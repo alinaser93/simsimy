@@ -70,7 +70,8 @@ html,body{margin:0;height:100%;}
 .bk-sec-t{font-size:20px;font-weight:800;color:#1C1C1C;}
 .bk-sec-sub{font-size:13px;color:#7a7a7a;font-weight:500;margin-top:2px;}
 .bk-sec-link{display:flex;align-items:center;gap:2px;color:var(--bk-green,#0C831F);font-size:13px;font-weight:700;cursor:pointer;flex:0 0 auto;padding-top:3px;}
-.bk-hs{display:flex;gap:12px;overflow-x:auto;padding:2px 14px 10px;content-visibility:auto;contain-intrinsic-size:auto 285px;}
+.bk-hs{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:158px;gap:14px 12px;overflow-x:auto;padding:2px 14px 12px;scroll-snap-type:x proximity;}
+.bk-hs .bk-pc{width:100%;scroll-snap-align:start;}
 
 .bk-bs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:4px 14px 10px;content-visibility:auto;contain-intrinsic-size:auto 340px;}
 .bk-bs{background:#f6f7f8;border-radius:16px;padding:8px 8px 10px;cursor:pointer;}
@@ -395,10 +396,10 @@ html,body{margin:0;height:100%;}
 .bk-reorder{font-size:11.5px;font-weight:900;color:var(--bk-green,#0C831F);margin-top:8px;display:inline-flex;align-items:center;gap:4px;}
 
 /* شريط «عرض المنتجات» العريض أسفل صف المنتجات (أسلوب بلينكيت) */
-.bk-seeall-bar{display:flex;align-items:center;gap:10px;margin:0 14px 16px;padding:9px 14px;background:#F5F7FB;border-radius:12px;cursor:pointer;}
+.bk-seeall-bar{display:flex;align-items:center;gap:12px;margin:0 14px 16px;padding:12px 16px;background:#F7F8FB;border:1px solid #EEF0F6;border-radius:14px;cursor:pointer;}
 .bk-seeall-bar .thumbs{display:flex;flex:0 0 auto;}
-.bk-seeall-bar .thumbs .th{width:34px;height:34px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;margin-right:-12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.bk-seeall-bar .thumbs .th{width:36px;height:36px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:18px;margin-right:-14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);}
 .bk-seeall-bar .thumbs .th:last-child{margin-right:0;}
 .bk-seeall-bar .thumbs .th img{width:100%;height:100%;object-fit:cover;}
-.bk-seeall-bar .txt{flex:1;text-align:center;font-size:13.5px;font-weight:800;color:#1C1C1C;}
-.bk-seeall-bar .chev{color:var(--bk-green,#0C831F);flex:0 0 auto;}
+.bk-seeall-bar .txt{flex:1;text-align:center;font-size:16px;font-weight:800;color:#302E53;letter-spacing:-.2px;}
+.bk-seeall-bar .chev{color:#343853;flex:0 0 auto;}

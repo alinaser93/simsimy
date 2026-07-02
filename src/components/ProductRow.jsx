@@ -29,12 +29,12 @@ export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSee
       {onSeeAll && (
         <div className="bk-seeall-bar" onClick={onSeeAll}>
           <div className="thumbs">
-            {items.slice(0, 2).map((p) => (
+            {items.slice(0, 3).map((p) => (
               <span key={p.id} className="th" style={{ background: p.bg }}>{p.img ? <img src={p.img} alt="" /> : p.e}</span>
             ))}
           </div>
           <div className="txt">عرض المنتجات</div>
-          <ChevronLeft size={18} strokeWidth={2.8} className="chev" />
+          <ChevronLeft size={20} strokeWidth={3} className="chev" />
         </div>
       )}
     </>
