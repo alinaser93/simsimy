@@ -70,8 +70,8 @@ html,body{margin:0;height:100%;}
 .bk-sec-t{font-size:20px;font-weight:800;color:#1C1C1C;}
 .bk-sec-sub{font-size:13px;color:#7a7a7a;font-weight:500;margin-top:2px;}
 .bk-sec-link{display:flex;align-items:center;gap:2px;color:var(--bk-green,#0C831F);font-size:13px;font-weight:700;cursor:pointer;flex:0 0 auto;padding-top:3px;}
-.bk-hs{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:158px;gap:14px 12px;overflow-x:auto;padding:2px 14px 12px;scroll-snap-type:x proximity;}
-.bk-hs .bk-pc{width:100%;scroll-snap-align:start;}
+.bk-hs{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:2px 14px 14px;}
+.bk-hs .bk-pc{width:100%;height:284px;}
 
 .bk-bs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:4px 14px 10px;content-visibility:auto;contain-intrinsic-size:auto 340px;}
 .bk-bs{background:#f6f7f8;border-radius:16px;padding:8px 8px 10px;cursor:pointer;}

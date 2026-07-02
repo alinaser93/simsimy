@@ -8,7 +8,8 @@ import { useStore } from "../store/appStore.js";
    - شريط «عرض المنتجات ←» عريض أسفل الصف (مصغّرات + نص وسط + سهم) */
 export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSeeAll, cardBg, cardBorder }) {
   const products = useStore((s) => s.products);
-  const items = ids.map((id) => products.find((x) => x.id === id)).filter(Boolean);
+  const all = ids.map((id) => products.find((x) => x.id === id)).filter(Boolean);
+  const items = all.slice(0, 4); // شبكة 2×2 ثابتة؛ الباقي عبر «عرض المنتجات»
   return (
     <>
       {title && (
@@ -29,7 +30,7 @@ export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSee
       {onSeeAll && (
         <div className="bk-seeall-bar" onClick={onSeeAll}>
           <div className="thumbs">
-            {items.slice(0, 3).map((p) => (
+            {all.slice(0, 3).map((p) => (
               <span key={p.id} className="th" style={{ background: p.bg }}>{p.img ? <img src={p.img} alt="" /> : p.e}</span>
             ))}
           </div>
