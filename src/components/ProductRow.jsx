@@ -9,7 +9,7 @@ import { useStore } from "../store/appStore.js";
 export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSeeAll, cardBg, cardBorder }) {
   const products = useStore((s) => s.products);
   const all = ids.map((id) => products.find((x) => x.id === id)).filter(Boolean);
-  const items = all.slice(0, 4); // شبكة 2×2 ثابتة؛ الباقي عبر «عرض المنتجات»
+  const items = all.slice(0, 6); // شبكة 3×2 ثابتة (كبلينكيت)؛ الباقي عبر «عرض المنتجات»
   return (
     <>
       {title && (
