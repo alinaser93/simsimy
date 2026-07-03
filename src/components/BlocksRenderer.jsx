@@ -41,6 +41,7 @@ export default function BlocksRenderer({ blocks, tabId = "home", cart, add, inc,
     if (b.type === "row") {
       return (
         <ProductRow key={b.id} title={b.title} sub={b.sub || undefined} ids={b.ids || []}
+          autoFill={b.cat && b.cat !== "الرائج الآن" && b.cat !== "البقالة" ? b.cat : undefined}
           slider={b.layout === "slide"} cart={cart} add={add} inc={inc} dec={dec}
           onSeeAll={() => openList(b.cat || b.title)} />
       );

@@ -360,7 +360,7 @@ function Products() {
                     </tr>
                     {isOpen && items.map((p) => (
                 <tr key={p.id} style={p.stock === false ? { opacity: 0.55 } : undefined}>
-                  <td><span style={{ fontSize: 18, marginLeft: 6 }}>{p.e}</span><b>{p.name}</b>{p.deal && <span className="pt-deal-tag">🏷️ عرض</span>}<div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{p.weight}</div></td>
+                  <td><div className="pt-prodcell">{(p.img || (p.images && p.images[0])) ? <img className="pt-thumb" src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="pt-thumb emoji">{p.e}</span>}<div><b>{p.name}</b>{p.deal && <span className="pt-deal-tag">🏷️ عرض</span>}{(p.variants || []).length > 0 && <span className="pt-deal-tag" style={{ background: "#eef4fb", color: "#2a5a8a" }}>{p.variants.length} خيارات</span>}<div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{p.weight}</div></div></div></td>
                   <td style={{ fontSize: 11.5 }}>{p.cat || "—"}</td>
                   <td>{p.sub ? <span className="pt-mini-chip">{p.sub}</span> : <span style={{ color: "var(--p-mut)" }}>—</span>}</td>
                   <td><b>{fmt(p.priceIQD)} {CUR}</b><div style={{ color: "var(--p-mut)", fontSize: 10, textDecoration: "line-through" }}>{fmt(p.mrpIQD)}</div></td>
