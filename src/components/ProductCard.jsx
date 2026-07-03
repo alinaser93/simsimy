@@ -35,15 +35,11 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
       <div className="bk-pc-imgwrap" style={{ background: p.bg }}
         onClick={onCardTap}
         onTouchStart={(e) => startDrag(e.touches[0].clientX)}
-        onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
+        onTouchMove={(e) => { moveDrag(e.touches[0].clientX); if (Math.abs(drag.current.dx) > 8 && imgs.length > 1) e.preventDefault(); }}
         onTouchEnd={endDrag}
         onMouseDown={(e) => startDrag(e.clientX)}
         onMouseMove={(e) => { if (e.buttons === 1) moveDrag(e.clientX); }}
         onMouseUp={endDrag}>
-        {off > 0 && <div className="bk-off">{off}%<br />خصم</div>}
-        {oos && <div className="bk-oos-badge">غير متوفر حالياً</div>}
-        {p.badge && <div className="bk-pbadge">{p.badge}</div>}
-        <div className="bk-veg"><i /></div>
         <div className="bk-pc-slider">
           {imgs.length > 0 ? (
             <div className="bk-pc-track" style={{ transform: `translateX(${ci * 100}%)` }}>
@@ -51,7 +47,10 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
             </div>
           ) : <div className="bk-pc-img">{p.e}</div>}
         </div>
-        <div className="bk-wtag">{p.weight}</div>
+        {off > 0 && <div className="bk-off">{off}%<br />خصم</div>}
+        {oos && <div className="bk-oos-badge">غير متوفر حالياً</div>}
+        {p.badge && <div className="bk-pbadge">{p.badge}</div>}
+        <div className="bk-veg"><i /></div>
         {imgs.length > 1 && <div className="bk-imgdots">{imgs.map((_, i) => <i key={i} className={i === ci ? "on" : ""} onClick={(e) => { e.stopPropagation(); setCi(i); }} />)}</div>}
         <div className="bk-addwrap" onClick={(e) => e.stopPropagation()}>
           {qty > 0 ? (
@@ -70,6 +69,7 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
         </div>
       </div>
       <div className="bk-pc-body">
+        {p.weight && <div className="bk-wt-inline">{p.weight}</div>}
         <div className="bk-price-row">
           <span className="bk-price">{fmt(price)} {CUR}</span>
           {mrp > price && <span className="bk-mrp">{fmt(mrp)}</span>}
