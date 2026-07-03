@@ -19,6 +19,8 @@ const SECTIONS = [
 export default function DealsContent({ cart, add, inc, dec, openList }) {
   const products = useStore((s) => s.products);
   const dealZone = useStore((s) => s.settings.dealZone);
+  const rowLayouts = useStore((s) => s.settings.rowLayouts || {});
+  const lay = (title, def) => (rowLayouts[title] || def) === "slide";
   const pct = (p) => (p.mrpIQD > p.priceIQD ? (p.mrpIQD - p.priceIQD) / p.mrpIQD : 0);
 
   const featured = useMemo(
@@ -65,10 +67,12 @@ export default function DealsContent({ cart, add, inc, dec, openList }) {
 
       {featured.length >= 2 && (
         <ProductRow title="⚡ عروض مختارة لك" sub="أفضل التخفيضات المنتقاة" ids={featured}
+          slider={lay("⚡ عروض مختارة لك", "grid")}
           cart={cart} add={add} inc={inc} dec={dec} onSeeAll={() => openList("الكل")} />
       )}
       {sections.map((sec) => (
-        <ProductRow key={sec.title} title={sec.title} ids={sec.ids} slider={sec.slider}
+        <ProductRow key={sec.title} title={sec.title} ids={sec.ids}
+          slider={lay(sec.title, sec.slider ? "slide" : "grid")}
           cart={cart} add={add} inc={inc} dec={dec} onSeeAll={() => openList(sec.cats[0])} />
       ))}
     </>

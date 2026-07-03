@@ -184,3 +184,21 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .th-tabs .dot{width:8px;height:8px;background:#bbb;border-radius:50%;margin:auto;}
 .th-strip .line{width:85%;height:9px;background:#f5c542;border-radius:4px;}
 .th-dz .star{width:22px;height:22px;background:#edf2ca;border-radius:50%;box-shadow:0 0 0 4px #fef9e5;}
+
+/* شريط أدوات المنشئ (تراجع/إعادة/استعادة/حفظ) */
+.pt-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pt-toolbar .tb{font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;border:1px solid var(--p-border);background:var(--p-card,#fff);color:var(--p-txt);cursor:pointer;}
+.pt-toolbar .tb:disabled{opacity:.35;cursor:default;}
+.save-badge{font-size:10.5px;font-weight:800;color:#0C831F;background:#e8f5ea;border:1px solid #bfe4c6;border-radius:8px;padding:5px 9px;}
+/* دُرج الكتالوج */
+.pal-toggle{width:100%;text-align:right;font-size:13px;font-weight:800;color:#0C831F;background:#f2faf3;border:1.5px dashed #9fd3aa;border-radius:10px;padding:9px 12px;cursor:pointer;margin-bottom:10px;}
+.pal-toggle small{color:var(--p-mut);font-weight:600;margin-right:6px;}
+/* المجموعات القابلة للطي */
+.pt-group{padding:0;overflow:hidden;}
+.pt-group .gcap{display:flex;align-items:center;gap:8px;padding:13px 16px;cursor:pointer;font-weight:800;font-size:13.5px;color:var(--p-txt);}
+.pt-group .gcap .chev{color:var(--p-mut);font-size:12px;}
+.pt-group .gcap small{color:var(--p-mut);font-weight:600;font-size:11px;}
+.pt-group .gbody{padding:0 16px 16px;}
+.pt-subhead{font-size:12px;font-weight:800;color:var(--p-mut);margin:14px 2px 8px;}
+.pt-h2{font-size:14px;font-weight:800;color:var(--p-txt);margin:22px 4px 10px;}
+.pt-h2 small{display:block;font-size:11px;color:var(--p-mut);font-weight:600;margin-top:2px;}

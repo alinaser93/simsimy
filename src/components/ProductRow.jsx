@@ -8,8 +8,7 @@ import { useStore } from "../store/appStore.js";
    - شريط «عرض المنتجات ←» عريض أسفل الصف (مصغّرات + نص وسط + سهم) */
 export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSeeAll, cardBg, cardBorder, slider }) {
   const products = useStore((s) => s.products);
-  const rowLayouts = useStore((s) => s.settings.rowLayouts || {});
-  const isSlider = rowLayouts[title] ? rowLayouts[title] === "slide" : !!slider;
+  const isSlider = !!slider;
   const all = ids.map((id) => products.find((x) => x.id === id)).filter(Boolean);
   const items = isSlider ? all.slice(0, 12) : all.slice(0, 6); // سلايد أفقي أو شبكة 3×2
   return (

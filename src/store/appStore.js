@@ -223,6 +223,40 @@ export const removeProduct = (id) =>
   setState((s) => ({ products: s.products.filter((p) => p.id !== id) }));
 
 
+
+// ===== سجلّ التراجع/الإعادة لتخطيطات المنشئ =====
+let undoStack = [], redoStack = [], lastHKey = null, lastHT = 0;
+const layoutSnap = (st) => JSON.parse(JSON.stringify({ homeBlocks: st.homeBlocks, tabBlocks: st.tabBlocks, customTabs: st.customTabs }));
+const pushHist = (key) => {
+  const now = Date.now();
+  if (key && key === lastHKey && now - lastHT < 900) { lastHT = now; return; } // دمج ضربات الكتابة المتتالية
+  undoStack.push(layoutSnap(state));
+  if (undoStack.length > 50) undoStack.shift();
+  redoStack = []; lastHKey = key || null; lastHT = now;
+};
+export const histState = () => ({ u: undoStack.length, r: redoStack.length });
+export const undoLayout = () => {
+  if (!undoStack.length) return;
+  redoStack.push(layoutSnap(state)); lastHKey = null;
+  const snap = undoStack.pop();
+  setState((st) => ({ ...snap, histV: (st.histV || 0) + 1 }));
+};
+export const redoLayout = () => {
+  if (!redoStack.length) return;
+  undoStack.push(layoutSnap(state)); lastHKey = null;
+  const snap = redoStack.pop();
+  setState((st) => ({ ...snap, histV: (st.histV || 0) + 1 }));
+};
+export const resetTabLayout = (tabId) => {
+  pushHist();
+  setState((st) => {
+    const bump = { histV: (st.histV || 0) + 1 };
+    if (tabId === "home") return { homeBlocks: JSON.parse(JSON.stringify(HOME_BLOCKS)), ...bump };
+    if (st.tabBlocks[tabId]) return { tabBlocks: { ...st.tabBlocks, [tabId]: JSON.parse(JSON.stringify(TAB_BLOCKS[tabId] || [])) }, ...bump };
+    return { customTabs: st.customTabs.map((t) => (t.id === tabId ? { ...t, blocks: [] } : t)), ...bump };
+  });
+};
+
 // ===== منشئ الصفحات (كتل الرئيسية + التبويبات المخصّصة) =====
 const genId = () => "b" + Math.random().toString(36).slice(2, 8);
 const blocksOf = (s, tabId) => (tabId === "home" ? s.homeBlocks : s.tabBlocks[tabId] ? s.tabBlocks[tabId] : (s.customTabs.find((t) => t.id === tabId)?.blocks || []));
@@ -232,34 +266,48 @@ const writeBlocks = (s, tabId, blocks) =>
     : s.tabBlocks[tabId]
     ? { tabBlocks: { ...s.tabBlocks, [tabId]: blocks } }
     : { customTabs: s.customTabs.map((t) => (t.id === tabId ? { ...t, blocks } : t)) };
-export const addBlock = (tabId, block, index) =>
-  setState((s) => {
+export const addBlock = (tabId, block, index) => {
+  pushHist();
+  return setState((s) => {
     const arr = [...blocksOf(s, tabId)];
     const nb = { id: genId(), ...block };
     if (index == null || index < 0 || index > arr.length) arr.push(nb); else arr.splice(index, 0, nb);
-    return writeBlocks(s, tabId, arr);
+    return { ...writeBlocks(s, tabId, arr), histV: (s.histV || 0) + 1 };
   });
-export const updateBlock = (tabId, id, patch) =>
-  setState((s) => writeBlocks(s, tabId, blocksOf(s, tabId).map((b) => (b.id === id ? { ...b, ...patch } : b))));
-export const removeBlock = (tabId, id) =>
-  setState((s) => writeBlocks(s, tabId, blocksOf(s, tabId).filter((b) => b.id !== id)));
-export const moveBlock = (tabId, id, dir) =>
-  setState((s) => {
+};
+export const updateBlock = (tabId, id, patch) => {
+  pushHist(tabId + ":" + id);
+  setState((s) => ({ ...writeBlocks(s, tabId, blocksOf(s, tabId).map((b) => (b.id === id ? { ...b, ...patch } : b))), histV: (s.histV || 0) + 1 }));
+};
+export const removeBlock = (tabId, id) => {
+  pushHist();
+  setState((s) => ({ ...writeBlocks(s, tabId, blocksOf(s, tabId).filter((b) => b.id !== id)), histV: (s.histV || 0) + 1 }));
+};
+export const moveBlock = (tabId, id, dir) => {
+  pushHist();
+  return setState((s) => {
     const arr = [...blocksOf(s, tabId)];
     const i = arr.findIndex((b) => b.id === id);
     const j = i + dir;
     if (i < 0 || j < 0 || j >= arr.length) return {};
     [arr[i], arr[j]] = [arr[j], arr[i]];
-    return writeBlocks(s, tabId, arr);
+    return { ...writeBlocks(s, tabId, arr), histV: (s.histV || 0) + 1 };
   });
-export const setBlocksOrder = (tabId, blocks) => setState((s) => writeBlocks(s, tabId, blocks));
+};
+export const setBlocksOrder = (tabId, blocks) => { pushHist(); setState((s) => ({ ...writeBlocks(s, tabId, blocks), histV: (s.histV || 0) + 1 })); };
 if (typeof window !== "undefined") window.__setBlocks = setBlocksOrder;
-export const addCustomTab = (label, emoji) =>
-  setState((s) => ({ customTabs: [...s.customTabs, { id: "ct" + Date.now().toString(36), label, emoji: emoji || "🛍️", blocks: [] }] }));
-export const updateCustomTab = (id, patch) =>
-  setState((s) => ({ customTabs: s.customTabs.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
-export const removeCustomTab = (id) =>
-  setState((s) => ({ customTabs: s.customTabs.filter((t) => t.id !== id) }));
+export const addCustomTab = (label, emoji) => {
+  pushHist();
+  setState((s) => ({ customTabs: [...s.customTabs, { id: "ct" + Date.now().toString(36), label, emoji: emoji || "🛍️", blocks: [] }], histV: (s.histV || 0) + 1 }));
+};
+export const updateCustomTab = (id, patch) => {
+  pushHist();
+  setState((s) => ({ customTabs: s.customTabs.map((t) => (t.id === id ? { ...t, ...patch } : t)), histV: (s.histV || 0) + 1 }));
+};
+export const removeCustomTab = (id) => {
+  pushHist();
+  setState((s) => ({ customTabs: s.customTabs.filter((t) => t.id !== id), histV: (s.histV || 0) + 1 }));
+};
 
 export const updateSettings = (patch) =>
   setState((s) => ({ settings: { ...s.settings, ...patch } }));

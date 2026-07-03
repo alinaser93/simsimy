@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { ROW_SECTIONS } from "../data/rowSections.js";
-import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab } from "../store/appStore.js";
+import { DEALS_ROWS } from "../data/rowSections.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
@@ -571,6 +571,22 @@ function Thumb({ kind }) {
   );
 }
 
+
+/* مجموعة قابلة للطي — لتجميع التحكمات المتشابهة */
+function Group({ icon, title, sub, children, open: dOpen }) {
+  const [open, setOpen] = useState(!!dOpen);
+  return (
+    <div className="pt-card pt-group">
+      <div className="gcap" onClick={() => setOpen(!open)}>
+        <span className="chev">{open ? "▾" : "◂"}</span>
+        <span className="gt">{icon} {title}</span>
+        {sub && <small>{sub}</small>}
+      </div>
+      {open && <div className="gbody">{children}</div>}
+    </div>
+  );
+}
+
 function PageBuilder() {
   const homeBlocks = useStore((s) => s.homeBlocks);
   const customTabs = useStore((s) => s.customTabs);
@@ -584,7 +600,7 @@ function PageBuilder() {
     const onMsg = (e) => {
       const d = e.data || {};
       if (!d.bk) return;
-      if (d.act === "insert" && d.tabId === tabRef.current) setPending(d.index);
+      if (d.act === "insert" && d.tabId === tabRef.current) { setPending(d.index); setPalOpen(true); }
       if (d.act === "select") { setOpenId(d.id); setPending(null); }
     };
     window.addEventListener("message", onMsg);
@@ -596,6 +612,19 @@ function PageBuilder() {
   ];
   const tabBlocksAll = useStore((s) => s.tabBlocks);
   const blocks = tabId === "home" ? homeBlocks : tabBlocksAll[tabId] ? tabBlocksAll[tabId] : (customTabs.find((t) => t.id === tabId)?.blocks || []);
+  useStore((s) => s.histV || 0); // إعادة رسم عند تغيّر السجل
+  const hs = histState();
+  const [palOpen, setPalOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); undoLayout(); }
+      else if (k === "y" || (k === "z" && e.shiftKey)) { e.preventDefault(); redoLayout(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const CATS_LIST = [...new Set(products.map((p) => p.cat).filter(Boolean))];
 
   const label = (b) => b.type === "builtin" ? "🧩 " + (b.label || b.key)
@@ -624,16 +653,24 @@ function PageBuilder() {
           {customTabs.map((t) => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
         </select>
         <button className="pt-btn sm" onClick={() => { const l = prompt("اسم التبويب الجديد:"); if (l) { const e = prompt("إيموجي التبويب:", "🛍️"); addCustomTab(l, e || "🛍️"); } }}>+ تبويب</button>
-        {tabId !== "home" && <button className="pt-btn warn sm" onClick={() => { if (confirm("حذف هذا التبويب وكل كتله؟")) { removeCustomTab(tabId); setTabId("home"); } }}><Trash2 size={12} /></button>}
+        {tabId !== "home" && !tabBlocksAll[tabId] && <button className="pt-btn warn sm" onClick={() => { if (confirm("حذف هذا التبويب وكل كتله؟")) { removeCustomTab(tabId); setTabId("home"); } }}><Trash2 size={12} /></button>}
+        <span className="sp" />
+        <div className="pt-toolbar">
+          <button className="tb" disabled={!hs.u} title="تراجع (Ctrl+Z)" onClick={undoLayout}>↩ تراجع{hs.u ? ` (${hs.u})` : ""}</button>
+          <button className="tb" disabled={!hs.r} title="إعادة (Ctrl+Y)" onClick={redoLayout}>↪ إعادة</button>
+          <button className="tb" title="استعادة التصميم الافتراضي لهذا التبويب" onClick={() => { if (confirm("استعادة هذا التبويب لتصميمه الافتراضي؟ (يمكن التراجع)")) resetTabLayout(tabId); }}>⟲ استعادة</button>
+          <span className="save-badge">✓ يُحفظ تلقائياً</span>
+        </div>
       </div>
 
       <div className="pt-builder">
         <div className="pt-blocks">
+          <button className="pal-toggle" onClick={() => setPalOpen(!palOpen)}>{palOpen ? "▾" : "＋"} إضافة كتلة <small>كتالوج أنماط بلينكيت</small></button>
           {pending != null && (
             <div className="pal-pending">📍 سيُدرَج في الموضع {pending + 1} — اختر كتلة من الكتالوج
               <button onClick={() => setPending(null)}>إلغاء</button></div>
           )}
-          <div className="pal-grid">
+          {palOpen && <div className="pal-grid">
             {[
               { k: "grid", n: "صف منتجات 3×2", th: "grid", add: { type: "row", title: "صف جديد", sub: "", ids: [1, 2, 3, 4, 5, 14], cat: CATS_LIST[0] || "", layout: "grid" } },
               { k: "slide", n: "صف سلايد دوّار", th: "slide", add: { type: "row", title: "سلايد جديد", sub: "", ids: [1, 2, 3, 4, 5, 14, 28, 29], cat: CATS_LIST[0] || "", layout: "slide" } },
@@ -643,7 +680,7 @@ function PageBuilder() {
               { k: "trio", n: "البطاقات الثلاثية", th: "trio", add: { type: "builtin", key: "trio", label: "البطاقات الثلاثية" } },
               { k: "big", n: "متاجر كبرى", th: "big", add: { type: "builtin", key: "bigstores", label: "متاجر يحبها الجميع" } },
             ].map((p) => (
-              <div key={p.k} className="pal-item" onClick={() => { addBlock(tabId, p.add, pending); setPending(null); }}>
+              <div key={p.k} className="pal-item" onClick={() => { addBlock(tabId, p.add, pending); setPending(null); setPalOpen(false); }}>
                 <Thumb kind={p.th} /><span>{p.n}</span>
               </div>
             ))}
@@ -651,14 +688,14 @@ function PageBuilder() {
               const opts = ["grocery:البقالة والمطبخ","snacks:وجبات ومشروبات","beauty:الجمال","household:المنزل","stores:متاجر مميّزة","lifestyle:أسلوب حياتك","tiles_electronics:الإلكترونيات","tiles_decor:الديكور","tiles_kids:الأطفال","tiles_imported:المستورد"];
               const pick = prompt("اختر مجموعة البلاطات:\n" + opts.map((o,i)=>(i+1)+") "+o.split(":")[1]).join("\n"), "1");
               const idx = (+pick || 1) - 1; const [key, lbl] = (opts[idx] || opts[0]).split(":");
-              addBlock(tabId, { type: "builtin", key, label: "بلاطات: " + lbl }, pending); setPending(null);
+              addBlock(tabId, { type: "builtin", key, label: "بلاطات: " + lbl }, pending); setPending(null); setPalOpen(false);
             }}><Thumb kind="tiles" /><span>بلاطات فئات</span></div>
             {[["head","رأس مُثيّم","المظهر"],["tabs","شريط التبويبات","زر + تبويب"],["strip","شريط تحفيزي","المظهر"],["dz","منطقة العروض","بطاقة العروض"]].map(([k,n,w]) => (
               <div key={k} className="pal-item struct" title={"هيكلي — يُدار من: " + w}>
                 <Thumb kind={k} /><span>{n}</span><small>{w}</small>
               </div>
             ))}
-          </div>
+          </div>}
           {blocks.length === 0 && <div style={{ color: "var(--p-mut)", fontSize: 12, padding: 14, textAlign: "center" }}>لا توجد كتل بعد — أضف صفًا أو إعلانًا</div>}
           {blocks.map((b, i) => (
             <div key={b.id}
@@ -670,6 +707,7 @@ function PageBuilder() {
                 <button title="أعلى" disabled={i === 0} onClick={() => moveBlock(tabId, b.id, -1)}>▲</button>
                 <button title="أسفل" disabled={i === blocks.length - 1} onClick={() => moveBlock(tabId, b.id, +1)}>▼</button>
                 <button title={b.hidden ? "إظهار" : "إخفاء"} onClick={() => updateBlock(tabId, b.id, { hidden: !b.hidden })}>{b.hidden ? "🙈" : "👁"}</button>
+                <button title="نسخ الكتلة" onClick={() => { const c = JSON.parse(JSON.stringify(b)); delete c.id; addBlock(tabId, c, i + 1); }}>⧉</button>
                 <button title="حذف" className="del" onClick={() => removeBlock(tabId, b.id)}>✕</button>
               </span>
               {openId === b.id && b.type === "row" && (
@@ -729,8 +767,7 @@ function Content() {
 
       <PageBuilder />
 
-      <div className="pt-card" style={{ borderColor: "#bfe0c2" }}>
-        <div className="cap" style={{ color: "#2f7a3a" }}>🏷️ منطقة العروض (DEAL ZONE) — تبويب «عروض»</div>
+      <Group icon="🏷️" title="تبويب العروض" sub="منطقة العروض + أنماط صفوفه (يُبنى تلقائياً من الخصومات)">
         <div className="pt-row2" style={{ marginBottom: 10 }}>
           <div className="pt-field"><label>عنوان البانر</label>{In(dealZone?.title || "", (v) => setDZ({ title: v }))}</div>
           <div className="pt-field"><label>الوصف الفرعي</label>{In(dealZone?.subtitle || "", (v) => setDZ({ subtitle: v }))}</div>
@@ -756,29 +793,23 @@ function Content() {
             </tbody>
           </table>
         </div>
-        <div style={{ fontSize: 11, color: "var(--p-mut)", marginTop: 6 }}>«سعر أقصى» = يعرض المنتجات بذلك السعر وأقل · «خصم أدنى» = يعرض المنتجات بخصم تلك النسبة فأكثر</div>
-      </div>
+        <div className="pt-subhead">🎚️ نمط عرض كل صف</div>
+        {DEALS_ROWS.map((title) => {
+          const mode = rowLayouts[title] || "grid";
+          return (
+            <div key={title} className="pt-layout-row">
+              <span className="nm">{title}</span>
+              <div className="pt-seg">
+                <button className={"seg" + (mode === "grid" ? " on" : "")} onClick={() => setLayout(title, "grid")}>▦ 3×2</button>
+                <button className={"seg" + (mode === "slide" ? " on" : "")} onClick={() => setLayout(title, "slide")}>⇄ سلايد</button>
+              </div>
+            </div>
+          );
+        })}
+      </Group>
 
-      <div className="pt-card">
-        <div className="cap">🎚️ أنماط عرض الصفوف — سلايد دوّار أو شبكة ثابتة (3×2)</div>
-        {ROW_SECTIONS.map((g) => (
-          <div key={g.group} style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "var(--p-mut)", margin: "6px 2px" }}>{g.group}</div>
-            {g.titles.map((title) => {
-              const mode = rowLayouts[title] || "grid";
-              return (
-                <div key={title} className="pt-layout-row">
-                  <span className="nm">{title}</span>
-                  <div className="pt-seg">
-                    <button className={"seg" + (mode === "grid" ? " on" : "")} onClick={() => setLayout(title, "grid")}>▦ شبكة 3×2</button>
-                    <button className={"seg" + (mode === "slide" ? " on" : "")} onClick={() => setLayout(title, "slide")}>⇄ سلايد دوّار</button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+
+      <div className="pt-h2">🧩 محتوى الكتل الجاهزة<small>البانرات والبطاقات — مكانها وترتيبها من المنشئ أعلاه</small></div>
 
       <div className="pt-card">
         <div className="cap">بانرات العروض العريضة<span className="sp" />
