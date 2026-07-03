@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { HOME_BLOCKS } from "../data/homeBlocks.js";
 import { PRODUCTS } from "../data/products.js";
 import { toIQD } from "../utils/currency.js";
 import { WIDE_BANNERS, TRIO_PROMOS, BIG_STORES } from "../data/collections.js";
@@ -65,7 +66,9 @@ const seedOrders = (prods) => {
 const defaults = () => {
   const products = seedProducts();
   return {
-    settings: {
+    homeBlocks: HOME_BLOCKS,
+  customTabs: [],
+  settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
       eta: 12,
       deliveryFee: 1000,
@@ -155,7 +158,7 @@ const mergeSaved = (d, saved) => {
   if (!saved) return d;
   const out = { ...d, ...saved };
   ["settings", "appearance", "texts"].forEach((k) => { out[k] = { ...d[k], ...(saved[k] || {}) }; });
-  ["banners", "trio", "bigStores", "addresses"].forEach((k) => { if (!Array.isArray(saved[k])) out[k] = d[k]; });
+  ["banners", "trio", "bigStores", "addresses", "homeBlocks", "customTabs"].forEach((k) => { if (!Array.isArray(saved[k])) out[k] = d[k]; });
   out.merchants = (saved.merchants || d.merchants).map((m) => ({ password: "0000", commission: 10, open: true, ...m }));
   out.couriers = (saved.couriers || d.couriers).map((c) => ({ password: "0000", ...c }));
   if (!Array.isArray(saved.settlements)) out.settlements = [];
@@ -214,6 +217,38 @@ export const addProduct = (data) =>
 
 export const removeProduct = (id) =>
   setState((s) => ({ products: s.products.filter((p) => p.id !== id) }));
+
+
+// ===== منشئ الصفحات (كتل الرئيسية + التبويبات المخصّصة) =====
+const genId = () => "b" + Math.random().toString(36).slice(2, 8);
+const blocksOf = (s, tabId) => (tabId === "home" ? s.homeBlocks : (s.customTabs.find((t) => t.id === tabId)?.blocks || []));
+const writeBlocks = (s, tabId, blocks) =>
+  tabId === "home"
+    ? { homeBlocks: blocks }
+    : { customTabs: s.customTabs.map((t) => (t.id === tabId ? { ...t, blocks } : t)) };
+export const addBlock = (tabId, block) =>
+  setState((s) => writeBlocks(s, tabId, [...blocksOf(s, tabId), { id: genId(), ...block }]));
+export const updateBlock = (tabId, id, patch) =>
+  setState((s) => writeBlocks(s, tabId, blocksOf(s, tabId).map((b) => (b.id === id ? { ...b, ...patch } : b))));
+export const removeBlock = (tabId, id) =>
+  setState((s) => writeBlocks(s, tabId, blocksOf(s, tabId).filter((b) => b.id !== id)));
+export const moveBlock = (tabId, id, dir) =>
+  setState((s) => {
+    const arr = [...blocksOf(s, tabId)];
+    const i = arr.findIndex((b) => b.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= arr.length) return {};
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    return writeBlocks(s, tabId, arr);
+  });
+export const setBlocksOrder = (tabId, blocks) => setState((s) => writeBlocks(s, tabId, blocks));
+if (typeof window !== "undefined") window.__setBlocks = setBlocksOrder;
+export const addCustomTab = (label, emoji) =>
+  setState((s) => ({ customTabs: [...s.customTabs, { id: "ct" + Date.now().toString(36), label, emoji: emoji || "🛍️", blocks: [] }] }));
+export const updateCustomTab = (id, patch) =>
+  setState((s) => ({ customTabs: s.customTabs.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
+export const removeCustomTab = (id) =>
+  setState((s) => ({ customTabs: s.customTabs.filter((t) => t.id !== id) }));
 
 export const updateSettings = (patch) =>
   setState((s) => ({ settings: { ...s.settings, ...patch } }));

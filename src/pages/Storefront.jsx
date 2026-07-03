@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { THEMES } from "../data/themes.js";
 import DealsContent from "../components/DealsContent.jsx";
+import BlocksRenderer from "../components/BlocksRenderer.jsx";
 import { useCart } from "../hooks/useCart.js";
 import { useCollapsingHeader } from "../hooks/useCollapsingHeader.js";
 import SplashScreen from "../components/SplashScreen.jsx";
@@ -39,7 +40,16 @@ export default function Storefront() {
   const appearance = useStore((st) => st.appearance);
   const texts = useStore((st) => st.texts);
 
-  const theme = THEMES[catTab];
+  const customTabs = useStore((s) => s.customTabs);
+  const customTab = customTabs.find((t) => t.id === catTab);
+  const theme = THEMES[catTab] || (customTab && {
+    eta: "12", headTop: "#4a4b50", headBot: "#6e6d6e", onHead: "#ffffff", sub: "#eaeaea",
+    badge: "#fff", badgeBorder: "rgba(255,255,255,.55)", searchBg: "#fff",
+    searchText: "#8a8a8a", searchIcon: "#5a5a5a",
+    hints: [customTab.label],
+    hero: { kind: "glow", title: customTab.emoji + " " + customTab.label, sub: "قسم مخصّص من إدارة المتجر",
+      bg: "linear-gradient(135deg,#5a5b60,#3f4045)", text: "#ffffff", subText: "#e2e2e2" },
+  }) || THEMES.all;
   const { cart, add, inc, dec, clear, count, total, savings, recentItems } = useCart();
   const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(theme);
 
@@ -100,8 +110,10 @@ export default function Storefront() {
       ? <HomeContent cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
       : catTab === "deals"
       ? <DealsContent cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
+      : customTab
+      ? <BlocksRenderer blocks={customTab.blocks} cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
       : <ThemedContent theme={theme} cart={cart} add={add} inc={inc} dec={dec} openList={openList} />),
-    [catTab, cart, theme, add, inc, dec, openList]
+    [catTab, cart, theme, customTab, add, inc, dec, openList]
   );
   const banner = useMemo(
     () => (catTab === "all" ? <WelcomeHero /> : <Hero hero={theme.hero} />),

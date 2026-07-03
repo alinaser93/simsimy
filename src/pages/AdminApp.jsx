@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ROW_SECTIONS } from "../data/rowSections.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
@@ -546,6 +547,104 @@ function Look() {
 }
 
 /* ---------------- المحتوى: بانرات وأقسام الصفحة الرئيسية ---------------- */
+
+/* ===== منشئ الصفحات التفاعلي: معاينة حيّة + سحب/أسهم + إضافة/حذف كتل وتبويبات ===== */
+function PageBuilder() {
+  const homeBlocks = useStore((s) => s.homeBlocks);
+  const customTabs = useStore((s) => s.customTabs);
+  const products = useStore((s) => s.products);
+  const [tabId, setTabId] = useState("home");
+  const [drag, setDrag] = useState(null);
+  const [openId, setOpenId] = useState(null);
+  const blocks = tabId === "home" ? homeBlocks : (customTabs.find((t) => t.id === tabId)?.blocks || []);
+  const CATS_LIST = [...new Set(products.map((p) => p.cat).filter(Boolean))];
+
+  const label = (b) => b.type === "builtin" ? "🧩 " + (b.label || b.key)
+    : b.type === "row" ? (b.layout === "slide" ? "⇄ " : "▦ ") + b.title
+    : "📢 إعلان: " + b.t;
+
+  const onDrop = (targetId) => {
+    if (!drag || drag === targetId) return setDrag(null);
+    const arr = [...blocks];
+    const from = arr.findIndex((b) => b.id === drag);
+    const to = arr.findIndex((b) => b.id === targetId);
+    if (from < 0 || to < 0) return setDrag(null);
+    const [m] = arr.splice(from, 1);
+    arr.splice(to, 0, m);
+    // اكتب الترتيب الجديد عبر التحريك المتسلسل (أبسط: استبدال كامل عبر update متتالٍ)
+    window.__setBlocks && window.__setBlocks(tabId, arr);
+    setDrag(null);
+  };
+
+  return (
+    <div className="pt-card">
+      <div className="cap">🧱 منشئ الصفحات التفاعلي<span className="sp" />
+        <select className="pt-in" style={{ width: 170 }} value={tabId} onChange={(e) => setTabId(e.target.value)}>
+          <option value="home">الصفحة الرئيسية (الكل)</option>
+          {customTabs.map((t) => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
+        </select>
+        <button className="pt-btn sm" onClick={() => { const l = prompt("اسم التبويب الجديد:"); if (l) { const e = prompt("إيموجي التبويب:", "🛍️"); addCustomTab(l, e || "🛍️"); } }}>+ تبويب</button>
+        {tabId !== "home" && <button className="pt-btn warn sm" onClick={() => { if (confirm("حذف هذا التبويب وكل كتله؟")) { removeCustomTab(tabId); setTabId("home"); } }}><Trash2 size={12} /></button>}
+      </div>
+
+      <div className="pt-builder">
+        <div className="pt-blocks">
+          <div className="add-row">
+            <button className="pt-btn sm" onClick={() => addBlock(tabId, { type: "row", title: "صف جديد", sub: "", ids: [1, 2, 3, 4, 5, 14], cat: CATS_LIST[0] || "", layout: "grid" })}>+ صف منتجات</button>
+            <button className="pt-btn sm ghost" onClick={() => addBlock(tabId, { type: "ad", t: "إعلان جديد", p: "وصف الإعلان", cta: "تسوّق الآن", e: "🛒", bg: "" })}>+ بانر إعلاني</button>
+          </div>
+          {blocks.length === 0 && <div style={{ color: "var(--p-mut)", fontSize: 12, padding: 14, textAlign: "center" }}>لا توجد كتل بعد — أضف صفًا أو إعلانًا</div>}
+          {blocks.map((b, i) => (
+            <div key={b.id}
+              className={"pt-block" + (drag === b.id ? " dragging" : "") + (b.hidden ? " off" : "")}
+              draggable onDragStart={() => setDrag(b.id)} onDragOver={(e) => e.preventDefault()} onDrop={() => onDrop(b.id)} onDragEnd={() => setDrag(null)}>
+              <span className="grip">⠿</span>
+              <span className="bl" onClick={() => setOpenId(openId === b.id ? null : b.id)}>{label(b)}</span>
+              <span className="ops">
+                <button title="أعلى" disabled={i === 0} onClick={() => moveBlock(tabId, b.id, -1)}>▲</button>
+                <button title="أسفل" disabled={i === blocks.length - 1} onClick={() => moveBlock(tabId, b.id, +1)}>▼</button>
+                <button title={b.hidden ? "إظهار" : "إخفاء"} onClick={() => updateBlock(tabId, b.id, { hidden: !b.hidden })}>{b.hidden ? "🙈" : "👁"}</button>
+                <button title="حذف" className="del" onClick={() => removeBlock(tabId, b.id)}>✕</button>
+              </span>
+              {openId === b.id && b.type === "row" && (
+                <div className="edit">
+                  <input className="pt-in" placeholder="العنوان" value={b.title} onChange={(e) => updateBlock(tabId, b.id, { title: e.target.value })} />
+                  <input className="pt-in" placeholder="سطر فرعي (اختياري)" value={b.sub || ""} onChange={(e) => updateBlock(tabId, b.id, { sub: e.target.value })} />
+                  <input className="pt-in" dir="ltr" placeholder="معرّفات المنتجات: 1,2,3" value={(b.ids || []).join(",")} onChange={(e) => updateBlock(tabId, b.id, { ids: e.target.value.split(",").map((x) => +x.trim()).filter(Boolean) })} />
+                  <div className="row2">
+                    <select className="pt-in" value={b.cat || ""} onChange={(e) => updateBlock(tabId, b.id, { cat: e.target.value })}>
+                      {CATS_LIST.map((c) => <option key={c}>{c}</option>)}
+                    </select>
+                    <div className="pt-seg">
+                      <button className={"seg" + (b.layout !== "slide" ? " on" : "")} onClick={() => updateBlock(tabId, b.id, { layout: "grid" })}>▦ 3×2</button>
+                      <button className={"seg" + (b.layout === "slide" ? " on" : "")} onClick={() => updateBlock(tabId, b.id, { layout: "slide" })}>⇄ سلايد</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {openId === b.id && b.type === "ad" && (
+                <div className="edit">
+                  <input className="pt-in" placeholder="عنوان الإعلان" value={b.t} onChange={(e) => updateBlock(tabId, b.id, { t: e.target.value })} />
+                  <input className="pt-in" placeholder="الوصف" value={b.p || ""} onChange={(e) => updateBlock(tabId, b.id, { p: e.target.value })} />
+                  <div className="row2">
+                    <input className="pt-in" placeholder="نص الزر" value={b.cta || ""} onChange={(e) => updateBlock(tabId, b.id, { cta: e.target.value })} />
+                    <input className="pt-in" placeholder="إيموجي" value={b.e || ""} onChange={(e) => updateBlock(tabId, b.id, { e: e.target.value })} />
+                  </div>
+                  <input className="pt-in" dir="ltr" placeholder="خلفية CSS (اختياري)" value={b.bg || ""} onChange={(e) => updateBlock(tabId, b.id, { bg: e.target.value })} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="pt-preview-wrap">
+          <div className="ph-note">معاينة حيّة — تتحدث فور أي تعديل{tabId !== "home" ? " (افتح التبويب الجديد من شريط المتجر)" : ""}</div>
+          <iframe className="pt-preview" src="/" title="معاينة المتجر" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Content() {
   const banners = useStore((s) => s.banners);
   const trio = useStore((s) => s.trio);
@@ -561,6 +660,8 @@ function Content() {
   return (
     <>
       <div className="pt-h1">محتوى الصفحة الرئيسية<small>حرّر البانرات والأقسام — تظهر فوراً في المتجر</small></div>
+
+      <PageBuilder />
 
       <div className="pt-card" style={{ borderColor: "#bfe0c2" }}>
         <div className="cap" style={{ color: "#2f7a3a" }}>🏷️ منطقة العروض (DEAL ZONE) — تبويب «عروض»</div>
