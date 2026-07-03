@@ -917,17 +917,33 @@ function PageBuilder() {
 function SupabaseCard() {
   const [cfg, setCfg] = useState(() => getSupabaseCfg() || { url: "", anonKey: "", bucket: "products" });
   const [saved, setSaved] = useState(false);
+  const [test, setTest] = useState("");
   const save = () => { setSupabaseCfg(cfg); setSaved(true); setTimeout(() => setSaved(false), 1500); };
+  const runTest = async () => {
+    setSupabaseCfg(cfg); setTest("جارٍ الاختبار…");
+    try {
+      // صورة PNG صغيرة 1×1 كاختبار رفع
+      const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const file = new File([bytes], "test.png", { type: "image/png" });
+      const url = await uploadImage(file);
+      setTest("✅ نجح! الصور تُرفع بشكل صحيح. " + (url ? "" : ""));
+    } catch (e) { setTest("❌ " + e.message); }
+  };
   return (
     <div>
       <div className="pt-field"><label>رابط المشروع (Project URL)</label>
         <input className="pt-in" dir="ltr" placeholder="https://xxxx.supabase.co" value={cfg.url} onChange={(e) => setCfg({ ...cfg, url: e.target.value })} /></div>
-      <div className="pt-field"><label>anon key (المفتاح العام — ليس service_role)</label>
-        <input className="pt-in" dir="ltr" placeholder="eyJhbGc..." value={cfg.anonKey} onChange={(e) => setCfg({ ...cfg, anonKey: e.target.value })} /></div>
+      <div className="pt-field"><label>المفتاح العام (publishable / anon) — ليس secret</label>
+        <input className="pt-in" dir="ltr" placeholder="sb_publishable_... أو eyJ..." value={cfg.anonKey} onChange={(e) => setCfg({ ...cfg, anonKey: e.target.value })} /></div>
       <div className="pt-field"><label>اسم الـ Bucket (عام)</label>
         <input className="pt-in" dir="ltr" placeholder="products" value={cfg.bucket} onChange={(e) => setCfg({ ...cfg, bucket: e.target.value })} /></div>
-      <button className="pt-btn sm" onClick={save}>{saved ? "✓ حُفظ" : "حفظ الإعداد"}</button>
-      <div className="pt-tip" style={{ marginTop: 8 }}>ℹ️ أنشئ bucket باسم «products» واجعله <b>Public</b> من لوحة Supabase. استخدم مفتاح <b>anon</b> العام فقط (آمن للعميل)، ولا تضع أبدًا مفتاح service_role.</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button className="pt-btn sm" onClick={save}>{saved ? "✓ حُفظ" : "حفظ الإعداد"}</button>
+        <button className="pt-btn sm ghost" onClick={runTest} disabled={!cfg.url || !cfg.anonKey}>🧪 اختبار الاتصال</button>
+      </div>
+      {test && <div className={"pt-testres " + (test.startsWith("✅") ? "ok" : test.startsWith("❌") ? "err" : "")}>{test}</div>}
+      <div className="pt-tip" style={{ marginTop: 8 }}>ℹ️ شغّل ملف <b>supabase-setup.sql</b> في Supabase (SQL Editor) أولًا — ينشئ bucket «products» العام وسياساته. استخدم مفتاح <b>anon</b> العام فقط.</div>
     </div>
   );
 }
