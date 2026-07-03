@@ -444,3 +444,8 @@ html,body{margin:0;height:100%;}
 .bk-dz-tile .star .sub{font-size:8.5px;font-weight:700;color:#6a8a5a;}
 /* شارة «Sale» على تبويب العروض */
 .bk-tab .bk-tab-badge{position:absolute;top:-4px;right:0;background:#E23744;color:#fff;font-size:7px;font-weight:800;padding:1px 4px;border-radius:6px;line-height:1.2;}
+
+/* صف منتجات «سلايد» أفقي واحد (لأقسام البقالة والمشروبات في العروض) */
+.bk-hs.slide{grid-template-columns:none;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:10px;scroll-snap-type:x mandatory;}
+.bk-hs.slide .bk-pc{flex:0 0 auto;width:150px;scroll-snap-align:start;}
+.bk-hs.slide .bk-pc-imgwrap{height:104px;}

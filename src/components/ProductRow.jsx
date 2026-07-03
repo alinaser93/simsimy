@@ -6,10 +6,12 @@ import { useStore } from "../store/appStore.js";
    - العنوان (وسطر التفرعات) بلا زر جانبي
    - صف أفقي من البطاقات
    - شريط «عرض المنتجات ←» عريض أسفل الصف (مصغّرات + نص وسط + سهم) */
-export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSeeAll, cardBg, cardBorder }) {
+export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSeeAll, cardBg, cardBorder, slider }) {
   const products = useStore((s) => s.products);
+  const rowLayouts = useStore((s) => s.settings.rowLayouts || {});
+  const isSlider = rowLayouts[title] ? rowLayouts[title] === "slide" : !!slider;
   const all = ids.map((id) => products.find((x) => x.id === id)).filter(Boolean);
-  const items = all.slice(0, 6); // شبكة 3×2 ثابتة (كبلينكيت)؛ الباقي عبر «عرض المنتجات»
+  const items = isSlider ? all.slice(0, 12) : all.slice(0, 6); // سلايد أفقي أو شبكة 3×2
   return (
     <>
       {title && (
@@ -22,7 +24,7 @@ export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSee
           </div>
         </div>
       )}
-      <div className="bk-hs hide-sb">
+      <div className={"bk-hs hide-sb" + (isSlider ? " slide" : "")}>
         {items.map((p) => (
           <ProductCard key={p.id} p={p} qty={cart[p.id] || 0} onAdd={add} onInc={inc} onDec={dec} cardBg={cardBg} cardBorder={cardBorder} />
         ))}

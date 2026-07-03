@@ -73,7 +73,11 @@ const defaults = () => {
       freeAbove: 25000,         // توصيل مجاني فوق هذا المبلغ
       tipOptions: [250, 500, 1000], // خيارات بقشيش المندوب
       storeOpen: true,
-      dealZone: {
+      rowLayouts: {
+      "أقل الأسعار على البقالة اليومية": "slide",
+      "وفّر أكثر مع عروض المشروبات": "slide",
+    },
+    dealZone: {
       title: "منطقة العروض",
       subtitle: "أقوى الخصومات في مكان واحد",
       tiles: [

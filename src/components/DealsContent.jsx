@@ -7,8 +7,8 @@ import { useStore } from "../store/appStore.js";
    - شبكة بلاطات نجمية (متاجر الأسعار + نِسب الخصم) — قابلة للتحكّم من الأدمن
    - أقسام مُثيّمة للمنتجات المخفّضة، مربوطة بالأدمن */
 const SECTIONS = [
-  { title: "أقل الأسعار على البقالة اليومية", cats: ["طحين وأرز وبقوليات", "زيوت وسكر وبهارات"] },
-  { title: "وفّر أكثر مع عروض المشروبات", cats: ["مشروبات وعصائر"] },
+  { title: "أقل الأسعار على البقالة اليومية", cats: ["طحين وأرز وبقوليات", "زيوت وسكر وبهارات"], slider: true },
+  { title: "وفّر أكثر مع عروض المشروبات", cats: ["مشروبات وعصائر"], slider: true },
   { title: "حلويات وآيس كريم بأسعار مغرية", cats: ["حلويات وشوكولاتة", "آيس كريم ومثلجات"] },
   { title: "طعام سريع ومجمّد بخصم", cats: ["طعام سريع ومجمّد"] },
   { title: "أساسيات المنزل بأسعار مخفّضة", cats: ["منظفات وعناية منزلية", "ألبان وخبز وبيض"] },
@@ -68,7 +68,7 @@ export default function DealsContent({ cart, add, inc, dec, openList }) {
           cart={cart} add={add} inc={inc} dec={dec} onSeeAll={() => openList("الكل")} />
       )}
       {sections.map((sec) => (
-        <ProductRow key={sec.title} title={sec.title} ids={sec.ids}
+        <ProductRow key={sec.title} title={sec.title} ids={sec.ids} slider={sec.slider}
           cart={cart} add={add} inc={inc} dec={dec} onSeeAll={() => openList(sec.cats[0])} />
       ))}
     </>

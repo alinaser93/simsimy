@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ROW_SECTIONS } from "../data/rowSections.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
@@ -552,6 +553,8 @@ function Content() {
   const dealZone = useStore((s) => s.settings.dealZone);
   const setDZ = (patch) => updateSettings({ dealZone: { ...dealZone, ...patch } });
   const setTile = (i, patch) => setDZ({ tiles: dealZone.tiles.map((t, j) => (j === i ? { ...t, ...patch } : t)) });
+  const rowLayouts = useStore((s) => s.settings.rowLayouts || {});
+  const setLayout = (title, mode) => updateSettings({ rowLayouts: { ...rowLayouts, [title]: mode } });
   const In = (val, on, w, dir) => (
     <input className="pt-in" dir={dir} style={{ width: w || "100%", padding: "6px 9px", fontSize: 12 }} value={val} onChange={(e) => on(e.target.value)} />
   );
@@ -587,6 +590,27 @@ function Content() {
           </table>
         </div>
         <div style={{ fontSize: 11, color: "var(--p-mut)", marginTop: 6 }}>«سعر أقصى» = يعرض المنتجات بذلك السعر وأقل · «خصم أدنى» = يعرض المنتجات بخصم تلك النسبة فأكثر</div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">🎚️ أنماط عرض الصفوف — سلايد دوّار أو شبكة ثابتة (3×2)</div>
+        {ROW_SECTIONS.map((g) => (
+          <div key={g.group} style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "var(--p-mut)", margin: "6px 2px" }}>{g.group}</div>
+            {g.titles.map((title) => {
+              const mode = rowLayouts[title] || "grid";
+              return (
+                <div key={title} className="pt-layout-row">
+                  <span className="nm">{title}</span>
+                  <div className="pt-seg">
+                    <button className={"seg" + (mode === "grid" ? " on" : "")} onClick={() => setLayout(title, "grid")}>▦ شبكة 3×2</button>
+                    <button className={"seg" + (mode === "slide" ? " on" : "")} onClick={() => setLayout(title, "slide")}>⇄ سلايد دوّار</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       <div className="pt-card">
