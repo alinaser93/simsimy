@@ -5,7 +5,7 @@ import { Switch } from "../portal/PortalKit.jsx";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
 import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
-import { genProductImage, suggestBackgrounds } from "../utils/imageGen.js";
+import { genProductImage, suggestBackgrounds, pollinationsUrl } from "../utils/imageGen.js";
 import { fmt, CUR } from "../utils/currency.js";
 
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
@@ -106,6 +106,29 @@ function ProductManager({ scope = "admin", mid = null }) {
     setAiBusy("");
   };
   const genImage = () => { const url = genProductImage(modal.data.e || "🛒", modal.data.cat); upd({ images: [...(modal.data.images || []), url] }); };
+  const genRealImage = async () => {
+    if (!modal.data.name || modal.data.name.length < 2) { alert("اكتب اسم المنتج أولًا"); return; }
+    setAiBusy("realimg");
+    try {
+      let prompt = modal.data.name;
+      const ai = await aiCall({ task: "imagePrompt", name: modal.data.name, cat: modal.data.cat }, 12000);
+      if (ai && ai.prompt) prompt = ai.prompt;
+      const genUrl = pollinationsUrl(prompt);
+      // جلب الصورة ورفعها لـ Supabase لتخزين دائم وسريع
+      try {
+        const res = await fetch(genUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const file = new File([blob], "ai-" + Date.now() + ".jpg", { type: blob.type || "image/jpeg" });
+          const stored = await uploadImage(file);
+          upd({ images: [...(modal.data.images || []), stored] });
+          setAiBusy(""); return;
+        }
+      } catch { /* fallback للرابط المباشر */ }
+      upd({ images: [...(modal.data.images || []), genUrl] });
+    } catch (e) { alert("تعذّر توليد الصورة — جرّب رفع صورة أو خلفية ملوّنة"); }
+    setAiBusy("");
+  };
   const [bgSuggest, setBgSuggest] = useState(null);
   const showBgSuggest = () => setBgSuggest(suggestBackgrounds(modal.data.e || "🛒", modal.data.cat));
   const aiClassify = () => runAI("classify");
@@ -203,8 +226,8 @@ function ProductManager({ scope = "admin", mid = null }) {
                 <button className="pt-img-add" onClick={() => addImage(upd, modal.data)}>＋<small>صورة</small></button>
               </div>
               <div className="pt-imgbtns">
-                <button className="ai-chip" onClick={genImage}>🎨 ولّد صورة متناسقة</button>
-                <button className="ai-chip" style={{ background: "#0C831F" }} onClick={showBgSuggest}>🖼️ اقترح خلفيات</button>
+                <button className="ai-chip" style={{ background: "#7c3aed" }} onClick={genRealImage} disabled={aiBusy==="realimg"}>{aiBusy==="realimg" ? "⏳ يولّد صورة…" : "🤖 ولّد صورة حقيقية بالذكاء"}</button>
+                <button className="ai-chip" style={{ background: "#5b6470" }} onClick={showBgSuggest}>🎨 خلفية ملوّنة</button>
               </div>
               {bgSuggest && (
                 <div className="pt-bgsuggest">

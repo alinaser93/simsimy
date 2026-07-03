@@ -48,3 +48,11 @@ export function suggestBackgrounds(emoji, cat) {
   const picks = [cat, ...bases.filter((b) => b !== cat)].slice(0, 4);
   return picks.map((c) => ({ cat: c, url: genProductImage(emoji, c, 300) }));
 }
+
+
+// توليد صورة حقيقية بالذكاء عبر Pollinations (مجاني، بلا مفتاح)
+export function pollinationsUrl(prompt) {
+  const p = encodeURIComponent((prompt || "product") + ", professional product photo, plain white background, centered, high quality, no text");
+  const seed = Math.floor(Math.random() * 100000);
+  return `https://image.pollinations.ai/prompt/${p}?width=600&height=600&nologo=true&seed=${seed}`;
+}

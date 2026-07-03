@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { Star, Plus, Minus, ChevronLeft } from "lucide-react";
 import { fmt, CUR } from "../utils/currency.js";
 
@@ -14,18 +15,44 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
   const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
   const oos = p.stock === false;
   const nOpts = (p.variants || []).length;
-  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [])).slice(0, 4);
+  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [])).slice(0, 5);
+  const [ci, setCi] = useState(0);
+  const drag = useRef({ x: 0, dx: 0, moved: false });
   const openProduct = () => window.dispatchEvent(new CustomEvent("bk:openProduct", { detail: p.id }));
+  const startDrag = (x) => { drag.current = { x, dx: 0, moved: false }; };
+  const moveDrag = (x) => { drag.current.dx = x - drag.current.x; if (Math.abs(drag.current.dx) > 6) drag.current.moved = true; };
+  const endDrag = () => {
+    const { dx, moved } = drag.current;
+    if (imgs.length > 1 && Math.abs(dx) > 30) {
+      if (dx < 0) setCi((i) => (i + 1) % imgs.length);
+      else setCi((i) => (i - 1 + imgs.length) % imgs.length);
+    }
+    return moved; // إن تحرّك فهو سحب لا نقر
+  };
+  const onCardTap = () => { if (!drag.current.moved) openProduct(); };
   return (
     <div className={"bk-pc" + (grid ? " grid" : "") + (oos ? " oos" : "")} style={style}>
-      <div className="bk-pc-imgwrap" style={{ background: p.bg, cursor: "pointer" }} onClick={openProduct}>
+      <div className="bk-pc-imgwrap" style={{ background: p.bg }}
+        onClick={onCardTap}
+        onTouchStart={(e) => startDrag(e.touches[0].clientX)}
+        onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
+        onTouchEnd={endDrag}
+        onMouseDown={(e) => startDrag(e.clientX)}
+        onMouseMove={(e) => { if (e.buttons === 1) moveDrag(e.clientX); }}
+        onMouseUp={endDrag}>
         {off > 0 && <div className="bk-off">{off}%<br />خصم</div>}
         {oos && <div className="bk-oos-badge">غير متوفر حالياً</div>}
         {p.badge && <div className="bk-pbadge">{p.badge}</div>}
         <div className="bk-veg"><i /></div>
-        <div className="bk-pc-img">{p.img ? <img className="ph-img" src={p.img} alt={p.name} loading="lazy" /> : p.e}</div>
+        <div className="bk-pc-slider">
+          {imgs.length > 0 ? (
+            <div className="bk-pc-track" style={{ transform: `translateX(${ci * 100}%)` }}>
+              {imgs.map((u, i) => <div className="bk-pc-slide" key={i}><img className="ph-img" src={u} alt={p.name} loading="lazy" draggable="false" /></div>)}
+            </div>
+          ) : <div className="bk-pc-img">{p.e}</div>}
+        </div>
         <div className="bk-wtag">{p.weight}</div>
-        {imgs.length > 1 && <div className="bk-imgdots">{imgs.map((_, i) => <i key={i} className={i === 0 ? "on" : ""} />)}</div>}
+        {imgs.length > 1 && <div className="bk-imgdots">{imgs.map((_, i) => <i key={i} className={i === ci ? "on" : ""} onClick={(e) => { e.stopPropagation(); setCi(i); }} />)}</div>}
         <div className="bk-addwrap" onClick={(e) => e.stopPropagation()}>
           {qty > 0 ? (
             <div className="bk-step">

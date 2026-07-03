@@ -26,6 +26,9 @@ export default async (req) => {
     prompt = `صنّف المنتج «${name}» في الأنسب من هذه الأقسام لأقصى مبيعات:\n${cats.join("، ")}\nواختر تفرّعاً مناسباً من: ${subs.join("، ") || "اقترح تفرّعاً منطقياً"}.\nأعد JSON: {"cat":"اسم القسم بالضبط من القائمة","sub":"التفرّع","reason":"سبب قصير جداً"}`;
   } else if (task === "badge") {
     prompt = `اختر شارة واحدة فقط للمنتج «${name}» (السعر ${price}) من: جديد، الأكثر مبيعاً، عرض خاص، محدود، أو اتركها فارغة. أعد JSON: {"badge":"..."}`;
+  } else if (task === "imagePrompt") {
+    system = "You translate Arabic grocery product names into short English image-generation prompts. Reply with JSON only, no extra text.";
+    prompt = `Product (Arabic): «${name}»${cat ? ` category: ${cat}` : ""}. Write a concise English prompt (max 15 words) to generate a clean professional product photo on a plain white background. Reply JSON: {"prompt":"..."}`;
   } else if (task === "full") {
     prompt = `للمنتج «${name}»${weight ? ` (${weight})` : ""}: 1) صنّفه في الأنسب من الأقسام: ${cats.join("، ")} 2) اقترح تفرّعاً 3) اكتب وصفاً تسويقياً قصيراً (≤22 كلمة) 4) اختر شارة (جديد/الأكثر مبيعاً/عرض خاص/محدود/فارغة). أعد JSON فقط: {"cat":"...","sub":"...","desc":"...","badge":"..."}`;
   } else {
