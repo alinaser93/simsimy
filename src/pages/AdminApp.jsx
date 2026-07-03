@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { DEALS_ROWS } from "../data/rowSections.js";
+import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
 import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
@@ -211,7 +212,7 @@ function Orders() {
 
 /* ---------------- المنتجات ---------------- */
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
-const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", deal: false, desc: "", highlights: [] };
+const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", deal: false, desc: "", highlights: [], images: [], variants: [], badge: "", autoPlace: true };
 function Products() {
   const products = useStore((s) => s.products);
   const merchants = useStore((s) => s.merchants);
@@ -223,16 +224,30 @@ function Products() {
   const list = products.filter((p) => p.name.includes(q) && (catFilter === "الكل" || p.cat === catFilter) && (!dealsOnly || p.deal));
   const save = () => {
     const d = { ...modal.data, priceIQD: +modal.data.priceIQD || 0, mrpIQD: +modal.data.mrpIQD || 0 };
-    // المواصفات: سطر لكل خاصية بصيغة «المفتاح: القيمة»
     if (typeof d.hlText === "string") {
       d.highlights = d.hlText.split("\n").map((l) => l.split(":")).filter((a) => a.length >= 2)
         .map((a) => [a[0].trim(), a.slice(1).join(":").trim()]);
       delete d.hlText;
     }
+    d.images = (d.images || []).filter(Boolean);
+    if (d.images.length && !d.img) d.img = d.images[0];
+    d.variants = (d.variants || []).filter((v) => v.label).map((v) => ({ label: v.label, weight: v.weight || "", priceIQD: +v.priceIQD || d.priceIQD, mrpIQD: +v.mrpIQD || +v.priceIQD || d.mrpIQD }));
+    // التصنيف الذكي التلقائي: يضع المنتج في أفضل قسم لأقصى ظهور (يحترم اختيار التاجر إن أوقف التلقائي)
+    if (d.autoPlace) {
+      const c = classify(d.name);
+      if (c.matched) { d.cat = c.cat; if (!d.sub) d.sub = c.sub; }
+    }
     if (modal.mode === "add") addProduct(d); else updateProduct(d.id, d);
     setModal(null);
   };
-  const openEdit = (p) => setModal({ mode: "edit", data: { ...p, hlText: (p.highlights || []).map(([k, v]) => k + ": " + v).join("\n") } });
+  const upd = (patch) => setModal((m) => ({ ...m, data: { ...m.data, ...patch } }));
+  // اقتراحات الذكاء
+  const aiClassify = () => { const c = classify(modal.data.name); if (c.matched) upd({ cat: c.cat, sub: modal.data.sub || c.sub }); };
+  const aiPrice = () => { const r = suggestPrice(products, modal.data.cat, modal.data.sub); if (r) upd({ priceIQD: r.price, mrpIQD: r.mrp }); };
+  const aiDesc = () => upd({ desc: generateDesc(modal.data.name, modal.data.cat, modal.data.weight) });
+  const aiBadge = () => upd({ badge: suggestBadge(modal.data.name, +modal.data.priceIQD, +modal.data.mrpIQD) });
+  const similar = modal && modal.data.name.length > 2 ? findSimilar(products, modal.data.name, modal.data.id) : [];
+  const openEdit = (p) => setModal({ mode: "edit", data: { ...p, images: p.images || (p.img ? [p.img] : []), variants: p.variants || [], badge: p.badge || "", autoPlace: false, hlText: (p.highlights || []).map(([k, v]) => k + ": " + v).join("\n") } });
   return (
     <>
       <div className="pt-h1">إدارة المنتجات<small>التعديلات تنعكس فوراً على واجهة المتجر</small></div>
@@ -273,46 +288,94 @@ function Products() {
       {modal && (
         <div className="pt-dim" onClick={(e) => e.target === e.currentTarget && setModal(null)}>
           <div className="pt-modal">
-            <h3>{modal.mode === "add" ? "إضافة منتج" : "تعديل المنتج"}</h3>
-            <div className="pt-field"><label>الاسم</label>
-              <input className="pt-in" value={modal.data.name} onChange={(e) => setModal({ ...modal, data: { ...modal.data, name: e.target.value } })} /></div>
-            <div className="pt-row2">
-              <div className="pt-field"><label>الإيموجي (مؤقتاً بدل الصورة)</label>
-                <input className="pt-in" value={modal.data.e} onChange={(e) => setModal({ ...modal, data: { ...modal.data, e: e.target.value } })} /></div>
-              <div className="pt-field"><label>الوزن/الحجم</label>
-                <input className="pt-in" value={modal.data.weight} onChange={(e) => setModal({ ...modal, data: { ...modal.data, weight: e.target.value } })} /></div>
+            <h3>{modal.mode === "add" ? "✨ إضافة منتج ذكي" : "تعديل المنتج"}</h3>
+
+            {/* صور متعددة */}
+            <div className="pt-field"><label>صور المنتج (يمكن إضافة أكثر من صورة)</label>
+              <div className="pt-imgs">
+                {(modal.data.images || []).map((url, i) => (
+                  <div key={i} className="pt-img-chip">
+                    {url ? <img src={url} alt="" onError={(e) => (e.target.style.opacity = 0.2)} /> : <span className="ph">🖼️</span>}
+                    <button className="rm" onClick={() => upd({ images: modal.data.images.filter((_, j) => j !== i) })}>✕</button>
+                  </div>
+                ))}
+                <button className="pt-img-add" onClick={() => { const u = prompt("رابط الصورة:"); if (u) upd({ images: [...(modal.data.images || []), u] }); }}>＋<small>صورة</small></button>
+              </div>
+              <input className="pt-in" style={{ marginTop: 6 }} value={modal.data.e} onChange={(e) => upd({ e: e.target.value })} placeholder="الإيموجي (يظهر إن لم توجد صورة)" />
             </div>
+
+            <div className="pt-field"><label>اسم المنتج</label>
+              <input className="pt-in" value={modal.data.name} onChange={(e) => upd({ name: e.target.value })} onBlur={aiClassify} placeholder="مثال: شوكولاتة كادبوري" /></div>
+
+            {/* كشف الدمج: منتج مشابه */}
+            {similar.length > 0 && modal.mode === "add" && (
+              <div className="pt-merge">🔗 يوجد منتج مشابه: <b>{similar[0].name}</b> — أضِف هذا كخيار ضمنه بدل منتج منفصل؟
+                <button onClick={() => { const base = similar[0]; const v = [...(base.variants || []), { label: modal.data.name.replace(base.name, "").trim() || modal.data.weight || "خيار", weight: modal.data.weight, priceIQD: +modal.data.priceIQD, mrpIQD: +modal.data.mrpIQD }]; updateProduct(base.id, { variants: v }); setModal(null); }}>دمج كخيار</button>
+              </div>
+            )}
+
             <div className="pt-row2">
-              <div className="pt-field"><label>السعر ({CUR})</label>
-                <input className="pt-in" type="number" step="50" value={modal.data.priceIQD} onChange={(e) => setModal({ ...modal, data: { ...modal.data, priceIQD: e.target.value } })} /></div>
-              <div className="pt-field"><label>السعر قبل الخصم</label>
-                <input className="pt-in" type="number" step="50" value={modal.data.mrpIQD} onChange={(e) => setModal({ ...modal, data: { ...modal.data, mrpIQD: e.target.value } })} /></div>
-            </div>
-            <div className="pt-row2">
-              <div className="pt-field"><label>القسم</label>
-                <select className="pt-in" style={{ width: "100%" }} value={modal.data.cat || CATS[0]} onChange={(e) => setModal({ ...modal, data: { ...modal.data, cat: e.target.value } })}>
+              <div className="pt-field"><label>القسم {modal.data.autoPlace && <span className="ai-on">✨ تلقائي</span>}</label>
+                <select className="pt-in" style={{ width: "100%" }} value={modal.data.cat || CATS[0]} onChange={(e) => upd({ cat: e.target.value })}>
                   {CATS.map((c) => <option key={c}>{c}</option>)}
                 </select></div>
-              <div className="pt-field"><label>التفرّع (يظهر كصف داخل القسم)</label>
-                <input className="pt-in" list="bk-subs" placeholder="مثال: نودلز ومعكرونة" value={modal.data.sub || ""} onChange={(e) => setModal({ ...modal, data: { ...modal.data, sub: e.target.value } })} />
+              <div className="pt-field"><label>التفرّع</label>
+                <input className="pt-in" list="bk-subs" placeholder="نودلز ومعكرونة" value={modal.data.sub || ""} onChange={(e) => upd({ sub: e.target.value })} />
                 <datalist id="bk-subs">{subOptions.map((sc) => <option key={sc} value={sc} />)}</datalist></div>
             </div>
-            <label className="pt-check" onClick={() => setModal({ ...modal, data: { ...modal.data, deal: !modal.data.deal } })}>
+            <label className="pt-check sm" onClick={() => upd({ autoPlace: !modal.data.autoPlace })}>
+              <span className={"pt-box" + (modal.data.autoPlace ? " on" : "")}>{modal.data.autoPlace ? "✓" : ""}</span>
+              🧠 تصنيف ذكي تلقائي — يضع المنتج في أنسب قسم لأقصى ظهور وشراء (يحلّل الاسم عند الحفظ)
+            </label>
+
+            <div className="pt-row2">
+              <div className="pt-field"><label>الوزن/الحجم</label>
+                <input className="pt-in" value={modal.data.weight} onChange={(e) => upd({ weight: e.target.value })} placeholder="1 كغ / 500 مل" /></div>
+              <div className="pt-field"><label>السعر ({CUR}) <button className="ai-chip" onClick={aiPrice}>✨ اقترح</button></label>
+                <input className="pt-in" type="number" step="50" value={modal.data.priceIQD} onChange={(e) => upd({ priceIQD: e.target.value })} /></div>
+            </div>
+            <div className="pt-field"><label>السعر قبل الخصم (اختياري)</label>
+              <input className="pt-in" type="number" step="50" value={modal.data.mrpIQD} onChange={(e) => upd({ mrpIQD: e.target.value })} /></div>
+
+            {/* خيارات المنتج (variants) */}
+            <div className="pt-field"><label>خيارات المنتج (أحجام/أنواع متعددة تظهر كـ «N خيارات»)</label>
+              <div className="pt-vars">
+                {(modal.data.variants || []).map((v, i) => (
+                  <div key={i} className="pt-var-row">
+                    <input className="pt-in" placeholder="الاسم (مثال: كبير)" value={v.label} onChange={(e) => upd({ variants: modal.data.variants.map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} />
+                    <input className="pt-in" style={{ width: 80 }} placeholder="الحجم" value={v.weight || ""} onChange={(e) => upd({ variants: modal.data.variants.map((x, j) => j === i ? { ...x, weight: e.target.value } : x) })} />
+                    <input className="pt-in" style={{ width: 90 }} type="number" step="50" placeholder="السعر" value={v.priceIQD || ""} onChange={(e) => upd({ variants: modal.data.variants.map((x, j) => j === i ? { ...x, priceIQD: e.target.value } : x) })} />
+                    <button className="rm" onClick={() => upd({ variants: modal.data.variants.filter((_, j) => j !== i) })}>✕</button>
+                  </div>
+                ))}
+                <button className="pt-btn sm ghost" onClick={() => upd({ variants: [...(modal.data.variants || []), { label: "", weight: "", priceIQD: modal.data.priceIQD, mrpIQD: modal.data.mrpIQD }] })}>＋ إضافة خيار</button>
+              </div>
+            </div>
+
+            {/* الشارة */}
+            <div className="pt-field"><label>شارة المنتج <button className="ai-chip" onClick={aiBadge}>✨ اقترح</button></label>
+              <div className="pt-badges">
+                {["", "جديد", "الأكثر مبيعاً", "عرض خاص", "محدود"].map((b) => (
+                  <button key={b} className={"bdg" + (modal.data.badge === b ? " on" : "")} onClick={() => upd({ badge: b })}>{b || "بدون"}</button>
+                ))}
+              </div>
+            </div>
+
+            <label className="pt-check sm" onClick={() => upd({ deal: !modal.data.deal })}>
               <span className={"pt-box" + (modal.data.deal ? " on" : "")}>{modal.data.deal ? "✓" : ""}</span>
               🏷️ عرض مميّز — يظهر في صف «عروض مختارة» بتبويب العروض
             </label>
-            <div className="pt-field"><label>الوصف (يظهر في صفحة تفاصيل المنتج)</label>
-              <textarea className="pt-in" rows="3" value={modal.data.desc || ""} onChange={(e) => setModal({ ...modal, data: { ...modal.data, desc: e.target.value } })} /></div>
-            <div className="pt-field"><label>المواصفات — سطر لكل خاصية بصيغة «المفتاح: القيمة»</label>
-              <textarea className="pt-in" rows="4" placeholder={"النوع: ألبان\nالوزن: 1 لتر"} value={modal.data.hlText || ""} onChange={(e) => setModal({ ...modal, data: { ...modal.data, hlText: e.target.value } })} /></div>
-            <div className="pt-field"><label>رابط الصورة (اختياري — يحلّ محل الإيموجي)</label>
-              <input className="pt-in" dir="ltr" placeholder="https://…" value={modal.data.img || ""} onChange={(e) => setModal({ ...modal, data: { ...modal.data, img: e.target.value } })} /></div>
+
+            <div className="pt-field"><label>الوصف <button className="ai-chip" onClick={aiDesc}>✨ توليد بالذكاء</button></label>
+              <textarea className="pt-in" rows="2" value={modal.data.desc || ""} onChange={(e) => upd({ desc: e.target.value })} placeholder="وصف قصير يجذب الزبون…" /></div>
+            <div className="pt-field"><label>المواصفات — سطر لكل خاصية «المفتاح: القيمة»</label>
+              <textarea className="pt-in" rows="3" placeholder={"النوع: ألبان\nالوزن: 1 لتر"} value={modal.data.hlText || ""} onChange={(e) => upd({ hlText: e.target.value })} /></div>
             <div className="pt-field"><label>التاجر</label>
-              <select className="pt-in" style={{ width: "100%" }} value={modal.data.merchantId} onChange={(e) => setModal({ ...modal, data: { ...modal.data, merchantId: e.target.value } })}>
+              <select className="pt-in" style={{ width: "100%" }} value={modal.data.merchantId} onChange={(e) => upd({ merchantId: e.target.value })}>
                 {merchants.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select></div>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              <button className="pt-btn" style={{ flex: 1 }} onClick={save}>حفظ</button>
+              <button className="pt-btn" style={{ flex: 1 }} onClick={save}>💾 {modal.mode === "add" ? "إضافة المنتج" : "حفظ"}</button>
               <button className="pt-btn ghost" onClick={() => setModal(null)}>إلغاء</button>
             </div>
           </div>

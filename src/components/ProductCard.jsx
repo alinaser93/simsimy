@@ -13,15 +13,19 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
   const mrp = p.mrpIQD;
   const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
   const oos = p.stock === false;
+  const nOpts = (p.variants || []).length;
+  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [])).slice(0, 4);
   const openProduct = () => window.dispatchEvent(new CustomEvent("bk:openProduct", { detail: p.id }));
   return (
     <div className={"bk-pc" + (grid ? " grid" : "") + (oos ? " oos" : "")} style={style}>
       <div className="bk-pc-imgwrap" style={{ background: p.bg, cursor: "pointer" }} onClick={openProduct}>
         {off > 0 && <div className="bk-off">{off}%<br />خصم</div>}
         {oos && <div className="bk-oos-badge">غير متوفر حالياً</div>}
+        {p.badge && <div className="bk-pbadge">{p.badge}</div>}
         <div className="bk-veg"><i /></div>
         <div className="bk-pc-img">{p.img ? <img className="ph-img" src={p.img} alt={p.name} loading="lazy" /> : p.e}</div>
         <div className="bk-wtag">{p.weight}</div>
+        {imgs.length > 1 && <div className="bk-imgdots">{imgs.map((_, i) => <i key={i} className={i === 0 ? "on" : ""} />)}</div>}
         <div className="bk-addwrap" onClick={(e) => e.stopPropagation()}>
           {qty > 0 ? (
             <div className="bk-step">
@@ -30,7 +34,11 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
               <button onClick={() => onInc(p.id)} aria-label="زيادة"><Plus size={14} strokeWidth={3} /></button>
             </div>
           ) : (
-            <button className="bk-add" disabled={oos} style={oos ? { opacity: 0.45, cursor: "not-allowed" } : undefined} onClick={() => !oos && onAdd(p.id)}>أضف</button>
+            nOpts > 0 ? (
+              <button className="bk-add opts" onClick={openProduct}>أضف<small>{nOpts} خيارات</small></button>
+            ) : (
+              <button className="bk-add" disabled={oos} style={oos ? { opacity: 0.45, cursor: "not-allowed" } : undefined} onClick={() => !oos && onAdd(p.id)}>أضف</button>
+            )
           )}
         </div>
       </div>

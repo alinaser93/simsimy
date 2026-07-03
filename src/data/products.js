@@ -31,7 +31,7 @@ export const PRODUCTS = [
   { id: 29, name: "خبز صمون طازج", cat: "ألبان وخبز وبيض", sub: "خبز", e: "🥖", bg: "#F6EFE2", weight: "6 قطع", price: 20, mrp: 24, off: 17, rating: 4.5, reviews: "5.2 ألف", eta: "8 دقائق" },
   { id: 30, name: "بيض بلدي طازج", cat: "ألبان وخبز وبيض", sub: "بيض", e: "🥚", bg: "#FBF3E4", weight: "30 قطعة", price: 120, mrp: 135, off: 11, rating: 4.7, reviews: "3.9 ألف", eta: "10 دقائق" },
   { id: 31, name: "جبن أبيض عراقي", cat: "ألبان وخبز وبيض", sub: "أجبان", e: "🧀", bg: "#FDF6E3", weight: "500 غ", price: 90, mrp: 105, off: 14, rating: 4.4, reviews: "2.2 ألف", eta: "10 دقائق" },
-  { id: 32, name: "موز طازج مستورد", cat: "خضار وفواكه", sub: "فواكه", e: "🍌", bg: "#F3F6E7", weight: "1 كغ", price: 55, mrp: 65, off: 15, rating: 4.5, reviews: "6.3 ألف", eta: "9 دقائق" },
+  { id: 32, name: "موز طازج مستورد", cat: "خضار وفواكه", sub: "فواكه", variants: [{ label: "أصفر ناضج", weight: "1 كغ", priceIQD: 1500, mrpIQD: 1750 }, { label: "أخضر", weight: "1 كغ", priceIQD: 1350, mrpIQD: 1600 }, { label: "بيبي", weight: "500 غ", priceIQD: 1900, mrpIQD: 2100 }], e: "🍌", bg: "#F3F6E7", weight: "1 كغ", price: 55, mrp: 65, off: 15, rating: 4.5, reviews: "6.3 ألف", eta: "9 دقائق" },
   { id: 33, name: "طماطم محلية", cat: "خضار وفواكه", sub: "خضار طازجة", e: "🍅", bg: "#FBEBE6", weight: "1 كغ", price: 40, mrp: 48, off: 17, rating: 4.3, reviews: "4.4 ألف", eta: "9 دقائق" },
   // ===== مشروبات وعصائر =====
   { id: 34, name: "كوكا كولا دايت", cat: "مشروبات وعصائر", sub: "مشروبات غازية", e: "🥤", bg: "#FBE3E3", weight: "300 مل", price: 40, mrp: 40, off: 0, rating: 4.6, reviews: "29 ألف", eta: "8 دقائق" },
@@ -59,7 +59,7 @@ export const PRODUCTS = [
   { id: 54, name: "مومو دجاج مجمّد", cat: "طعام سريع ومجمّد", sub: "دجاج مجمّد", e: "🥟", bg: "#FBEEEA", weight: "500 غ", price: 250, mrp: 280, off: 11, rating: 4.3, reviews: "7.8 ألف", eta: "13 دقيقة" },
   // ===== حلويات وشوكولاتة =====
   { id: 55, name: "شوكولاتة كيت كات أصابع", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#F3E7DD", weight: "37 غ", price: 30, mrp: 30, off: 0, rating: 4.6, reviews: "4 آلاف", eta: "8 دقائق" },
-  { id: 56, name: "شوكولاتة كادبوري ديري ميلك", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#F0E6DC", weight: "55 غ", price: 45, mrp: 50, off: 10, rating: 4.7, reviews: "24 ألف", eta: "8 دقائق" },
+  { id: 56, name: "شوكولاتة كادبوري ديري ميلك", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", variants: [{ label: "صغير", weight: "13 غ", priceIQD: 500, mrpIQD: 500 }, { label: "وسط", weight: "55 غ", priceIQD: 2250, mrpIQD: 2500 }, { label: "كبير", weight: "150 غ", priceIQD: 5500, mrpIQD: 6250 }], e: "🍫", bg: "#F0E6DC", weight: "55 غ", price: 45, mrp: 50, off: 10, rating: 4.7, reviews: "24 ألف", eta: "8 دقائق" },
   { id: 57, name: "شوكولاتة أمول داكنة", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#EDE3D5", weight: "90 غ", price: 99, mrp: 120, off: 17, rating: 4.6, reviews: "90 ألف", eta: "8 دقائق", deal: true },
   { id: 58, name: "نستله مانش مقرمشة", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#F3EADC", weight: "30 غ", price: 20, mrp: 20, off: 0, rating: 4.5, reviews: "81 ألف", eta: "8 دقائق" },
   { id: 59, name: "كادبوري سيلك أوريو", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#EFE4DA", weight: "130 غ", price: 130, mrp: 145, off: 10, rating: 4.7, reviews: "2.4 ألف", eta: "8 دقائق" },

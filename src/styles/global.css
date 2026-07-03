@@ -457,3 +457,25 @@ html,body{margin:0;height:100%;}
 .bk-ebar button{width:20px;height:20px;border:none;border-radius:5px;background:rgba(255,255,255,.2);color:#fff;font-size:11px;cursor:pointer;line-height:1;}
 .bk-ebar .del{background:rgba(220,50,50,.85);}
 .bk-eend{margin:8px 14px 20px;padding:10px;border:1.5px dashed #0C831F;border-radius:10px;color:#0C831F;font-weight:800;font-size:12px;text-align:center;cursor:pointer;background:#f2faf3;}
+
+/* شارة المنتج + نقاط الصور + زر الخيارات على البطاقة */
+.bk-pbadge{position:absolute;top:6px;left:6px;z-index:2;background:#1C1C1C;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:6px;}
+.bk-imgdots{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);display:flex;gap:3px;}
+.bk-imgdots i{width:4px;height:4px;border-radius:50%;background:rgba(0,0,0,.2);}
+.bk-imgdots i.on{background:var(--bk-green,#0C831F);width:10px;border-radius:3px;}
+.bk-add.opts{flex-direction:column;line-height:1;padding:4px 6px;height:auto;}
+.bk-add.opts small{font-size:8px;font-weight:700;opacity:.85;margin-top:1px;}
+
+/* منتقي الخيارات ومعرض الصور في صفحة التفاصيل */
+.bk-pd-thumbs{display:flex;gap:8px;justify-content:center;margin-top:10px;}
+.bk-pd-thumbs .th{width:46px;height:46px;border-radius:10px;border:2px solid #eee;overflow:hidden;cursor:pointer;background:#fafafa;}
+.bk-pd-thumbs .th.on{border-color:var(--bk-green,#0C831F);}
+.bk-pd-thumbs .th img{width:100%;height:100%;object-fit:contain;}
+.bk-pd-variants{margin:16px 0 6px;}
+.bk-pd-variants .vh{font-size:13px;font-weight:800;color:#1C1C1C;margin-bottom:8px;}
+.bk-pd-variants .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;}
+.bk-pd-variants .vopt{border:1.5px solid #e2e2e2;border-radius:12px;padding:9px 8px;text-align:center;cursor:pointer;background:#fff;position:relative;}
+.bk-pd-variants .vopt.on{border-color:var(--bk-green,#0C831F);background:#f2faf3;}
+.bk-pd-variants .vl{font-size:11px;font-weight:700;color:#3a3a3a;margin-bottom:3px;}
+.bk-pd-variants .vp{font-size:13px;font-weight:800;color:#1C1C1C;}
+.bk-pd-variants .vo{font-size:8.5px;font-weight:800;color:#1a7f37;margin-top:2px;}

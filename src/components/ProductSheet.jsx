@@ -8,6 +8,8 @@ import ProductRow from "./ProductRow.jsx";
    صورة كبيرة، شريط علوي لاصق عند التمرير، لماذا بلينكيت، المواصفات،
    الوصف، سياسة الاستبدال، منتجات مشابهة، واشترى الناس أيضاً */
 export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
+  const [vi, setVi] = useState(0);
+  const [ii, setIi] = useState(0);
   const products = useStore((s) => s.products);
   const appName = useStore((s) => s.texts.appName);
   const p = products.find((x) => x.id === id);
@@ -15,8 +17,14 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const bodyRef = useRef(null);
   if (!p) return null;
 
+  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : []));
+  const variants = p.variants || [];
+  const sel = variants[vi] || null;
+  const price = sel ? sel.priceIQD : p.priceIQD;
+  const mrp = sel ? (sel.mrpIQD || sel.priceIQD) : p.mrpIQD;
+  const curImg = imgs[ii] || null;
   const qty = cart[p.id] || 0;
-  const off = p.mrpIQD > p.priceIQD ? Math.round(((p.mrpIQD - p.priceIQD) / p.mrpIQD) * 100) : 0;
+  const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
   const similar = products.filter((x) => x.cat === p.cat && x.id !== p.id).slice(0, 6).map((x) => x.id);
   const also = products.filter((x) => x.cat !== p.cat && x.merchantId === p.merchantId && x.id !== p.id).slice(0, 6).map((x) => x.id);
   const oos = p.stock === false;
@@ -50,9 +58,14 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
       <div className="bk-pbody" ref={bodyRef} onScroll={(e) => setBar(e.currentTarget.scrollTop > 230)}>
         <div className="bk-pd-hero">
           <div className="bk-pd-img" style={{ background: p.bg, borderRadius: 18, padding: "18px 0" }}>
-            {p.img ? <img src={p.img} alt={p.name} /> : p.e}
+            {curImg ? <img src={curImg} alt={p.name} /> : p.e}
           </div>
-          <div className="bk-pd-dots"><i className="on" /><i /><i /></div>
+          {imgs.length > 1 && <div className="bk-pd-dots">{imgs.map((_, i) => <i key={i} className={i === ii ? "on" : ""} onClick={() => setIi(i)} />)}</div>}
+          {imgs.length > 1 && (
+            <div className="bk-pd-thumbs">
+              {imgs.map((u, i) => <div key={i} className={"th" + (i === ii ? " on" : "")} onClick={() => setIi(i)}><img src={u} alt="" /></div>)}
+            </div>
+          )}
         </div>
 
         <div className="bk-pd-body">
@@ -60,10 +73,28 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
           <div className="bk-pd-name">{p.name}</div>
           <div className="bk-pd-w">{p.weight} · <Star size={11} fill="#f5a623" color="#f5a623" style={{ verticalAlign: -1 }} /> {p.rating} ({p.reviews})</div>
           <div className="bk-pd-price">
-            <span className="p">{fmt(p.priceIQD)} {CUR}</span>
-            {off > 0 && <><span className="m">{fmt(p.mrpIQD)}</span><span className="o">خصم {off}%</span></>}
+            <span className="p">{fmt(price)} {CUR}</span>
+            {off > 0 && <><span className="m">{fmt(mrp)}</span><span className="o">خصم {off}%</span></>}
             <span className="bk-pd-add"><Adder big /></span>
           </div>
+
+          {variants.length > 0 && (
+            <div className="bk-pd-variants">
+              <div className="vh">اختر الحجم / النوع</div>
+              <div className="vgrid">
+                {variants.map((v, i) => {
+                  const vo = (v.mrpIQD || v.priceIQD) > v.priceIQD ? Math.round((((v.mrpIQD || v.priceIQD) - v.priceIQD) / (v.mrpIQD || v.priceIQD)) * 100) : 0;
+                  return (
+                    <button key={i} className={"vopt" + (i === vi ? " on" : "")} onClick={() => setVi(i)}>
+                      <div className="vl">{v.label}{v.weight ? " · " + v.weight : ""}</div>
+                      <div className="vp">{fmt(v.priceIQD)} {CUR}</div>
+                      {vo > 0 && <div className="vo">خصم {vo}%</div>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bk-why">

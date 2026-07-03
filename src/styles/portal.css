@@ -202,3 +202,25 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .pt-subhead{font-size:12px;font-weight:800;color:var(--p-mut);margin:14px 2px 8px;}
 .pt-h2{font-size:14px;font-weight:800;color:var(--p-txt);margin:22px 4px 10px;}
 .pt-h2 small{display:block;font-size:11px;color:var(--p-mut);font-weight:600;margin-top:2px;}
+
+/* نموذج المنتج الذكي */
+.pt-imgs{display:flex;gap:8px;flex-wrap:wrap;}
+.pt-img-chip{position:relative;width:56px;height:56px;border-radius:10px;overflow:hidden;border:1px solid var(--p-border);background:#fafafa;display:grid;place-items:center;}
+.pt-img-chip img{width:100%;height:100%;object-fit:cover;}
+.pt-img-chip .ph{font-size:22px;}
+.pt-img-chip .rm{position:absolute;top:1px;left:1px;width:17px;height:17px;border:none;border-radius:5px;background:rgba(220,50,50,.9);color:#fff;font-size:10px;cursor:pointer;}
+.pt-img-add{width:56px;height:56px;border-radius:10px;border:1.5px dashed var(--p-border);background:transparent;color:var(--p-mut);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;}
+.pt-img-add small{font-size:8.5px;}
+.ai-chip{border:none;background:#7c3aed;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;cursor:pointer;margin-right:6px;vertical-align:middle;}
+.ai-on{background:#e8f5ea;color:#0C831F;font-size:9px;font-weight:800;padding:1px 6px;border-radius:6px;margin-right:5px;}
+.pt-check.sm{font-size:11.5px;margin-top:8px;font-weight:600;align-items:flex-start;}
+.pt-merge{background:#eef4fb;border:1px solid #cfe0f2;border-radius:9px;padding:8px 10px;font-size:11.5px;color:#2a5a8a;margin:4px 0 8px;}
+.pt-merge b{color:#1a3f6a;}
+.pt-merge button{display:block;margin-top:6px;border:none;background:#2a6ed9;color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+.pt-vars{display:flex;flex-direction:column;gap:6px;}
+.pt-var-row{display:flex;gap:6px;align-items:center;}
+.pt-var-row .pt-in{padding:6px 8px;font-size:12px;}
+.pt-var-row .rm{width:26px;height:30px;flex:0 0 auto;border:1px solid var(--p-border);border-radius:7px;background:transparent;color:#d33;cursor:pointer;}
+.pt-badges,.pt-seg{display:flex;gap:6px;flex-wrap:wrap;}
+.pt-badges .bdg{font-size:11px;font-weight:700;padding:5px 11px;border-radius:8px;border:1px solid var(--p-border);background:transparent;color:var(--p-txt);cursor:pointer;}
+.pt-badges .bdg.on{background:#1C1C1C;color:#fff;border-color:#1C1C1C;}
