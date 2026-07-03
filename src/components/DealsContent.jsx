@@ -2,9 +2,10 @@ import { useMemo } from "react";
 import ProductRow from "./ProductRow.jsx";
 import { useStore } from "../store/appStore.js";
 
-/* تبويب «العروض» — يعرض المنتجات المخفّضة مجمّعة بأقسام مُثيّمة (كتبويب Deals في بلينكيت)
-   مربوط بالأدمن: أي منتج يضع له الأدمن سعرًا أقل من سعر ما قبل الخصم يظهر هنا تلقائيًا،
-   وأي منتج يفعّل له الأدمن «عرض مميّز» يظهر في صف العروض المختارة بالأعلى. */
+/* تبويب «العروض» بأسلوب بلينكيت (DEAL ZONE):
+   - بانر أخضر «منطقة العروض»
+   - شبكة بلاطات نجمية (متاجر الأسعار + نِسب الخصم) — قابلة للتحكّم من الأدمن
+   - أقسام مُثيّمة للمنتجات المخفّضة، مربوطة بالأدمن */
 const SECTIONS = [
   { title: "أقل الأسعار على البقالة اليومية", cats: ["طحين وأرز وبقوليات", "زيوت وسكر وبهارات"] },
   { title: "وفّر أكثر مع عروض المشروبات", cats: ["مشروبات وعصائر"] },
@@ -17,6 +18,7 @@ const SECTIONS = [
 
 export default function DealsContent({ cart, add, inc, dec, openList }) {
   const products = useStore((s) => s.products);
+  const dealZone = useStore((s) => s.settings.dealZone);
   const pct = (p) => (p.mrpIQD > p.priceIQD ? (p.mrpIQD - p.priceIQD) / p.mrpIQD : 0);
 
   const featured = useMemo(
@@ -28,20 +30,39 @@ export default function DealsContent({ cart, add, inc, dec, openList }) {
     const discounted = products.filter((p) => p.mrpIQD > p.priceIQD);
     return SECTIONS.map((sec) => ({
       ...sec,
-      ids: discounted
-        .filter((p) => sec.cats.includes(p.cat || ""))
-        .sort((a, b) => pct(b) - pct(a))
-        .slice(0, 8)
-        .map((p) => p.id),
+      ids: discounted.filter((p) => sec.cats.includes(p.cat || "")).sort((a, b) => pct(b) - pct(a)).slice(0, 8).map((p) => p.id),
     })).filter((sec) => sec.ids.length >= 2);
   }, [products]);
 
+  const tileClick = (t) => {
+    if (t.type === "max") openList("__deals_max_" + t.n);
+    else if (t.type === "minoff") openList("__deals_off_" + t.n);
+  };
+
   return (
     <>
-      <div className="bk-deal-strip">
-        <span className="t">تخفيضات حتى ٧٠٪</span>
-        <span className="s">توصيل سريع · أسعار لا تُقاوم</span>
+      {/* بانر منطقة العروض الأخضر */}
+      <div className="bk-dealzone">
+        <div className="bk-dz-banner">
+          <span className="dz-coupon c1">٪</span>
+          <span className="dz-emoji e1">🧳</span>
+          <span className="dz-title">منطقة العروض</span>
+          <span className="dz-emoji e2">🛒</span>
+          <span className="dz-coupon c2">٪</span>
+        </div>
+        <div className="bk-dz-grid">
+          {(dealZone?.tiles || []).map((t) => (
+            <div key={t.id} className="bk-dz-tile" onClick={() => tileClick(t)}>
+              <div className="star">
+                <div className="v">{t.value}</div>
+                <div className="l">{t.label}</div>
+                {t.sub && <div className="sub">{t.sub}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
       {featured.length >= 2 && (
         <ProductRow title="⚡ عروض مختارة لك" sub="أفضل التخفيضات المنتقاة" ids={featured}
           cart={cart} add={add} inc={inc} dec={dec} onSeeAll={() => openList("الكل")} />

@@ -73,7 +73,19 @@ const defaults = () => {
       freeAbove: 25000,         // توصيل مجاني فوق هذا المبلغ
       tipOptions: [250, 500, 1000], // خيارات بقشيش المندوب
       storeOpen: true,
-      adminPin: "1234",        // رمز دخول لوحة الأدمن (قابل للتغيير من الإعدادات)
+      dealZone: {
+      title: "منطقة العروض",
+      subtitle: "أقوى الخصومات في مكان واحد",
+      tiles: [
+        { id: "s5", label: "متجر", value: "٥٬٠٠٠", sub: "د.ع وأقل", type: "max", n: 5000 },
+        { id: "s15", label: "متجر", value: "١٥٬٠٠٠", sub: "د.ع وأقل", type: "max", n: 15000 },
+        { id: "s25", label: "متجر", value: "٢٥٬٠٠٠", sub: "د.ع وأقل", type: "max", n: 25000 },
+        { id: "d30", label: "خصم", value: "٣٠٪+", sub: "وأكثر", type: "minoff", n: 30 },
+        { id: "d40", label: "خصم", value: "٤٠٪+", sub: "وأكثر", type: "minoff", n: 40 },
+        { id: "d50", label: "خصم", value: "٥٠٪+", sub: "الأعلى", type: "minoff", n: 50 },
+      ],
+    },
+    adminPin: "1234",        // رمز دخول لوحة الأدمن (قابل للتغيير من الإعدادات)
       courierBase: 1500,       // أجرة المندوب الأساسية عن التوصيلة
       courierExtra: 500,       // إضافة عن كل متجر إضافي في نفس الطلب
       whatsapp: "0770 000 0000", // رقم واتساب الدعم

@@ -549,12 +549,45 @@ function Content() {
   const banners = useStore((s) => s.banners);
   const trio = useStore((s) => s.trio);
   const bigStores = useStore((s) => s.bigStores);
+  const dealZone = useStore((s) => s.settings.dealZone);
+  const setDZ = (patch) => updateSettings({ dealZone: { ...dealZone, ...patch } });
+  const setTile = (i, patch) => setDZ({ tiles: dealZone.tiles.map((t, j) => (j === i ? { ...t, ...patch } : t)) });
   const In = (val, on, w, dir) => (
     <input className="pt-in" dir={dir} style={{ width: w || "100%", padding: "6px 9px", fontSize: 12 }} value={val} onChange={(e) => on(e.target.value)} />
   );
   return (
     <>
       <div className="pt-h1">محتوى الصفحة الرئيسية<small>حرّر البانرات والأقسام — تظهر فوراً في المتجر</small></div>
+
+      <div className="pt-card" style={{ borderColor: "#bfe0c2" }}>
+        <div className="cap" style={{ color: "#2f7a3a" }}>🏷️ منطقة العروض (DEAL ZONE) — تبويب «عروض»</div>
+        <div className="pt-row2" style={{ marginBottom: 10 }}>
+          <div className="pt-field"><label>عنوان البانر</label>{In(dealZone?.title || "", (v) => setDZ({ title: v }))}</div>
+          <div className="pt-field"><label>الوصف الفرعي</label>{In(dealZone?.subtitle || "", (v) => setDZ({ subtitle: v }))}</div>
+        </div>
+        <div className="pt-scroll">
+          <table className="pt-table">
+            <thead><tr><th>القيمة</th><th>التسمية</th><th>سطر فرعي</th><th>النوع</th><th>الحد / النسبة</th></tr></thead>
+            <tbody>
+              {(dealZone?.tiles || []).map((t, i) => (
+                <tr key={t.id}>
+                  <td>{In(t.value, (v) => setTile(i, { value: v }), 75)}</td>
+                  <td>{In(t.label, (v) => setTile(i, { label: v }), 70)}</td>
+                  <td>{In(t.sub, (v) => setTile(i, { sub: v }), 95)}</td>
+                  <td>
+                    <select className="pt-in" style={{ width: 110, padding: "6px 8px", fontSize: 12 }} value={t.type} onChange={(e) => setTile(i, { type: e.target.value })}>
+                      <option value="max">سعر أقصى</option>
+                      <option value="minoff">خصم أدنى</option>
+                    </select>
+                  </td>
+                  <td>{In(String(t.n), (v) => setTile(i, { n: +v || 0 }), 80, "ltr")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--p-mut)", marginTop: 6 }}>«سعر أقصى» = يعرض المنتجات بذلك السعر وأقل · «خصم أدنى» = يعرض المنتجات بخصم تلك النسبة فأكثر</div>
+      </div>
 
       <div className="pt-card">
         <div className="cap">بانرات العروض العريضة<span className="sp" />

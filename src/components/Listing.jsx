@@ -19,10 +19,14 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
   const [sort, setSort] = useState(SORTS[0]);
   const [sortOpen, setSortOpen] = useState(false);
 
-  const inCat = useMemo(
-    () => (cat === "الكل" ? PRODUCTS : PRODUCTS.filter((p) => (p.cat || "") === cat)),
-    [PRODUCTS, cat]
-  );
+  // عناوين خاصة من بلاطات منطقة العروض
+  const dealMax = title.startsWith("__deals_max_") ? +title.replace("__deals_max_", "") : null;
+  const dealOff = title.startsWith("__deals_off_") ? +title.replace("__deals_off_", "") : null;
+  const inCat = useMemo(() => {
+    if (dealMax) return PRODUCTS.filter((p) => p.priceIQD <= dealMax);
+    if (dealOff) return PRODUCTS.filter((p) => p.mrpIQD > p.priceIQD && ((p.mrpIQD - p.priceIQD) / p.mrpIQD) * 100 >= dealOff);
+    return cat === "الكل" ? PRODUCTS : PRODUCTS.filter((p) => (p.cat || "") === cat);
+  }, [PRODUCTS, cat, dealMax, dealOff]);
 
   const sorter = (l) => {
     const a = [...l];
@@ -49,7 +53,7 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
     <div className="bk-page" style={{ zIndex: 25 }}>
       <div className="bk-phead">
         <div className="bk-back" onClick={onBack}><ChevronRight size={22} strokeWidth={2.5} /></div>
-        <div className="ti">{cat === "الكل" ? title : cat}<small>التوصيل خلال 8 دقائق · {total} منتج</small></div>
+        <div className="ti">{dealMax ? `عروض بـ ${dealMax.toLocaleString("ar")} د.ع وأقل` : dealOff ? `خصم ${dealOff}٪ فأكثر` : cat === "الكل" ? title : cat}<small>التوصيل خلال 8 دقائق · {total} منتج</small></div>
         <Search size={19} color="#4a4a4a" />
         <div className="bk-profile" style={{ background: "rgba(0,0,0,.06)", borderColor: "rgba(0,0,0,.08)" }}>
           <User size={18} strokeWidth={2} color="#3a3a3a" />
