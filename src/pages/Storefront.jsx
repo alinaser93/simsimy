@@ -45,8 +45,10 @@ export default function Storefront() {
   // فتح تفاصيل المنتج من أي بطاقة
   useEffect(() => {
     const h = (e) => setProductId(e.detail);
+    const hl = (e) => setListing(e.detail);
     window.addEventListener("bk:openProduct", h);
-    return () => window.removeEventListener("bk:openProduct", h);
+    window.addEventListener("bk:openList", hl);
+    return () => { window.removeEventListener("bk:openProduct", h); window.removeEventListener("bk:openList", hl); };
   }, []);
 
   // شاشة البداية
