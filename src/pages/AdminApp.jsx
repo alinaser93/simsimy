@@ -1,6 +1,9 @@
+import React from "react";
 import { useState, useRef, useEffect } from "react";
 import { DEALS_ROWS } from "../data/rowSections.js";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
+import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
+import { aiCall } from "../utils/aiClient.js";
 import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
@@ -212,16 +215,51 @@ function Orders() {
 
 /* ---------------- المنتجات ---------------- */
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
+async function addImage(upd, data) {
+  const cfg = getSupabaseCfg();
+  if (cfg && cfg.url && cfg.anonKey) {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "image/*";
+    inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      try { const url = await uploadImage(f); upd({ images: [...(data.images || []), url] }); }
+      catch (e) { alert(e.message); }
+    };
+    inp.click();
+  } else {
+    const u = prompt("رابط الصورة (أو اضبط Supabase من الإعدادات للرفع المباشر):");
+    if (u) upd({ images: [...(data.images || []), u] });
+  }
+}
+
 const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", deal: false, desc: "", highlights: [], images: [], variants: [], badge: "", autoPlace: true };
 function Products() {
   const products = useStore((s) => s.products);
   const merchants = useStore((s) => s.merchants);
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState("الكل");
+  const [merchantFilter, setMerchantFilter] = useState("الكل");
+  const [groupBy, setGroupBy] = useState("cat"); // cat | merchant | none
   const [dealsOnly, setDealsOnly] = useState(false);
+  const [collapsed, setCollapsed] = useState({});
   const subOptions = [...new Set(products.map((p) => p.sub).filter(Boolean))];
   const [modal, setModal] = useState(null); // null | {mode:'add'|'edit', data}
-  const list = products.filter((p) => p.name.includes(q) && (catFilter === "الكل" || p.cat === catFilter) && (!dealsOnly || p.deal));
+  const list = products.filter((p) => p.name.includes(q) && (catFilter === "الكل" || p.cat === catFilter) && (merchantFilter === "الكل" || p.merchantId === merchantFilter) && (!dealsOnly || p.deal));
+  const mName = (id) => merchants.find((m) => m.id === id)?.name || "—";
+  // بناء المجموعات المرتّبة
+  const groups = (() => {
+    if (groupBy === "none") return [["كل المنتجات", list]];
+    const map = new Map();
+    if (groupBy === "cat") {
+      // قسم ← ثم مرتّب داخله بالتفرّع
+      list.forEach((p) => { const k = p.cat || "غير مصنّف"; if (!map.has(k)) map.set(k, []); map.get(k).push(p); });
+      for (const [, arr] of map) arr.sort((a, b) => (a.sub || "").localeCompare(b.sub || "", "ar") || a.name.localeCompare(b.name, "ar"));
+    } else {
+      list.forEach((p) => { const k = mName(p.merchantId); if (!map.has(k)) map.set(k, []); map.get(k).push(p); });
+      for (const [, arr] of map) arr.sort((a, b) => (a.cat || "").localeCompare(b.cat || "", "ar"));
+    }
+    return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
+  })();
   const save = () => {
     const d = { ...modal.data, priceIQD: +modal.data.priceIQD || 0, mrpIQD: +modal.data.mrpIQD || 0 };
     if (typeof d.hlText === "string") {
@@ -241,32 +279,86 @@ function Products() {
     setModal(null);
   };
   const upd = (patch) => setModal((m) => ({ ...m, data: { ...m.data, ...patch } }));
-  // اقتراحات الذكاء
-  const aiClassify = () => { const c = classify(modal.data.name); if (c.matched) upd({ cat: c.cat, sub: modal.data.sub || c.sub }); };
+  const [aiBusy, setAiBusy] = useState("");
+  const subsList = [...new Set(products.map((p) => p.sub).filter(Boolean))];
+  // يحاول Claude الحقيقي عبر دالة Netlify؛ إن فشل يستخدم القواعد المحلية فوراً
+  const runAI = async (kind) => {
+    if (!modal.data.name || modal.data.name.length < 2) return;
+    setAiBusy(kind);
+    const base = { name: modal.data.name, cat: modal.data.cat, sub: modal.data.sub, weight: modal.data.weight, price: +modal.data.priceIQD, cats: CATS, subs: subsList };
+    let res = null;
+    if (kind === "classify") res = await aiCall({ ...base, task: "classify" });
+    else if (kind === "desc") res = await aiCall({ ...base, task: "describe" });
+    else if (kind === "badge") res = await aiCall({ ...base, task: "badge" });
+    else if (kind === "full") res = await aiCall({ ...base, task: "full" });
+    // تطبيق نتيجة Claude
+    if (res) {
+      const patch = {};
+      if (res.cat && CATS.includes(res.cat)) patch.cat = res.cat;
+      if (res.sub) patch.sub = res.sub;
+      if (res.desc) patch.desc = res.desc;
+      if (typeof res.badge === "string") patch.badge = res.badge;
+      if (Object.keys(patch).length) { upd(patch); setAiBusy(""); return; }
+    }
+    // احتياطي: القواعد المحلية
+    if (kind === "classify" || kind === "full") { const c = classify(modal.data.name); if (c.matched) upd({ cat: c.cat, sub: modal.data.sub || c.sub }); }
+    if (kind === "desc" || kind === "full") upd({ desc: generateDesc(modal.data.name, modal.data.cat, modal.data.weight) });
+    if (kind === "badge" || kind === "full") upd({ badge: suggestBadge(modal.data.name, +modal.data.priceIQD, +modal.data.mrpIQD) });
+    setAiBusy("");
+  };
+  const aiClassify = () => runAI("classify");
+  const aiDesc = () => runAI("desc");
+  const aiBadge = () => runAI("badge");
   const aiPrice = () => { const r = suggestPrice(products, modal.data.cat, modal.data.sub); if (r) upd({ priceIQD: r.price, mrpIQD: r.mrp }); };
-  const aiDesc = () => upd({ desc: generateDesc(modal.data.name, modal.data.cat, modal.data.weight) });
-  const aiBadge = () => upd({ badge: suggestBadge(modal.data.name, +modal.data.priceIQD, +modal.data.mrpIQD) });
   const similar = modal && modal.data.name.length > 2 ? findSimilar(products, modal.data.name, modal.data.id) : [];
+  // زرّ رجوع المتصفح يغلق المودال بدل مغادرة الصفحة
+  useEffect(() => {
+    if (!modal) return;
+    window.history.pushState({ pm: 1 }, "");
+    const onPop = () => setModal(null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [!!modal]);
+  const closeModal = () => { if (window.history.state && window.history.state.pm) window.history.back(); else setModal(null); };
   const openEdit = (p) => setModal({ mode: "edit", data: { ...p, images: p.images || (p.img ? [p.img] : []), variants: p.variants || [], badge: p.badge || "", autoPlace: false, hlText: (p.highlights || []).map(([k, v]) => k + ": " + v).join("\n") } });
   return (
     <>
       <div className="pt-h1">إدارة المنتجات<small>التعديلات تنعكس فوراً على واجهة المتجر</small></div>
       <div className="pt-card">
-        <div className="cap">
-          {list.length} منتج<span className="sp" />
-          <select className="pt-in" style={{ width: 140 }} value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
-            <option>الكل</option>
-            {CATS.map((c) => <option key={c}>{c}</option>)}
+        <div className="cap" style={{ flexWrap: "wrap", gap: 8 }}>
+          <b>{list.length}</b> منتج<span className="sp" />
+          <span className="pt-seg">
+            <button className={"seg" + (groupBy === "cat" ? " on" : "")} onClick={() => setGroupBy("cat")}>📂 حسب القسم</button>
+            <button className={"seg" + (groupBy === "merchant" ? " on" : "")} onClick={() => setGroupBy("merchant")}>🏪 حسب المتجر</button>
+            <button className={"seg" + (groupBy === "none" ? " on" : "")} onClick={() => setGroupBy("none")}>قائمة</button>
+          </span>
+          <select className="pt-in" style={{ width: 130 }} value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
+            <option>الكل</option>{CATS.map((c) => <option key={c}>{c}</option>)}
           </select>
-          <input className="pt-in" style={{ width: 120 }} placeholder="بحث…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <select className="pt-in" style={{ width: 130 }} value={merchantFilter} onChange={(e) => setMerchantFilter(e.target.value)}>
+            <option value="الكل">كل المتاجر</option>{merchants.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+          <input className="pt-in" style={{ width: 110 }} placeholder="بحث…" value={q} onChange={(e) => setQ(e.target.value)} />
           <button className={"pt-btn sm" + (dealsOnly ? "" : " ghost")} onClick={() => setDealsOnly(!dealsOnly)}>🏷️ العروض</button>
           <button className="pt-btn sm" onClick={() => setModal({ mode: "add", data: { ...EMPTY } })}><Plus size={13} style={{ verticalAlign: -2 }} /> إضافة</button>
         </div>
         <div className="pt-scroll">
-          <table className="pt-table">
+          <table className="pt-table pt-ptable">
             <thead><tr><th>المنتج</th><th>القسم</th><th>التفرّع</th><th>السعر</th><th>التاجر</th><th>متوفر</th><th></th></tr></thead>
             <tbody>
-              {list.map((p) => (
+              {groups.map(([gname, items]) => {
+                const gkey = groupBy + ":" + gname;
+                const isOpen = !collapsed[gkey];
+                return (
+                  <React.Fragment key={gkey}>
+                    <tr className="pt-grouprow" onClick={() => setCollapsed((c) => ({ ...c, [gkey]: isOpen }))}>
+                      <td colSpan={7}>
+                        <span className="gchev">{isOpen ? "▾" : "◂"}</span>
+                        {groupBy === "merchant" ? "🏪 " : "📂 "}<b>{gname}</b>
+                        <span className="gcount">{items.length}</span>
+                      </td>
+                    </tr>
+                    {isOpen && items.map((p) => (
                 <tr key={p.id} style={p.stock === false ? { opacity: 0.55 } : undefined}>
                   <td><span style={{ fontSize: 18, marginLeft: 6 }}>{p.e}</span><b>{p.name}</b>{p.deal && <span className="pt-deal-tag">🏷️ عرض</span>}<div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{p.weight}</div></td>
                   <td style={{ fontSize: 11.5 }}>{p.cat || "—"}</td>
@@ -279,14 +371,17 @@ function Products() {
                     <button className="pt-btn warn sm" onClick={() => confirm(`حذف «${p.name}»؟`) && removeProduct(p.id)}><Trash2 size={12} /></button>
                   </td>
                 </tr>
-              ))}
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
       {modal && (
-        <div className="pt-dim" onClick={(e) => e.target === e.currentTarget && setModal(null)}>
+        <div className="pt-dim" onClick={(e) => e.target === e.currentTarget && closeModal()}>
           <div className="pt-modal">
             <h3>{modal.mode === "add" ? "✨ إضافة منتج ذكي" : "تعديل المنتج"}</h3>
 
@@ -299,13 +394,14 @@ function Products() {
                     <button className="rm" onClick={() => upd({ images: modal.data.images.filter((_, j) => j !== i) })}>✕</button>
                   </div>
                 ))}
-                <button className="pt-img-add" onClick={() => { const u = prompt("رابط الصورة:"); if (u) upd({ images: [...(modal.data.images || []), u] }); }}>＋<small>صورة</small></button>
+                <button className="pt-img-add" onClick={() => addImage(upd, modal.data)}>＋<small>صورة</small></button>
               </div>
+              <div className="pt-tip">💡 المنتجات بأكثر من صورة تُباع <b>أضعافاً</b> — أضف صورًا من زوايا مختلفة ليثق الزبون ويشتري أسرع.</div>
               <input className="pt-in" style={{ marginTop: 6 }} value={modal.data.e} onChange={(e) => upd({ e: e.target.value })} placeholder="الإيموجي (يظهر إن لم توجد صورة)" />
             </div>
 
-            <div className="pt-field"><label>اسم المنتج</label>
-              <input className="pt-in" value={modal.data.name} onChange={(e) => upd({ name: e.target.value })} onBlur={aiClassify} placeholder="مثال: شوكولاتة كادبوري" /></div>
+            <div className="pt-field"><label>اسم المنتج <button className="ai-chip" onClick={() => runAI("full")} disabled={aiBusy==="full" || modal.data.name.length<2}>{aiBusy==="full" ? "⏳ يحلّل…" : "🤖 حلّل بالذكاء"}</button></label>
+              <input className="pt-in" value={modal.data.name} onChange={(e) => upd({ name: e.target.value })} placeholder="مثال: شوكولاتة كادبوري" /></div>
 
             {/* كشف الدمج: منتج مشابه */}
             {similar.length > 0 && modal.mode === "add" && (
@@ -315,7 +411,7 @@ function Products() {
             )}
 
             <div className="pt-row2">
-              <div className="pt-field"><label>القسم {modal.data.autoPlace && <span className="ai-on">✨ تلقائي</span>}</label>
+              <div className="pt-field"><label>القسم {modal.data.autoPlace && <span className="ai-on">✨ تلقائي</span>} <button className="ai-chip" onClick={aiClassify} disabled={aiBusy==="classify"}>{aiBusy==="classify" ? "⏳" : "🧠 صنّف"}</button></label>
                 <select className="pt-in" style={{ width: "100%" }} value={modal.data.cat || CATS[0]} onChange={(e) => upd({ cat: e.target.value })}>
                   {CATS.map((c) => <option key={c}>{c}</option>)}
                 </select></div>
@@ -350,10 +446,11 @@ function Products() {
                 ))}
                 <button className="pt-btn sm ghost" onClick={() => upd({ variants: [...(modal.data.variants || []), { label: "", weight: "", priceIQD: modal.data.priceIQD, mrpIQD: modal.data.mrpIQD }] })}>＋ إضافة خيار</button>
               </div>
+              <div className="pt-tip">🎯 أضف أحجامًا/أنواعًا متعددة (صغير/كبير) — الزبون يجد ما يناسب ميزانيته فيشتري بدل أن يغادر.</div>
             </div>
 
             {/* الشارة */}
-            <div className="pt-field"><label>شارة المنتج <button className="ai-chip" onClick={aiBadge}>✨ اقترح</button></label>
+            <div className="pt-field"><label>شارة المنتج <button className="ai-chip" onClick={aiBadge} disabled={aiBusy==="badge"}>{aiBusy==="badge" ? "⏳" : "✨ اقترح"}</button></label>
               <div className="pt-badges">
                 {["", "جديد", "الأكثر مبيعاً", "عرض خاص", "محدود"].map((b) => (
                   <button key={b} className={"bdg" + (modal.data.badge === b ? " on" : "")} onClick={() => upd({ badge: b })}>{b || "بدون"}</button>
@@ -366,7 +463,7 @@ function Products() {
               🏷️ عرض مميّز — يظهر في صف «عروض مختارة» بتبويب العروض
             </label>
 
-            <div className="pt-field"><label>الوصف <button className="ai-chip" onClick={aiDesc}>✨ توليد بالذكاء</button></label>
+            <div className="pt-field"><label>الوصف <button className="ai-chip" onClick={aiDesc} disabled={aiBusy==="desc"}>{aiBusy==="desc" ? "⏳ يفكّر…" : "✨ توليد بالذكاء"}</button></label>
               <textarea className="pt-in" rows="2" value={modal.data.desc || ""} onChange={(e) => upd({ desc: e.target.value })} placeholder="وصف قصير يجذب الزبون…" /></div>
             <div className="pt-field"><label>المواصفات — سطر لكل خاصية «المفتاح: القيمة»</label>
               <textarea className="pt-in" rows="3" placeholder={"النوع: ألبان\nالوزن: 1 لتر"} value={modal.data.hlText || ""} onChange={(e) => upd({ hlText: e.target.value })} /></div>
@@ -376,7 +473,7 @@ function Products() {
               </select></div>
             <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
               <button className="pt-btn" style={{ flex: 1 }} onClick={save}>💾 {modal.mode === "add" ? "إضافة المنتج" : "حفظ"}</button>
-              <button className="pt-btn ghost" onClick={() => setModal(null)}>إلغاء</button>
+              <button className="pt-btn ghost" onClick={closeModal}>إلغاء</button>
             </div>
           </div>
         </div>
@@ -487,6 +584,10 @@ function SettingsPage() {
   return (
     <>
       <div className="pt-h1">إعدادات المتجر<small>تنعكس فوراً على واجهة الزبائن</small></div>
+      <div className="pt-card">
+        <div className="cap">🗄️ تكامل Supabase — رفع صور المنتجات</div>
+        <SupabaseCard />
+      </div>
       <div className="pt-card">
         <div className="cap">الواجهة والتوصيل</div>
         <div style={{ padding: 14 }}>
@@ -808,6 +909,25 @@ function PageBuilder() {
           <iframe key={tabId} className="pt-preview" src={"/?builder=1&tab=" + (tabId === "home" ? "all" : tabId)} title="معاينة المتجر" />
         </div>
       </div>
+    </div>
+  );
+}
+
+
+function SupabaseCard() {
+  const [cfg, setCfg] = useState(() => getSupabaseCfg() || { url: "", anonKey: "", bucket: "products" });
+  const [saved, setSaved] = useState(false);
+  const save = () => { setSupabaseCfg(cfg); setSaved(true); setTimeout(() => setSaved(false), 1500); };
+  return (
+    <div>
+      <div className="pt-field"><label>رابط المشروع (Project URL)</label>
+        <input className="pt-in" dir="ltr" placeholder="https://xxxx.supabase.co" value={cfg.url} onChange={(e) => setCfg({ ...cfg, url: e.target.value })} /></div>
+      <div className="pt-field"><label>anon key (المفتاح العام — ليس service_role)</label>
+        <input className="pt-in" dir="ltr" placeholder="eyJhbGc..." value={cfg.anonKey} onChange={(e) => setCfg({ ...cfg, anonKey: e.target.value })} /></div>
+      <div className="pt-field"><label>اسم الـ Bucket (عام)</label>
+        <input className="pt-in" dir="ltr" placeholder="products" value={cfg.bucket} onChange={(e) => setCfg({ ...cfg, bucket: e.target.value })} /></div>
+      <button className="pt-btn sm" onClick={save}>{saved ? "✓ حُفظ" : "حفظ الإعداد"}</button>
+      <div className="pt-tip" style={{ marginTop: 8 }}>ℹ️ أنشئ bucket باسم «products» واجعله <b>Public</b> من لوحة Supabase. استخدم مفتاح <b>anon</b> العام فقط (آمن للعميل)، ولا تضع أبدًا مفتاح service_role.</div>
     </div>
   );
 }
