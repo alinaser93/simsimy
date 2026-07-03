@@ -57,7 +57,17 @@ export function classify(name) {
       if (t.includes(kn)) { const sc = kn.length; if (sc > score) { score = sc; best = r; } }
     }
   }
-  return best ? { cat: best.cat, sub: best.sub, matched: true } : { cat: "بقالة أساسية", sub: "", matched: false };
+  if (best) return { cat: best.cat, sub: best.sub, matched: true };
+  // تخمين عام إن لم يوجد تطابق دقيق
+  const generic = [
+    { kw: ["مشروب", "شراب", "عصير", "ماء"], cat: "مشروبات وعصائر", sub: "مشروبات" },
+    { kw: ["حلوى", "حلويات", "سكاكر", "شوكو"], cat: "حلويات وشوكولاتة", sub: "حلويات" },
+    { kw: ["منظف", "صابون", "معطر", "غسول"], cat: "منظفات وعناية منزلية", sub: "منظفات" },
+    { kw: ["كريم", "عناية", "بشرة", "شعر"], cat: "جمال وعناية", sub: "عناية" },
+    { kw: ["جهاز", "شاحن", "كيبل", "الكترون"], cat: "إلكترونيات", sub: "إلكترونيات" },
+  ];
+  for (const g of generic) { for (const k of g.kw) { if (t.includes(norm(k))) return { cat: g.cat, sub: g.sub, matched: true }; } }
+  return { cat: "بقالة أساسية", sub: "متنوّعات", matched: false };
 }
 
 // يقترح سعرًا من متوسط أسعار المنتجات في نفس القسم/التفرّع

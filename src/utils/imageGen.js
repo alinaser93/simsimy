@@ -89,3 +89,31 @@ export function pollinationsUrl(prompt) {
   const seed = Math.floor(Math.random() * 100000);
   return `https://image.pollinations.ai/prompt/${p}?width=600&height=600&nologo=true&seed=${seed}`;
 }
+
+
+// توحيد صورة المنتج: مربّع بخلفية بيضاء نظيفة (كبلينكيت) — دون تغيير ألوان المنتج
+export function normalizeImage(srcUrl, size = 600) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const cv = document.createElement("canvas");
+        cv.width = cv.height = size;
+        const ctx = cv.getContext("2d");
+        // خلفية بيضاء
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, size, size);
+        // احتواء الصورة داخل المربّع مع هامش (object-fit: contain)
+        const pad = size * 0.08;
+        const box = size - pad * 2;
+        const scale = Math.min(box / img.width, box / img.height);
+        const w = img.width * scale, h = img.height * scale;
+        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        resolve(cv.toDataURL("image/jpeg", 0.9));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error("تعذّر تحميل الصورة"));
+    img.src = srcUrl;
+  });
+}

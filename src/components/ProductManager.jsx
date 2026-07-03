@@ -5,7 +5,7 @@ import { Switch } from "../portal/PortalKit.jsx";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
 import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
-import { genProductImage, suggestBackgrounds, pollinationsUrl, arToEnPrompt } from "../utils/imageGen.js";
+import { genProductImage, suggestBackgrounds, pollinationsUrl, arToEnPrompt, normalizeImage } from "../utils/imageGen.js";
 import { fmt, CUR } from "../utils/currency.js";
 
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
@@ -80,6 +80,9 @@ function ProductManager({ scope = "admin", mid = null }) {
   const upd = (patch) => setModal((m) => ({ ...m, data: { ...m.data, ...patch } }));
   const [aiBusy, setAiBusy] = useState("");
   const subsList = [...new Set(products.map((p) => p.sub).filter(Boolean))];
+  // كل الأقسام: الثابتة + أي قسم مخصّص موجود في المنتجات + القسم الحالي (يسمح بأقسام مولّدة بالذكاء)
+  const customCats = [...new Set(allProducts.map((p) => p.cat).filter((c) => c && !CATS.includes(c)))];
+  const allCats = [...new Set([...(modal ? [modal.data.cat] : []), ...CATS, ...customCats].filter(Boolean))];
   // يحاول Claude الحقيقي عبر دالة Netlify؛ إن فشل يستخدم القواعد المحلية فوراً
   const runAI = async (kind) => {
     if (!modal.data.name || modal.data.name.length < 2) return;
@@ -93,11 +96,12 @@ function ProductManager({ scope = "admin", mid = null }) {
     // تطبيق نتيجة Claude
     if (res) {
       const patch = {};
-      if (res.cat && CATS.includes(res.cat)) patch.cat = res.cat;
+      if (res.cat) patch.cat = res.cat;   // يقبل قسماً جديداً مولّداً بالذكاء
       if (res.sub) patch.sub = res.sub;
       if (res.desc) patch.desc = res.desc;
       if (typeof res.badge === "string") patch.badge = res.badge;
-      if (Object.keys(patch).length) { upd(patch); setAiBusy(""); return; }
+      if (res.isNew && res.cat) patch._newCat = res.cat; // إشارة لقسم جديد
+      if (Object.keys(patch).length) { upd(patch); setAiBusy(""); if (res.isNew) setTimeout(() => alert("🆕 أنشأ الذكاء قسماً جديداً: «" + res.cat + "» ووضع المنتج فيه"), 100); return; }
     }
     // احتياطي: القواعد المحلية
     if (kind === "classify" || kind === "full") { const c = classify(modal.data.name); if (c.matched) upd({ cat: c.cat, sub: modal.data.sub || c.sub }); }
@@ -106,6 +110,46 @@ function ProductManager({ scope = "admin", mid = null }) {
     setAiBusy("");
   };
   const genImage = () => { const url = genProductImage(modal.data.e || "🛒", modal.data.cat); upd({ images: [...(modal.data.images || []), url] }); };
+  const [normBusy, setNormBusy] = useState(false);
+  const normalizeAll = async () => {
+    const imgs = modal.data.images || [];
+    if (!imgs.length) { alert("لا صور لتوحيدها"); return; }
+    setNormBusy(true);
+    try {
+      const out = [];
+      for (const u of imgs) {
+        try { out.push(await normalizeImage(u)); } catch { out.push(u); }
+      }
+      upd({ images: out });
+    } catch (e) { alert("تعذّر التوحيد: " + e.message); }
+    setNormBusy(false);
+  };
+  const analyzeFromImage = async () => {
+    const imgs = modal.data.images || [];
+    if (!imgs.length) { alert("أضف صورة أولًا (رفع) ثم استخرج التفاصيل منها"); return; }
+    setAiBusy("analyze");
+    try {
+      // حوّل الصورة لـ base64
+      let dataUrl = imgs[0];
+      if (!dataUrl.startsWith("data:")) {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        dataUrl = await new Promise((resolve) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.readAsDataURL(blob); });
+      }
+      const r = await aiCall({ task: "analyzeImage", image: dataUrl, cats: CATS }, 25000);
+      if (r && (r.name || r.desc)) {
+        const patch = {};
+        if (r.name && !modal.data.name) patch.name = r.name;
+        if (r.desc) patch.desc = r.desc;
+        if (r.weight && !modal.data.weight) patch.weight = r.weight;
+        if (r.cat) patch.cat = r.cat;
+        if (r.sub) patch.sub = r.sub;
+        if (r.details) patch.hlText = (modal.data.hlText ? modal.data.hlText + "\n" : "") + r.details;
+        upd(patch);
+      } else { alert("تعذّر تحليل الصورة — تأكّد من نشر دالة الذكاء على Netlify"); }
+    } catch (e) { alert("خطأ في التحليل: " + e.message); }
+    setAiBusy("");
+  };
   const genRealImage = async () => {
     if (!modal.data.name || modal.data.name.length < 2) { alert("اكتب اسم المنتج أولًا"); return; }
     setAiBusy("realimg");
@@ -226,9 +270,12 @@ function ProductManager({ scope = "admin", mid = null }) {
                 <button className="pt-img-add" onClick={() => addImage(upd, modal.data)}>＋<small>صورة</small></button>
               </div>
               <div className="pt-imgbtns">
-                <button className="ai-chip" style={{ background: "#7c3aed" }} onClick={genRealImage} disabled={aiBusy==="realimg"}>{aiBusy==="realimg" ? "⏳ يولّد صورة…" : "🤖 ولّد صورة حقيقية بالذكاء"}</button>
+                <button className="ai-chip" style={{ background: "#0C831F" }} onClick={analyzeFromImage} disabled={aiBusy==="analyze"}>{aiBusy==="analyze" ? "⏳ يقرأ الصورة…" : "📷 استخرج التفاصيل من الصورة"}</button>
+                <button className="ai-chip" style={{ background: "#2A6ED9" }} onClick={normalizeAll} disabled={normBusy}>{normBusy ? "⏳ يوحّد…" : "◻️ وحّد الصور (خلفية بيضاء)"}</button>
+                <button className="ai-chip" style={{ background: "#7c3aed" }} onClick={genRealImage} disabled={aiBusy==="realimg"}>{aiBusy==="realimg" ? "⏳ يولّد…" : "🤖 ولّد صورة بالذكاء"}</button>
                 <button className="ai-chip" style={{ background: "#5b6470" }} onClick={showBgSuggest}>🎨 خلفية ملوّنة</button>
               </div>
+              <div className="pt-tip" style={{ marginTop: 6 }}>📷 <b>الأفضل:</b> ارفع صورة حقيقية للمنتج ← «استخرج التفاصيل» (يقرأها الذكاء ويملأ الاسم والوصف) ← «وحّد الصور» (خلفية بيضاء نظيفة كبلينكيت).</div>
               {bgSuggest && (
                 <div className="pt-bgsuggest">
                   {bgSuggest.map((b, i) => (
@@ -254,8 +301,9 @@ function ProductManager({ scope = "admin", mid = null }) {
 
             <div className="pt-row2">
               <div className="pt-field"><label>القسم {modal.data.autoPlace && <span className="ai-on">✨ تلقائي</span>} <button className="ai-chip" onClick={aiClassify} disabled={aiBusy==="classify"}>{aiBusy==="classify" ? "⏳" : "🧠 صنّف"}</button></label>
-                <select className="pt-in" style={{ width: "100%" }} value={modal.data.cat || CATS[0]} onChange={(e) => upd({ cat: e.target.value, autoPlace: false })}>
-                  {CATS.map((c) => <option key={c}>{c}</option>)}
+                <select className="pt-in" style={{ width: "100%" }} value={modal.data.cat || CATS[0]} onChange={(e) => { if (e.target.value === "__new") { const nc = prompt("اسم القسم الجديد:"); if (nc) upd({ cat: nc, autoPlace: false }); } else upd({ cat: e.target.value, autoPlace: false }); }}>
+                  {allCats.map((c) => <option key={c} value={c}>{c}{!CATS.includes(c) ? " 🆕" : ""}</option>)}
+                  <option value="__new">➕ قسم جديد…</option>
                 </select></div>
               <div className="pt-field"><label>التفرّع</label>
                 <input className="pt-in" list="bk-subs" placeholder="نودلز ومعكرونة" value={modal.data.sub || ""} onChange={(e) => upd({ sub: e.target.value, autoPlace: false })} />
