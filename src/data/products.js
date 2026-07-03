@@ -42,7 +42,7 @@ export const PRODUCTS = [
   { id: 39, name: "مونستر مشروب طاقة", cat: "مشروبات وعصائر", sub: "مشروبات طاقة", e: "⚡", bg: "#E9F2E6", weight: "350 مل", price: 100, mrp: 112, off: 10, rating: 4.4, reviews: "60 ألف", eta: "8 دقائق" },
   { id: 40, name: "ماء جوز الهند الطبيعي", cat: "مشروبات وعصائر", sub: "ماء وجوز هند", e: "🥥", bg: "#EAF3EF", weight: "200 مل", price: 60, mrp: 70, off: 14, rating: 4.3, reviews: "64 ألف", eta: "8 دقائق" },
   // ===== زيوت وسكر وبهارات =====
-  { id: 41, name: "زيت خردل كاتشي غاني", cat: "زيوت وسكر وبهارات", sub: "زيوت الطبخ", e: "🛢️", bg: "#FBF3E2", weight: "1 لتر", price: 185, mrp: 225, off: 18, rating: 4.5, reviews: "91 ألف", eta: "10 دقائق" },
+  { id: 41, name: "زيت خردل كاتشي غاني", cat: "زيوت وسكر وبهارات", sub: "زيوت الطبخ", e: "🛢️", bg: "#FBF3E2", weight: "1 لتر", price: 185, mrp: 225, off: 18, rating: 4.5, reviews: "91 ألف", eta: "10 دقائق", deal: true },
   { id: 42, name: "زيت فول الصويا الصافي", cat: "زيوت وسكر وبهارات", sub: "زيوت الطبخ", e: "🛢️", bg: "#F6EFDD", weight: "1 لتر", price: 165, mrp: 195, off: 15, rating: 4.4, reviews: "24 ألف", eta: "10 دقائق" },
   { id: 43, name: "سكر أبيض ناعم", cat: "زيوت وسكر وبهارات", sub: "سكر", e: "🧂", bg: "#F2EEE5", weight: "1 كغ", price: 55, mrp: 65, off: 15, rating: 4.6, reviews: "27 ألف", eta: "10 دقائق" },
   { id: 44, name: "بذور كمّون (جيرا)", cat: "زيوت وسكر وبهارات", sub: "بهارات وتوابل", e: "🌿", bg: "#F3ECDD", weight: "100 غ", price: 90, mrp: 100, off: 10, rating: 4.5, reviews: "90 ألف", eta: "10 دقائق" },
@@ -60,17 +60,17 @@ export const PRODUCTS = [
   // ===== حلويات وشوكولاتة =====
   { id: 55, name: "شوكولاتة كيت كات أصابع", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#F3E7DD", weight: "37 غ", price: 30, mrp: 30, off: 0, rating: 4.6, reviews: "4 آلاف", eta: "8 دقائق" },
   { id: 56, name: "شوكولاتة كادبوري ديري ميلك", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#F0E6DC", weight: "55 غ", price: 45, mrp: 50, off: 10, rating: 4.7, reviews: "24 ألف", eta: "8 دقائق" },
-  { id: 57, name: "شوكولاتة أمول داكنة", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#EDE3D5", weight: "90 غ", price: 99, mrp: 120, off: 17, rating: 4.6, reviews: "90 ألف", eta: "8 دقائق" },
+  { id: 57, name: "شوكولاتة أمول داكنة", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#EDE3D5", weight: "90 غ", price: 99, mrp: 120, off: 17, rating: 4.6, reviews: "90 ألف", eta: "8 دقائق", deal: true },
   { id: 58, name: "نستله مانش مقرمشة", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#F3EADC", weight: "30 غ", price: 20, mrp: 20, off: 0, rating: 4.5, reviews: "81 ألف", eta: "8 دقائق" },
   { id: 59, name: "كادبوري سيلك أوريو", cat: "حلويات وشوكولاتة", sub: "ألواح شوكولاتة", e: "🍫", bg: "#EFE4DA", weight: "130 غ", price: 130, mrp: 145, off: 10, rating: 4.7, reviews: "2.4 ألف", eta: "8 دقائق" },
   { id: 60, name: "فيريرو روشيه (16 حبة)", cat: "حلويات وشوكولاتة", sub: "علب هدايا", e: "🍬", bg: "#F1E6CE", weight: "200 غ", price: 425, mrp: 450, off: 6, rating: 4.8, reviews: "22 ألف", eta: "13 دقيقة" },
-  { id: 61, name: "تمر خضري فاخر", cat: "حلويات وشوكولاتة", sub: "مكسرات وتمور", e: "🌴", bg: "#F2E8D0", weight: "500 غ", price: 301, mrp: 425, off: 24, rating: 4.6, reviews: "171", eta: "13 دقيقة" },
+  { id: 61, name: "تمر خضري فاخر", cat: "حلويات وشوكولاتة", sub: "مكسرات وتمور", e: "🌴", bg: "#F2E8D0", weight: "500 غ", price: 301, mrp: 425, off: 24, rating: 4.6, reviews: "171", eta: "13 دقيقة", deal: true },
   // ===== آيس كريم ومثلجات =====
   { id: 62, name: "آيس كريم أمول فانيلا", cat: "آيس كريم ومثلجات", sub: "علب آيس كريم", e: "🍦", bg: "#F1EAF6", weight: "1 لتر", price: 205, mrp: 230, off: 11, rating: 4.6, reviews: "1.1 ألف", eta: "13 دقيقة" },
   { id: 63, name: "كورنيتو دبل شوكولاتة", cat: "آيس كريم ومثلجات", sub: "أصابع وأقماع", e: "🍦", bg: "#F0E7DC", weight: "120 مل", price: 40, mrp: 45, off: 11, rating: 4.5, reviews: "2.4 ألف", eta: "13 دقيقة" },
   { id: 64, name: "آيس كريم مانجو دويتز", cat: "آيس كريم ومثلجات", sub: "أصابع وأقماع", e: "🍧", bg: "#FBEFD9", weight: "70 مل", price: 20, mrp: 20, off: 0, rating: 4.4, reviews: "1.5 ألف", eta: "13 دقيقة" },
   { id: 65, name: "آيس كريم ماجنوم", cat: "آيس كريم ومثلجات", sub: "أصابع وأقماع", e: "🍫", bg: "#EDE3D5", weight: "80 مل", price: 80, mrp: 85, off: 6, rating: 4.7, reviews: "49 ألف", eta: "13 دقيقة" },
-  { id: 66, name: "كاساتا كريم بيل", cat: "آيس كريم ومثلجات", sub: "كيك آيس كريم", e: "🍰", bg: "#F6E9EE", weight: "1 لتر", price: 285, mrp: 366, off: 22, rating: 4.5, reviews: "39 ألف", eta: "13 دقيقة" },
+  { id: 66, name: "كاساتا كريم بيل", cat: "آيس كريم ومثلجات", sub: "كيك آيس كريم", e: "🍰", bg: "#F6E9EE", weight: "1 لتر", price: 285, mrp: 366, off: 22, rating: 4.5, reviews: "39 ألف", eta: "13 دقيقة", deal: true },
   { id: 67, name: "كيك آيس كريم شوكولاتة", cat: "آيس كريم ومثلجات", sub: "كيك آيس كريم", e: "🎂", bg: "#F3E7DD", weight: "1 لتر", price: 323, mrp: 340, off: 5, rating: 4.6, reviews: "22 ألف", eta: "13 دقيقة" },
   // ===== خضار وفواكه =====
   { id: 68, name: "خيار طازج", cat: "خضار وفواكه", sub: "خضار طازجة", e: "🥒", bg: "#E9F2E6", weight: "500 غ", price: 15, mrp: 18, off: 17, rating: 4.5, reviews: "3.2 ألف", eta: "9 دقائق" },
@@ -93,19 +93,19 @@ export const PRODUCTS = [
   { id: 82, name: "غسول أطباق ديتول", cat: "منظفات وعناية منزلية", sub: "مطهرات", e: "🧴", bg: "#E9F1F2", weight: "750 مل", price: 94, mrp: 110, off: 14, rating: 4.5, reviews: "33 ألف", eta: "10 دقائق" },
   { id: 83, name: "منظف أرضيات لايزول", cat: "منظفات وعناية منزلية", sub: "منظفات أرضيات", e: "🧽", bg: "#E7F1F1", weight: "500 مل", price: 120, mrp: 135, off: 11, rating: 4.6, reviews: "29 ألف", eta: "10 دقائق" },
   { id: 84, name: "منظف زجاج كولن", cat: "منظفات وعناية منزلية", sub: "منظفات أرضيات", e: "✨", bg: "#EAF2F2", weight: "500 مل", price: 169, mrp: 180, off: 6, rating: 4.5, reviews: "37 ألف", eta: "10 دقائق" },
-  { id: 85, name: "معطر جو غودريج آير", cat: "منظفات وعناية منزلية", sub: "معطرات جو", e: "🌸", bg: "#EDEFF2", weight: "240 مل", price: 149, mrp: 199, off: 25, rating: 4.4, reviews: "1.3 ألف", eta: "13 دقيقة" },
+  { id: 85, name: "معطر جو غودريج آير", cat: "منظفات وعناية منزلية", sub: "معطرات جو", e: "🌸", bg: "#EDEFF2", weight: "240 مل", price: 149, mrp: 199, off: 25, rating: 4.4, reviews: "1.3 ألف", eta: "13 دقيقة", deal: true },
   { id: 86, name: "مطهّر مرحاض هاربيك", cat: "منظفات وعناية منزلية", sub: "مطهرات", e: "🚽", bg: "#E8F0F1", weight: "500 مل", price: 72, mrp: 95, off: 24, rating: 4.5, reviews: "1.7 ألف", eta: "13 دقيقة" },
   // ===== سيرومات وعناية بالبشرة (بيوتي لاند m2) =====
-  { id: 87, name: "سيروم فيتامين C مينِماليست", cat: "جمال وعناية", sub: "سيرومات للوجه", e: "🧪", bg: "#FBF6D9", weight: "30 مل", price: 285, mrp: 499, off: 43, rating: 4.5, reviews: "2.4 ألف", eta: "21 دقيقة", merchantId: "m2" },
+  { id: 87, name: "سيروم فيتامين C مينِماليست", cat: "جمال وعناية", sub: "سيرومات للوجه", e: "🧪", bg: "#FBF6D9", weight: "30 مل", price: 285, mrp: 499, off: 43, rating: 4.5, reviews: "2.4 ألف", eta: "21 دقيقة", merchantId: "m2", deal: true },
   { id: 88, name: "سيروم دوت آند كي فيتامين C", cat: "جمال وعناية", sub: "سيرومات للوجه", e: "🧪", bg: "#F6E9EE", weight: "30 مل", price: 263, mrp: 299, off: 12, rating: 4.4, reviews: "7.3 ألف", eta: "21 دقيقة", merchantId: "m2" },
   { id: 89, name: "سيروم غارنييه فيتامين C", cat: "جمال وعناية", sub: "سيرومات للوجه", e: "🧪", bg: "#EFE9F6", weight: "30 مل", price: 249, mrp: 299, off: 16, rating: 4.5, reviews: "9 آلاف", eta: "21 دقيقة", merchantId: "m2" },
-  { id: 90, name: "كريم مرطّب فازلين SPF", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🧴", bg: "#F6E7EC", weight: "100 مل", price: 199, mrp: 249, off: 20, rating: 4.4, reviews: "13 ألف", eta: "21 دقيقة", merchantId: "m2" },
+  { id: 90, name: "كريم مرطّب فازلين SPF", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🧴", bg: "#F6E7EC", weight: "100 مل", price: 199, mrp: 249, off: 20, rating: 4.4, reviews: "13 ألف", eta: "21 دقيقة", merchantId: "m2", deal: true },
   { id: 91, name: "طين ملتاني للبشرة", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🪴", bg: "#FBEAF0", weight: "100 غ", price: 149, mrp: 199, off: 25, rating: 4.3, reviews: "2.2 ألف", eta: "13 دقيقة", merchantId: "m2" },
   { id: 92, name: "ملمّع أحذية شيري بلوسوم", cat: "جمال وعناية", sub: "عناية بالأحذية", e: "👞", bg: "#F3E7EE", weight: "88 مل", price: 91, mrp: 98, off: 7, rating: 4.4, reviews: "7.5 ألف", eta: "13 دقيقة", merchantId: "m2" },
   // ===== صوتيات وإلكترونيات (تك ستور m3) =====
-  { id: 93, name: "سماعات هامر إيربودز TWS", cat: "إلكترونيات", sub: "صوتيات", e: "🎧", bg: "#EAF0F4", weight: "قطعة", price: 579, mrp: 1499, off: 61, rating: 4.2, reviews: "5.9 ألف", eta: "13 دقيقة", merchantId: "m3" },
-  { id: 94, name: "سماعات بوت روكرز نيك باند", cat: "إلكترونيات", sub: "صوتيات", e: "🎧", bg: "#ECEEF1", weight: "قطعة", price: 699, mrp: 2490, off: 71, rating: 4.3, reviews: "3.4 ألف", eta: "13 دقيقة", merchantId: "m3" },
-  { id: 95, name: "مكبّر صوت يوبون بلوتوث", cat: "إلكترونيات", sub: "صوتيات", e: "🔊", bg: "#EDEFF2", weight: "قطعة", price: 499, mrp: 999, off: 50, rating: 4.1, reviews: "3.6 ألف", eta: "13 دقيقة", merchantId: "m3" },
+  { id: 93, name: "سماعات هامر إيربودز TWS", cat: "إلكترونيات", sub: "صوتيات", e: "🎧", bg: "#EAF0F4", weight: "قطعة", price: 579, mrp: 1499, off: 61, rating: 4.2, reviews: "5.9 ألف", eta: "13 دقيقة", merchantId: "m3", deal: true },
+  { id: 94, name: "سماعات بوت روكرز نيك باند", cat: "إلكترونيات", sub: "صوتيات", e: "🎧", bg: "#ECEEF1", weight: "قطعة", price: 699, mrp: 2490, off: 71, rating: 4.3, reviews: "3.4 ألف", eta: "13 دقيقة", merchantId: "m3", deal: true },
+  { id: 95, name: "مكبّر صوت يوبون بلوتوث", cat: "إلكترونيات", sub: "صوتيات", e: "🔊", bg: "#EDEFF2", weight: "قطعة", price: 499, mrp: 999, off: 50, rating: 4.1, reviews: "3.6 ألف", eta: "13 دقيقة", merchantId: "m3", deal: true },
 ];
 export const byId = (id) => PRODUCTS.find((p) => p.id === id);
 

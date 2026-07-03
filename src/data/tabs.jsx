@@ -1,10 +1,11 @@
 import {
-  ShoppingBasket, Headphones, Sparkles, Lamp, Baby, Gift, Globe,
+  ShoppingBasket, Headphones, Sparkles, Lamp, Baby, Gift, Globe, BadgePercent,
 } from "lucide-react";
 
 // تبويبات الفئات الرئيسية
 export const TABS = [
   { id: "all", label: "الكل", Icon: ShoppingBasket },
+  { id: "deals", label: "عروض", Icon: BadgePercent, badge: "خصم" },
   { id: "electronics", label: "إلكترونيات", Icon: Headphones },
   { id: "beauty", label: "الجمال", Icon: Sparkles },
   { id: "decor", label: "ديكور", Icon: Lamp },

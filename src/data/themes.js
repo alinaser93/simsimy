@@ -4,6 +4,14 @@ import {
 
 // هوية كل تبويب: ألوان الهيدر، البانر، صفوف المنتجات، قسم البطاقات
 export const THEMES = {
+  deals: {
+    eta: "12", headTop: "#E23744", headBot: "#C0182A", onHead: "#ffffff", sub: "#ffd9dd",
+    badge: "#ffffff", badgeBorder: "rgba(255,255,255,.5)", searchBg: "#fff",
+    searchText: "#8a8a8a", searchIcon: "#5a5a5a",
+    hints: ["عروض", "خصومات", "أقل سعر", "توفير"],
+    hero: { kind: "glow", title: "عروض وخصومات اليوم", sub: "أفضل الأسعار على منتجاتك المفضّلة",
+      bg: "linear-gradient(135deg,#F0404F,#C0182A)", text: "#ffffff", subText: "#ffe0e3" },
+  },
   all: {
     eta: "12", headTop: "#C99A24", headBot: "#8E6112", onHead: "#ffffff", sub: "#fbeccd",
     badge: "#ffffff", badgeBorder: "rgba(255,255,255,.5)", searchBg: "#fff",

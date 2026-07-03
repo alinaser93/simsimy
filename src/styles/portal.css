@@ -113,3 +113,10 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .pt-mini-chip.ok{background:#E8F4EA;color:#0C831F;border-color:#cde7d2;}
 .pt-topbtn{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;}
 .pt-note{font-size:11px;color:var(--p-mut);line-height:1.7;padding:10px 14px;}
+
+/* حقل «عرض مميّز» وشارته في الأدمن */
+.pt-check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--p-txt);cursor:pointer;margin-top:10px;font-weight:600;}
+.pt-box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--p-border);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;flex:0 0 auto;}
+.pt-box.on{background:#E23744;border-color:#E23744;}
+.pt-btn.ghost{background:transparent;color:var(--p-txt);border:1px solid var(--p-border);}
+.pt-deal-tag{display:inline-block;background:#ffe3e6;color:#C0182A;font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:6px;margin-right:6px;}

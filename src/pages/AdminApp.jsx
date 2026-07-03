@@ -209,15 +209,16 @@ function Orders() {
 
 /* ---------------- المنتجات ---------------- */
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
-const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", desc: "", highlights: [] };
+const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", deal: false, desc: "", highlights: [] };
 function Products() {
   const products = useStore((s) => s.products);
   const merchants = useStore((s) => s.merchants);
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState("الكل");
+  const [dealsOnly, setDealsOnly] = useState(false);
   const subOptions = [...new Set(products.map((p) => p.sub).filter(Boolean))];
   const [modal, setModal] = useState(null); // null | {mode:'add'|'edit', data}
-  const list = products.filter((p) => p.name.includes(q) && (catFilter === "الكل" || p.cat === catFilter));
+  const list = products.filter((p) => p.name.includes(q) && (catFilter === "الكل" || p.cat === catFilter) && (!dealsOnly || p.deal));
   const save = () => {
     const d = { ...modal.data, priceIQD: +modal.data.priceIQD || 0, mrpIQD: +modal.data.mrpIQD || 0 };
     // المواصفات: سطر لكل خاصية بصيغة «المفتاح: القيمة»
@@ -240,7 +241,8 @@ function Products() {
             <option>الكل</option>
             {CATS.map((c) => <option key={c}>{c}</option>)}
           </select>
-          <input className="pt-in" style={{ width: 130 }} placeholder="بحث…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="pt-in" style={{ width: 120 }} placeholder="بحث…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <button className={"pt-btn sm" + (dealsOnly ? "" : " ghost")} onClick={() => setDealsOnly(!dealsOnly)}>🏷️ العروض</button>
           <button className="pt-btn sm" onClick={() => setModal({ mode: "add", data: { ...EMPTY } })}><Plus size={13} style={{ verticalAlign: -2 }} /> إضافة</button>
         </div>
         <div className="pt-scroll">
@@ -249,7 +251,7 @@ function Products() {
             <tbody>
               {list.map((p) => (
                 <tr key={p.id} style={p.stock === false ? { opacity: 0.55 } : undefined}>
-                  <td><span style={{ fontSize: 18, marginLeft: 6 }}>{p.e}</span><b>{p.name}</b><div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{p.weight}</div></td>
+                  <td><span style={{ fontSize: 18, marginLeft: 6 }}>{p.e}</span><b>{p.name}</b>{p.deal && <span className="pt-deal-tag">🏷️ عرض</span>}<div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{p.weight}</div></td>
                   <td style={{ fontSize: 11.5 }}>{p.cat || "—"}</td>
                   <td>{p.sub ? <span className="pt-mini-chip">{p.sub}</span> : <span style={{ color: "var(--p-mut)" }}>—</span>}</td>
                   <td><b>{fmt(p.priceIQD)} {CUR}</b><div style={{ color: "var(--p-mut)", fontSize: 10, textDecoration: "line-through" }}>{fmt(p.mrpIQD)}</div></td>
@@ -293,6 +295,10 @@ function Products() {
                 <input className="pt-in" list="bk-subs" placeholder="مثال: نودلز ومعكرونة" value={modal.data.sub || ""} onChange={(e) => setModal({ ...modal, data: { ...modal.data, sub: e.target.value } })} />
                 <datalist id="bk-subs">{subOptions.map((sc) => <option key={sc} value={sc} />)}</datalist></div>
             </div>
+            <label className="pt-check" onClick={() => setModal({ ...modal, data: { ...modal.data, deal: !modal.data.deal } })}>
+              <span className={"pt-box" + (modal.data.deal ? " on" : "")}>{modal.data.deal ? "✓" : ""}</span>
+              🏷️ عرض مميّز — يظهر في صف «عروض مختارة» بتبويب العروض
+            </label>
             <div className="pt-field"><label>الوصف (يظهر في صفحة تفاصيل المنتج)</label>
               <textarea className="pt-in" rows="3" value={modal.data.desc || ""} onChange={(e) => setModal({ ...modal, data: { ...modal.data, desc: e.target.value } })} /></div>
             <div className="pt-field"><label>المواصفات — سطر لكل خاصية بصيغة «المفتاح: القيمة»</label>

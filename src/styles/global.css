@@ -422,3 +422,9 @@ html,body{margin:0;height:100%;}
 .bk-rt{display:flex;align-items:center;gap:4px;margin-bottom:6px;}
 .bk-sublink{display:inline-flex;align-items:center;gap:1px;font-size:10px;font-weight:700;color:#3a6ea5;border:1px solid #e3e9f0;background:#f6f9fc;border-radius:7px;padding:3px 8px;cursor:pointer;align-self:flex-start;}
 .bk-sublink:hover{background:#eef4fb;}
+
+/* شريط تبويب العروض */
+.bk-deal-strip{margin:12px 14px 4px;padding:12px 16px;border-radius:14px;background:linear-gradient(120deg,#FFF0F1,#FFE3E6);border:1px solid #ffd0d5;display:flex;flex-direction:column;gap:2px;}
+.bk-deal-strip .t{font-size:16px;font-weight:800;color:#C0182A;}
+.bk-deal-strip .s{font-size:11.5px;color:#9a5560;font-weight:600;}
+.bk-tab .bk-tab-badge{position:absolute;top:-3px;right:2px;background:#E23744;color:#fff;font-size:7.5px;font-weight:800;padding:1px 4px;border-radius:6px;}

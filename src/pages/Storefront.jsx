@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { THEMES } from "../data/themes.js";
+import DealsContent from "../components/DealsContent.jsx";
 import { useCart } from "../hooks/useCart.js";
 import { useCollapsingHeader } from "../hooks/useCollapsingHeader.js";
 import SplashScreen from "../components/SplashScreen.jsx";
@@ -97,6 +98,8 @@ export default function Storefront() {
   const sections = useMemo(
     () => (catTab === "all"
       ? <HomeContent cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
+      : catTab === "deals"
+      ? <DealsContent cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
       : <ThemedContent theme={theme} cart={cart} add={add} inc={inc} dec={dec} openList={openList} />),
     [catTab, cart, theme, add, inc, dec, openList]
   );
