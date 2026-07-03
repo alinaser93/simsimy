@@ -1,3 +1,4 @@
+import ProductManager from "../components/ProductManager.jsx";
 import { useState } from "react";
 import { LayoutDashboard, ShoppingCart, PackageSearch, Wallet, Clock3, CheckCircle2, Store, Hourglass } from "lucide-react";
 import { useStore, updateProduct, updateMerchant, setOrderStatus, setMerchantReady, confirmSettlement } from "../store/appStore.js";
@@ -69,7 +70,7 @@ function Merchant({ mid, onLogout }) {
     <Shell role="التاجر" who={me.name} tabs={TABS} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
       {tab === "dash" && <Dash mid={me.id} />}
       {tab === "orders" && <Orders mid={me.id} />}
-      {tab === "products" && <Products mid={me.id} />}
+      {tab === "products" && <ProductManager scope="merchant" mid={me.id} />}
       {tab === "wallet" && <MyWallet mid={me.id} />}
       {tab === "shop" && <MyShop mid={me.id} />}
     </Shell>
@@ -157,40 +158,6 @@ function Orders({ mid }) {
                 );
               })}
               {orders.length === 0 && <tr><td colSpan="6"><div className="pt-empty">لا توجد طلبات بعد</div></td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function Products({ mid }) {
-  const products = useStore((s) => s.products).filter((p) => p.merchantId === mid);
-  return (
-    <>
-      <div className="pt-h1">منتجاتي<small>سعرك وتوفّرك — يظهران فوراً للزبائن</small></div>
-      <div className="pt-card">
-        <div className="cap">{products.length} منتج</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>المنتج</th><th>الوزن</th><th>السعر ({CUR})</th><th>رابط الصورة</th><th>متوفر</th></tr></thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.id} style={p.stock === false ? { opacity: 0.55 } : undefined}>
-                  <td><span style={{ fontSize: 18, marginLeft: 6 }}>{p.e}</span><b>{p.name}</b></td>
-                  <td>{p.weight}</td>
-                  <td>
-                    <input className="pt-in" type="number" step="50" style={{ width: 110 }}
-                      value={p.priceIQD}
-                      onChange={(e) => updateProduct(p.id, { priceIQD: +e.target.value || 0 })} />
-                  </td>
-                  <td><input className="pt-in" dir="ltr" placeholder="https://…" style={{ width: 150, padding: "6px 9px", fontSize: 11 }}
-                    value={p.img || ""} onChange={(e) => updateProduct(p.id, { img: e.target.value })} /></td>
-                  <td><Switch on={p.stock !== false} onToggle={() => updateProduct(p.id, { stock: !(p.stock !== false) })} /></td>
-                </tr>
-              ))}
-              {products.length === 0 && <tr><td colSpan="5"><div className="pt-empty">لا توجد منتجات مسندة لمتجرك</div></td></tr>}
             </tbody>
           </table>
         </div>
