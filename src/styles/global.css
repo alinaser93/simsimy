@@ -449,3 +449,11 @@ html,body{margin:0;height:100%;}
 .bk-hs.slide{grid-template-columns:none;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:10px;scroll-snap-type:x mandatory;}
 .bk-hs.slide .bk-pc{flex:0 0 auto;width:150px;scroll-snap-align:start;}
 .bk-hs.slide .bk-pc-imgwrap{height:104px;}
+
+/* تراكبات وضع المنشئ داخل المعاينة الحيّة (?builder=1) */
+.bk-eblk{position:relative;outline:1.5px dashed rgba(12,131,31,.45);outline-offset:-2px;margin:2px 4px;border-radius:10px;}
+.bk-ebar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:5px;background:rgba(12,131,31,.92);color:#fff;padding:3px 8px;border-radius:8px 8px 0 0;font-size:10.5px;}
+.bk-ebar .nm{flex:1;font-weight:800;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bk-ebar button{width:20px;height:20px;border:none;border-radius:5px;background:rgba(255,255,255,.2);color:#fff;font-size:11px;cursor:pointer;line-height:1;}
+.bk-ebar .del{background:rgba(220,50,50,.85);}
+.bk-eend{margin:8px 14px 20px;padding:10px;border:1.5px dashed #0C831F;border-radius:10px;color:#0C831F;font-weight:800;font-size:12px;text-align:center;cursor:pointer;background:#f2faf3;}

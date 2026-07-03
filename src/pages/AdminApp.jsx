@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ROW_SECTIONS } from "../data/rowSections.js";
 import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab } from "../store/appStore.js";
 import {
@@ -549,6 +549,28 @@ function Look() {
 /* ---------------- المحتوى: بانرات وأقسام الصفحة الرئيسية ---------------- */
 
 /* ===== منشئ الصفحات التفاعلي: معاينة حيّة + سحب/أسهم + إضافة/حذف كتل وتبويبات ===== */
+
+/* مصغّرات رسومية لكتالوج الكتل */
+function Thumb({ kind }) {
+  const sq = (n, cls) => Array.from({ length: n }, (_, i) => <i key={i} className={cls || ""} />);
+  return (
+    <div className={"pal-th th-" + kind}>
+      {kind === "grid" && sq(6)}
+      {kind === "slide" && <>{sq(3)}<i className="cut" /></>}
+      {kind === "ad" && <><b /><em /></>}
+      {kind === "carousel" && <>{sq(2, "bar")}</>}
+      {kind === "best" && sq(3, "col")}
+      {kind === "tiles" && sq(8, "tile")}
+      {kind === "trio" && sq(3, "tall")}
+      {kind === "big" && sq(2, "bigc")}
+      {kind === "head" && <><b className="hbar" /><em className="srch" /></>}
+      {kind === "tabs" && sq(5, "dot")}
+      {kind === "strip" && <b className="line" />}
+      {kind === "dz" && <b className="star" />}
+    </div>
+  );
+}
+
 function PageBuilder() {
   const homeBlocks = useStore((s) => s.homeBlocks);
   const customTabs = useStore((s) => s.customTabs);
@@ -556,7 +578,24 @@ function PageBuilder() {
   const [tabId, setTabId] = useState("home");
   const [drag, setDrag] = useState(null);
   const [openId, setOpenId] = useState(null);
-  const blocks = tabId === "home" ? homeBlocks : (customTabs.find((t) => t.id === tabId)?.blocks || []);
+  const [pending, setPending] = useState(null); // موضع الإدراج القادم من المعاينة
+  const tabRef = useRef(tabId); tabRef.current = tabId;
+  useEffect(() => {
+    const onMsg = (e) => {
+      const d = e.data || {};
+      if (!d.bk) return;
+      if (d.act === "insert" && d.tabId === tabRef.current) setPending(d.index);
+      if (d.act === "select") { setOpenId(d.id); setPending(null); }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+  const THEMED_TABS = [
+    ["electronics", "🎧 إلكترونيات"], ["beauty", "💄 الجمال"], ["decor", "🛋️ ديكور"],
+    ["kids", "🧸 الأطفال"], ["gifting", "🎁 الهدايا"], ["imported", "🌍 مستورد"],
+  ];
+  const tabBlocksAll = useStore((s) => s.tabBlocks);
+  const blocks = tabId === "home" ? homeBlocks : tabBlocksAll[tabId] ? tabBlocksAll[tabId] : (customTabs.find((t) => t.id === tabId)?.blocks || []);
   const CATS_LIST = [...new Set(products.map((p) => p.cat).filter(Boolean))];
 
   const label = (b) => b.type === "builtin" ? "🧩 " + (b.label || b.key)
@@ -580,7 +619,8 @@ function PageBuilder() {
     <div className="pt-card">
       <div className="cap">🧱 منشئ الصفحات التفاعلي<span className="sp" />
         <select className="pt-in" style={{ width: 170 }} value={tabId} onChange={(e) => setTabId(e.target.value)}>
-          <option value="home">الصفحة الرئيسية (الكل)</option>
+          <option value="home">🏠 الصفحة الرئيسية (الكل)</option>
+          {THEMED_TABS.map(([id, l]) => <option key={id} value={id}>{l}</option>)}
           {customTabs.map((t) => <option key={t.id} value={t.id}>{t.emoji} {t.label}</option>)}
         </select>
         <button className="pt-btn sm" onClick={() => { const l = prompt("اسم التبويب الجديد:"); if (l) { const e = prompt("إيموجي التبويب:", "🛍️"); addCustomTab(l, e || "🛍️"); } }}>+ تبويب</button>
@@ -589,9 +629,35 @@ function PageBuilder() {
 
       <div className="pt-builder">
         <div className="pt-blocks">
-          <div className="add-row">
-            <button className="pt-btn sm" onClick={() => addBlock(tabId, { type: "row", title: "صف جديد", sub: "", ids: [1, 2, 3, 4, 5, 14], cat: CATS_LIST[0] || "", layout: "grid" })}>+ صف منتجات</button>
-            <button className="pt-btn sm ghost" onClick={() => addBlock(tabId, { type: "ad", t: "إعلان جديد", p: "وصف الإعلان", cta: "تسوّق الآن", e: "🛒", bg: "" })}>+ بانر إعلاني</button>
+          {pending != null && (
+            <div className="pal-pending">📍 سيُدرَج في الموضع {pending + 1} — اختر كتلة من الكتالوج
+              <button onClick={() => setPending(null)}>إلغاء</button></div>
+          )}
+          <div className="pal-grid">
+            {[
+              { k: "grid", n: "صف منتجات 3×2", th: "grid", add: { type: "row", title: "صف جديد", sub: "", ids: [1, 2, 3, 4, 5, 14], cat: CATS_LIST[0] || "", layout: "grid" } },
+              { k: "slide", n: "صف سلايد دوّار", th: "slide", add: { type: "row", title: "سلايد جديد", sub: "", ids: [1, 2, 3, 4, 5, 14, 28, 29], cat: CATS_LIST[0] || "", layout: "slide" } },
+              { k: "ad", n: "بانر إعلاني", th: "ad", add: { type: "ad", t: "إعلان جديد", p: "وصف الإعلان", cta: "تسوّق الآن", e: "🛒", bg: "" } },
+              { k: "banners", n: "كاروسيل بانرات", th: "carousel", add: { type: "builtin", key: "banners", label: "بانرات العروض العريضة" } },
+              { k: "best", n: "شبكة الأكثر مبيعاً", th: "best", add: { type: "builtin", key: "bestsellers", label: "الأكثر مبيعاً (شبكة الفئات)" } },
+              { k: "trio", n: "البطاقات الثلاثية", th: "trio", add: { type: "builtin", key: "trio", label: "البطاقات الثلاثية" } },
+              { k: "big", n: "متاجر كبرى", th: "big", add: { type: "builtin", key: "bigstores", label: "متاجر يحبها الجميع" } },
+            ].map((p) => (
+              <div key={p.k} className="pal-item" onClick={() => { addBlock(tabId, p.add, pending); setPending(null); }}>
+                <Thumb kind={p.th} /><span>{p.n}</span>
+              </div>
+            ))}
+            <div className="pal-item" onClick={() => {
+              const opts = ["grocery:البقالة والمطبخ","snacks:وجبات ومشروبات","beauty:الجمال","household:المنزل","stores:متاجر مميّزة","lifestyle:أسلوب حياتك","tiles_electronics:الإلكترونيات","tiles_decor:الديكور","tiles_kids:الأطفال","tiles_imported:المستورد"];
+              const pick = prompt("اختر مجموعة البلاطات:\n" + opts.map((o,i)=>(i+1)+") "+o.split(":")[1]).join("\n"), "1");
+              const idx = (+pick || 1) - 1; const [key, lbl] = (opts[idx] || opts[0]).split(":");
+              addBlock(tabId, { type: "builtin", key, label: "بلاطات: " + lbl }, pending); setPending(null);
+            }}><Thumb kind="tiles" /><span>بلاطات فئات</span></div>
+            {[["head","رأس مُثيّم","المظهر"],["tabs","شريط التبويبات","زر + تبويب"],["strip","شريط تحفيزي","المظهر"],["dz","منطقة العروض","بطاقة العروض"]].map(([k,n,w]) => (
+              <div key={k} className="pal-item struct" title={"هيكلي — يُدار من: " + w}>
+                <Thumb kind={k} /><span>{n}</span><small>{w}</small>
+              </div>
+            ))}
           </div>
           {blocks.length === 0 && <div style={{ color: "var(--p-mut)", fontSize: 12, padding: 14, textAlign: "center" }}>لا توجد كتل بعد — أضف صفًا أو إعلانًا</div>}
           {blocks.map((b, i) => (
@@ -638,7 +704,7 @@ function PageBuilder() {
         </div>
         <div className="pt-preview-wrap">
           <div className="ph-note">معاينة حيّة — تتحدث فور أي تعديل{tabId !== "home" ? " (افتح التبويب الجديد من شريط المتجر)" : ""}</div>
-          <iframe className="pt-preview" src="/" title="معاينة المتجر" />
+          <iframe key={tabId} className="pt-preview" src={"/?builder=1&tab=" + (tabId === "home" ? "all" : tabId)} title="معاينة المتجر" />
         </div>
       </div>
     </div>

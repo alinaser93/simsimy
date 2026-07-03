@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { THEMES } from "../data/themes.js";
 import DealsContent from "../components/DealsContent.jsx";
 import BlocksRenderer from "../components/BlocksRenderer.jsx";
@@ -11,7 +11,6 @@ import CategoryTabs from "../components/CategoryTabs.jsx";
 import WelcomeHero from "../components/WelcomeHero.jsx";
 import Hero from "../components/Hero.jsx";
 import HomeContent from "../components/HomeContent.jsx";
-import ThemedContent from "../components/ThemedContent.jsx";
 import Listing from "../components/Listing.jsx";
 import CartBar from "../components/CartBar.jsx";
 import BottomNav from "../components/BottomNav.jsx";
@@ -29,7 +28,8 @@ export default function Storefront() {
   const [ready, setReady] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [nav, setNav] = useState("home");
-  const [catTab, setCatTab] = useState("all");
+  const initialTab = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("tab") || "all") : "all";
+  const [catTab, setCatTab] = useState(initialTab);
   const [hint, setHint] = useState(0);
   const [listing, setListing] = useState(null);
   const [page, setPage] = useState(null);        // cart | payment | address | orders | search | {tracking:id}
@@ -41,6 +41,7 @@ export default function Storefront() {
   const texts = useStore((st) => st.texts);
 
   const customTabs = useStore((s) => s.customTabs);
+  const tabBlocks = useStore((s) => s.tabBlocks);
   const customTab = customTabs.find((t) => t.id === catTab);
   const theme = THEMES[catTab] || (customTab && {
     eta: "12", headTop: "#4a4b50", headBot: "#6e6d6e", onHead: "#ffffff", sub: "#eaeaea",
@@ -54,9 +55,21 @@ export default function Storefront() {
   const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(theme);
 
   // فتح تفاصيل المنتج من أي بطاقة
+  const backRef = { productId, listing, catTab };
+  const backRefBox = useRef(backRef); backRefBox.current = backRef;
   useEffect(() => {
-    const h = (e) => setProductId(e.detail);
-    const hl = (e) => setListing(e.detail);
+    const onPop = () => {
+      const r = backRefBox.current;
+      if (r.productId != null) { setProductId(null); return; }
+      if (r.listing) { setListing(null); return; }
+      if (r.catTab !== "all") setCatTab("all");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    const h = (e) => { pushBK(); setProductId(e.detail); };
+    const hl = (e) => { pushBK(); setListing(e.detail); };
     window.addEventListener("bk:openProduct", h);
     window.addEventListener("bk:openList", hl);
     return () => { window.removeEventListener("bk:openProduct", h); window.removeEventListener("bk:openList", hl); };
@@ -77,8 +90,10 @@ export default function Storefront() {
     return () => clearInterval(iv);
   }, [theme]);
 
-  const openList = useCallback((t) => setListing(t), []);
+  const pushBK = () => { try { window.history.pushState({ bk: 1 }, ""); } catch { /* لا شيء */ } };
+  const openList = useCallback((t) => { pushBK(); setListing(t); }, []);
   const pickTab = useCallback((id, el) => {
+    if (catTab === "all" && id !== "all") pushBK();
     setCatTab(id); setListing(null);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
@@ -111,9 +126,9 @@ export default function Storefront() {
       : catTab === "deals"
       ? <DealsContent cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
       : customTab
-      ? <BlocksRenderer blocks={customTab.blocks} cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
-      : <ThemedContent theme={theme} cart={cart} add={add} inc={inc} dec={dec} openList={openList} />),
-    [catTab, cart, theme, customTab, add, inc, dec, openList]
+      ? <BlocksRenderer blocks={customTab.blocks} tabId={catTab} cart={cart} add={add} inc={inc} dec={dec} openList={openList} />
+      : <BlocksRenderer blocks={tabBlocks[catTab] || []} tabId={catTab} cart={cart} add={add} inc={inc} dec={dec} openList={openList} />),
+    [catTab, cart, theme, customTab, tabBlocks, add, inc, dec, openList]
   );
   const banner = useMemo(
     () => (catTab === "all" ? <WelcomeHero /> : <Hero hero={theme.hero} />),
@@ -127,7 +142,7 @@ export default function Storefront() {
         {!ready && <SplashScreen exiting={exiting} onSkip={skip} />}
 
         {listing ? (
-          <Listing title={listing} cart={cart} add={add} inc={inc} dec={dec} onBack={() => setListing(null)} />
+          <Listing title={listing} cart={cart} add={add} inc={inc} dec={dec} onBack={() => window.history.back()} />
         ) : (
           <>
             {!settings.storeOpen && <div className="bk-closed">{texts.closedMsg}</div>}
@@ -177,7 +192,7 @@ export default function Storefront() {
 
         {/* ورقة تفاصيل المنتج فوق كل شيء */}
         {productId && (
-          <ProductSheet id={productId} cart={cart} add={add} inc={inc} dec={dec} onClose={() => setProductId(null)} />
+          <ProductSheet id={productId} cart={cart} add={add} inc={inc} dec={dec} onClose={() => window.history.back()} />
         )}
 
         {toast && <div className="bk-toast">{toast}</div>}

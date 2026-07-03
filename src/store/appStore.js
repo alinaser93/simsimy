@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { HOME_BLOCKS } from "../data/homeBlocks.js";
+import { TAB_BLOCKS } from "../data/tabBlocks.js";
 import { PRODUCTS } from "../data/products.js";
 import { toIQD } from "../utils/currency.js";
 import { WIDE_BANNERS, TRIO_PROMOS, BIG_STORES } from "../data/collections.js";
@@ -67,6 +68,7 @@ const defaults = () => {
   const products = seedProducts();
   return {
     homeBlocks: HOME_BLOCKS,
+  tabBlocks: TAB_BLOCKS,
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -159,6 +161,8 @@ const mergeSaved = (d, saved) => {
   const out = { ...d, ...saved };
   ["settings", "appearance", "texts"].forEach((k) => { out[k] = { ...d[k], ...(saved[k] || {}) }; });
   ["banners", "trio", "bigStores", "addresses", "homeBlocks", "customTabs"].forEach((k) => { if (!Array.isArray(saved[k])) out[k] = d[k]; });
+  out.tabBlocks = { ...d.tabBlocks, ...(saved.tabBlocks || {}) };
+  Object.keys(d.tabBlocks).forEach((k) => { if (!Array.isArray(out.tabBlocks[k])) out.tabBlocks[k] = d.tabBlocks[k]; });
   out.merchants = (saved.merchants || d.merchants).map((m) => ({ password: "0000", commission: 10, open: true, ...m }));
   out.couriers = (saved.couriers || d.couriers).map((c) => ({ password: "0000", ...c }));
   if (!Array.isArray(saved.settlements)) out.settlements = [];
@@ -221,13 +225,20 @@ export const removeProduct = (id) =>
 
 // ===== منشئ الصفحات (كتل الرئيسية + التبويبات المخصّصة) =====
 const genId = () => "b" + Math.random().toString(36).slice(2, 8);
-const blocksOf = (s, tabId) => (tabId === "home" ? s.homeBlocks : (s.customTabs.find((t) => t.id === tabId)?.blocks || []));
+const blocksOf = (s, tabId) => (tabId === "home" ? s.homeBlocks : s.tabBlocks[tabId] ? s.tabBlocks[tabId] : (s.customTabs.find((t) => t.id === tabId)?.blocks || []));
 const writeBlocks = (s, tabId, blocks) =>
   tabId === "home"
     ? { homeBlocks: blocks }
+    : s.tabBlocks[tabId]
+    ? { tabBlocks: { ...s.tabBlocks, [tabId]: blocks } }
     : { customTabs: s.customTabs.map((t) => (t.id === tabId ? { ...t, blocks } : t)) };
-export const addBlock = (tabId, block) =>
-  setState((s) => writeBlocks(s, tabId, [...blocksOf(s, tabId), { id: genId(), ...block }]));
+export const addBlock = (tabId, block, index) =>
+  setState((s) => {
+    const arr = [...blocksOf(s, tabId)];
+    const nb = { id: genId(), ...block };
+    if (index == null || index < 0 || index > arr.length) arr.push(nb); else arr.splice(index, 0, nb);
+    return writeBlocks(s, tabId, arr);
+  });
 export const updateBlock = (tabId, id, patch) =>
   setState((s) => writeBlocks(s, tabId, blocksOf(s, tabId).map((b) => (b.id === id ? { ...b, ...patch } : b))));
 export const removeBlock = (tabId, id) =>
