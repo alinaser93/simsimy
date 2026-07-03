@@ -50,6 +50,39 @@ export function suggestBackgrounds(emoji, cat) {
 }
 
 
+
+
+// قاموس مبسّط عربي→إنجليزي لوصف الصورة (لتوليد صور صحيحة عبر Pollinations)
+const AR_EN = {
+  "تمر": "dates fruit", "تمور": "dates", "خضري": "khudri dates", "موز": "banana", "تفاح": "apple",
+  "برتقال": "orange fruit", "عنب": "grapes", "رمان": "pomegranate", "فراولة": "strawberry",
+  "بطيخ": "watermelon", "مانجو": "mango", "ليمون": "lemon", "خيار": "cucumber", "طماطم": "tomato",
+  "بصل": "onion", "بطاطا": "potato", "جزر": "carrot", "ثوم": "garlic", "باذنجان": "eggplant",
+  "شوكولاتة": "chocolate bar", "شوكولا": "chocolate", "كادبوري": "cadbury chocolate", "كيت كات": "kitkat chocolate",
+  "بسكويت": "biscuits", "كيك": "cake", "رقائق": "potato chips", "شيبس": "chips", "فشار": "popcorn",
+  "آيس كريم": "ice cream", "بوظة": "ice cream", "حليب": "milk bottle", "لبن": "yogurt", "زبادي": "yogurt cup",
+  "جبن": "cheese", "جبنة": "cheese", "خبز": "bread", "صمون": "bread bun", "بيض": "eggs carton",
+  "أرز": "rice bag", "بسمتي": "basmati rice", "طحين": "flour bag", "دقيق": "flour",
+  "عدس": "lentils", "حمص": "chickpeas", "فاصوليا": "beans", "زيت": "cooking oil bottle", "خردل": "mustard oil",
+  "سكر": "sugar bag", "ملح": "salt", "بهار": "spices", "كاتشب": "ketchup bottle", "صلصة": "sauce",
+  "عصير": "juice bottle", "كولا": "cola soft drink", "بيبسي": "pepsi can", "ماء": "water bottle",
+  "مشروب طاقة": "energy drink can", "شامبو": "shampoo bottle", "صابون": "soap bar", "كريم": "cream jar",
+  "سيروم": "face serum bottle", "مسحوق غسيل": "laundry detergent", "معطر": "air freshener spray",
+  "سماعات": "headphones", "شاحن": "phone charger", "باور بانك": "power bank",
+  "معجون": "paste jar", "نودلز": "instant noodles pack", "معكرونة": "pasta pack", "دجاج": "frozen chicken",
+  "فيريرو": "ferrero rocher chocolate", "روشيه": "ferrero rocher", "أوريو": "oreo cookies",
+};
+const norm2 = (s) => (s || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
+export function arToEnPrompt(name) {
+  const t = norm2(name);
+  // ابحث عن أطول كلمة مفتاحية مطابقة
+  let best = "", en = "";
+  for (const [ar, e] of Object.entries(AR_EN)) {
+    if (t.includes(norm2(ar)) && ar.length > best.length) { best = ar; en = e; }
+  }
+  return en || name; // إن لم نجد، نعيد الاسم كما هو
+}
+
 // توليد صورة حقيقية بالذكاء عبر Pollinations (مجاني، بلا مفتاح)
 export function pollinationsUrl(prompt) {
   const p = encodeURIComponent((prompt || "product") + ", professional product photo, plain white background, centered, high quality, no text");

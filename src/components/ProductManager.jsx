@@ -5,7 +5,7 @@ import { Switch } from "../portal/PortalKit.jsx";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
 import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
-import { genProductImage, suggestBackgrounds, pollinationsUrl } from "../utils/imageGen.js";
+import { genProductImage, suggestBackgrounds, pollinationsUrl, arToEnPrompt } from "../utils/imageGen.js";
 import { fmt, CUR } from "../utils/currency.js";
 
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
@@ -110,9 +110,9 @@ function ProductManager({ scope = "admin", mid = null }) {
     if (!modal.data.name || modal.data.name.length < 2) { alert("اكتب اسم المنتج أولًا"); return; }
     setAiBusy("realimg");
     try {
-      let prompt = modal.data.name;
-      const ai = await aiCall({ task: "imagePrompt", name: modal.data.name, cat: modal.data.cat }, 12000);
-      if (ai && ai.prompt) prompt = ai.prompt;
+      let prompt = arToEnPrompt(modal.data.name); // ترجمة محلية موثوقة أولًا
+      const ai = await aiCall({ task: "imagePrompt", name: modal.data.name, cat: modal.data.cat }, 10000);
+      if (ai && ai.prompt && ai.prompt.length > 3) prompt = ai.prompt;
       const genUrl = pollinationsUrl(prompt);
       // جلب الصورة ورفعها لـ Supabase لتخزين دائم وسريع
       try {
@@ -254,16 +254,16 @@ function ProductManager({ scope = "admin", mid = null }) {
 
             <div className="pt-row2">
               <div className="pt-field"><label>القسم {modal.data.autoPlace && <span className="ai-on">✨ تلقائي</span>} <button className="ai-chip" onClick={aiClassify} disabled={aiBusy==="classify"}>{aiBusy==="classify" ? "⏳" : "🧠 صنّف"}</button></label>
-                <select className="pt-in" style={{ width: "100%" }} value={modal.data.cat || CATS[0]} onChange={(e) => upd({ cat: e.target.value })}>
+                <select className="pt-in" style={{ width: "100%" }} value={modal.data.cat || CATS[0]} onChange={(e) => upd({ cat: e.target.value, autoPlace: false })}>
                   {CATS.map((c) => <option key={c}>{c}</option>)}
                 </select></div>
               <div className="pt-field"><label>التفرّع</label>
-                <input className="pt-in" list="bk-subs" placeholder="نودلز ومعكرونة" value={modal.data.sub || ""} onChange={(e) => upd({ sub: e.target.value })} />
+                <input className="pt-in" list="bk-subs" placeholder="نودلز ومعكرونة" value={modal.data.sub || ""} onChange={(e) => upd({ sub: e.target.value, autoPlace: false })} />
                 <datalist id="bk-subs">{subOptions.map((sc) => <option key={sc} value={sc} />)}</datalist></div>
             </div>
             <label className="pt-check sm" onClick={() => upd({ autoPlace: !modal.data.autoPlace })}>
               <span className={"pt-box" + (modal.data.autoPlace ? " on" : "")}>{modal.data.autoPlace ? "✓" : ""}</span>
-              🧠 تصنيف ذكي تلقائي — يضع المنتج في أنسب قسم لأقصى ظهور وشراء (يحلّل الاسم عند الحفظ)
+              🧠 تصنيف ذكي تلقائي — يحلّل الاسم ويضع المنتج في أنسب قسم عند الحفظ (يتوقّف تلقائياً إن غيّرت القسم يدوياً)
             </label>
 
             <div className="pt-row2">
