@@ -63,11 +63,13 @@ function Merchant({ mid, onLogout }) {
   const [tab, setTab] = useState("dash");
   const merchants = useStore((s) => s.merchants);
   const me = merchants.find((m) => m.id === mid) || merchants[0];
+  const outCount = useStore((s) => s.products).filter((p) => p.merchantId === me.id && (p.qty === 0 || (p.qty != null && p.qty <= (p.lowAt || 0)) || (p.qty == null && p.stock === false))).length;
+  const tabsWithBadge = TABS.map((t) => (t.id === "products" && outCount > 0 ? { ...t, badge: String(outCount) } : t));
   const prefs = usePortalPrefs("merchant");
   const myCount = mineOrders(useStore((s) => s.orders), mid).length;
   useOrderAlert(myCount, prefs.sound); // 🔔 طلب جديد لمتجري
   return (
-    <Shell role="التاجر" who={me.name} tabs={TABS} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
+    <Shell role="التاجر" who={me.name} tabs={tabsWithBadge} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
       {tab === "dash" && <Dash mid={me.id} />}
       {tab === "orders" && <Orders mid={me.id} />}
       {tab === "products" && <ProductManager scope="merchant" mid={me.id} />}
@@ -82,14 +84,37 @@ function Dash({ mid }) {
   const products = useStore((s) => s.products).filter((p) => p.merchantId === mid);
   const revenue = orders.filter((o) => o.status === "تم التوصيل").reduce((a, o) => a + o.subtotal, 0);
   const pending = orders.filter((o) => ["جديد", "قيد التجهيز"].includes(o.status)).length;
+  const outOfStock = products.filter((p) => p.qty === 0 || (p.qty == null && p.stock === false));
+  const lowStock = products.filter((p) => p.qty != null && p.qty > 0 && p.qty <= (p.lowAt || 0));
   return (
     <>
       <div className="pt-h1">لوحة المتجر<small>أداء متجرك اليوم</small></div>
+      {(outOfStock.length > 0 || lowStock.length > 0) && (
+        <div className="mc-stockalert">
+          {outOfStock.length > 0 && <div className="hd">⚠️ {outOfStock.length} {outOfStock.length === 1 ? "منتج نفد" : "منتجات نفدت"} — لا يراها الزبائن الآن</div>}
+          {lowStock.length > 0 && <div className="hd low">🔔 {lowStock.length} {lowStock.length === 1 ? "منتج قارب" : "منتجات قاربت"} على النفاد — جدّد المخزون</div>}
+          <div className="items">
+            {outOfStock.slice(0, 4).map((p) => (
+              <div key={p.id} className="it">
+                <span className="nm">🔴 {p.e} {p.name}</span>
+                <button className="restore" onClick={() => updateProduct(p.id, { qty: p.qty != null ? Math.max(20, p.lowAt ? p.lowAt * 2 : 20) : undefined, stock: true })}>✓ تجديد المخزون</button>
+              </div>
+            ))}
+            {lowStock.slice(0, 4).map((p) => (
+              <div key={p.id} className="it">
+                <span className="nm">🟡 {p.e} {p.name} <b>({p.qty} متبقٍ)</b></span>
+                <button className="restore" onClick={() => updateProduct(p.id, { qty: (p.lowAt || 10) * 3 })}>✓ تجديد المخزون</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="pt-stats">
         <Stat Icon={ShoppingCart} l="طلبات متجري" v={orders.length} />
         <Stat Icon={Wallet} l="إيراد المُسلَّم" v={`${fmt(revenue)} ${CUR}`} />
         <Stat Icon={Clock3} l="بانتظار التجهيز" v={pending} />
         <Stat Icon={PackageSearch} l="منتجاتي" v={products.length} />
+        {outOfStock.length > 0 && <Stat Icon={PackageSearch} l="نفدت من المخزون" v={outOfStock.length} />}
       </div>
       <div className="pt-card">
         <div className="cap">أحدث طلبات متجري</div>

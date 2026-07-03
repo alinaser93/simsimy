@@ -10,6 +10,7 @@ import ProductRow from "./ProductRow.jsx";
 export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const [vi, setVi] = useState(0);
   const [ii, setIi] = useState(0);
+  const touch = useRef({ x: 0, dx: 0 });
   const products = useStore((s) => s.products);
   const appName = useStore((s) => s.texts.appName);
   const p = products.find((x) => x.id === id);
@@ -57,8 +58,37 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
 
       <div className="bk-pbody" ref={bodyRef} onScroll={(e) => setBar(e.currentTarget.scrollTop > 230)}>
         <div className="bk-pd-hero">
-          <div className="bk-pd-img" style={{ background: p.bg, borderRadius: 18, padding: "18px 0" }}>
-            {curImg ? <img src={curImg} alt={p.name} /> : p.e}
+          <div className="bk-pd-gallery"
+            onTouchStart={(e) => { touch.current = { x: e.touches[0].clientX, dx: 0 }; }}
+            onTouchMove={(e) => { touch.current.dx = e.touches[0].clientX - touch.current.x; }}
+            onTouchEnd={() => {
+              const dx = touch.current.dx;
+              if (imgs.length > 1 && Math.abs(dx) > 40) {
+                if (dx < 0) setIi((i) => (i + 1) % imgs.length);
+                else setIi((i) => (i - 1 + imgs.length) % imgs.length);
+              }
+            }}
+            onMouseDown={(e) => { touch.current = { x: e.clientX, dx: 0 }; }}
+            onMouseUp={(e) => {
+              const dx = e.clientX - touch.current.x;
+              if (imgs.length > 1 && Math.abs(dx) > 40) {
+                if (dx < 0) setIi((i) => (i + 1) % imgs.length);
+                else setIi((i) => (i - 1 + imgs.length) % imgs.length);
+              }
+            }}>
+            <div className="bk-pd-track" style={{ transform: `translateX(${ii * 100}%)` }}>
+              {(imgs.length ? imgs : [null]).map((u, i) => (
+                <div className="bk-pd-slide" key={i} style={{ background: p.bg }}>
+                  {u ? <img src={u} alt={p.name} draggable="false" /> : <span className="emoji">{p.e}</span>}
+                </div>
+              ))}
+            </div>
+            {imgs.length > 1 && (
+              <>
+                <button className="bk-pd-nav prev" onClick={() => setIi((i) => (i - 1 + imgs.length) % imgs.length)}>‹</button>
+                <button className="bk-pd-nav next" onClick={() => setIi((i) => (i + 1) % imgs.length)}>›</button>
+              </>
+            )}
           </div>
           {imgs.length > 1 && <div className="bk-pd-dots">{imgs.map((_, i) => <i key={i} className={i === ii ? "on" : ""} onClick={() => setIi(i)} />)}</div>}
           {imgs.length > 1 && (

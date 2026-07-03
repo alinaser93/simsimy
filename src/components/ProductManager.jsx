@@ -5,6 +5,7 @@ import { Switch } from "../portal/PortalKit.jsx";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
 import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
+import { genProductImage, suggestBackgrounds } from "../utils/imageGen.js";
 import { fmt, CUR } from "../utils/currency.js";
 
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
@@ -26,7 +27,7 @@ async function addImage(upd, data) {
   }
 }
 
-const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", deal: false, desc: "", highlights: [], images: [], variants: [], badge: "", autoPlace: true };
+const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", deal: false, desc: "", highlights: [], images: [], variants: [], badge: "", autoPlace: true, qty: 50, lowAt: 10 };
 const emptyFor = (mid) => ({ ...EMPTY, merchantId: mid || "m1" });
 function ProductManager({ scope = "admin", mid = null }) {
   const allProducts = useStore((s) => s.products);
@@ -67,6 +68,7 @@ function ProductManager({ scope = "admin", mid = null }) {
     d.images = (d.images || []).filter(Boolean);
     if (d.images.length && !d.img) d.img = d.images[0];
     d.variants = (d.variants || []).filter((v) => v.label).map((v) => ({ label: v.label, weight: v.weight || "", priceIQD: +v.priceIQD || d.priceIQD, mrpIQD: +v.mrpIQD || +v.priceIQD || d.mrpIQD }));
+    if (d.qty != null) { d.qty = +d.qty || 0; d.lowAt = +d.lowAt || 0; d.stock = d.qty > 0; }
     // التصنيف الذكي التلقائي: يضع المنتج في أفضل قسم لأقصى ظهور (يحترم اختيار التاجر إن أوقف التلقائي)
     if (d.autoPlace) {
       const c = classify(d.name);
@@ -103,6 +105,9 @@ function ProductManager({ scope = "admin", mid = null }) {
     if (kind === "badge" || kind === "full") upd({ badge: suggestBadge(modal.data.name, +modal.data.priceIQD, +modal.data.mrpIQD) });
     setAiBusy("");
   };
+  const genImage = () => { const url = genProductImage(modal.data.e || "🛒", modal.data.cat); upd({ images: [...(modal.data.images || []), url] }); };
+  const [bgSuggest, setBgSuggest] = useState(null);
+  const showBgSuggest = () => setBgSuggest(suggestBackgrounds(modal.data.e || "🛒", modal.data.cat));
   const aiClassify = () => runAI("classify");
   const aiDesc = () => runAI("desc");
   const aiBadge = () => runAI("badge");
@@ -117,7 +122,7 @@ function ProductManager({ scope = "admin", mid = null }) {
     return () => window.removeEventListener("popstate", onPop);
   }, [!!modal]);
   const closeModal = () => { if (window.history.state && window.history.state.pm) window.history.back(); else setModal(null); };
-  const openEdit = (p) => setModal({ mode: "edit", data: { ...p, images: p.images || (p.img ? [p.img] : []), variants: p.variants || [], badge: p.badge || "", autoPlace: false, hlText: (p.highlights || []).map(([k, v]) => k + ": " + v).join("\n") } });
+  const openEdit = (p) => setModal({ mode: "edit", data: { ...p, images: p.images || (p.img ? [p.img] : []), variants: p.variants || [], badge: p.badge || "", autoPlace: false, qty: p.qty ?? 50, lowAt: p.lowAt ?? 10, hlText: (p.highlights || []).map(([k, v]) => k + ": " + v).join("\n") } });
   return (
     <>
       <div className="pt-h1">{isMerchant ? "منتجاتي" : "إدارة المنتجات"}<small>{isMerchant ? "سعرك وتوفّرك وصورك — تظهر فوراً للزبائن" : "التعديلات تنعكس فوراً على واجهة المتجر"}</small></div>
@@ -162,7 +167,11 @@ function ProductManager({ scope = "admin", mid = null }) {
                   <td>{p.sub ? <span className="pt-mini-chip">{p.sub}</span> : <span style={{ color: "var(--p-mut)" }}>—</span>}</td>
                   <td><b>{fmt(p.priceIQD)} {CUR}</b><div style={{ color: "var(--p-mut)", fontSize: 10, textDecoration: "line-through" }}>{fmt(p.mrpIQD)}</div></td>
                   <td>{merchants.find((m) => m.id === p.merchantId)?.name || "—"}</td>
-                  <td><Switch on={p.stock !== false} onToggle={() => updateProduct(p.id, { stock: !(p.stock !== false) })} /></td>
+                  <td>
+                    {p.qty != null ? (
+                      <span className={"pt-qty" + (p.qty === 0 ? " out" : p.qty <= (p.lowAt || 0) ? " low" : "")}>{p.qty === 0 ? "نفد" : p.qty <= (p.lowAt || 0) ? `${p.qty} ⚠️` : p.qty}</span>
+                    ) : <Switch on={p.stock !== false} onToggle={() => updateProduct(p.id, { stock: !(p.stock !== false) })} />}
+                  </td>
                   <td style={{ display: "flex", gap: 6 }}>
                     <button className="pt-btn ghost sm" onClick={() => openEdit(p)}><Pencil size={12} /></button>
                     <button className="pt-btn warn sm" onClick={() => confirm(`حذف «${p.name}»؟`) && removeProduct(p.id)}><Trash2 size={12} /></button>
@@ -193,7 +202,20 @@ function ProductManager({ scope = "admin", mid = null }) {
                 ))}
                 <button className="pt-img-add" onClick={() => addImage(upd, modal.data)}>＋<small>صورة</small></button>
               </div>
-              <div className="pt-tip">💡 المنتجات بأكثر من صورة تُباع <b>أضعافاً</b> — أضف صورًا من زوايا مختلفة ليثق الزبون ويشتري أسرع.</div>
+              <div className="pt-imgbtns">
+                <button className="ai-chip" onClick={genImage}>🎨 ولّد صورة متناسقة</button>
+                <button className="ai-chip" style={{ background: "#0C831F" }} onClick={showBgSuggest}>🖼️ اقترح خلفيات</button>
+              </div>
+              {bgSuggest && (
+                <div className="pt-bgsuggest">
+                  {bgSuggest.map((b, i) => (
+                    <div key={i} className="bgs" onClick={() => { upd({ images: [...(modal.data.images || []), b.url] }); setBgSuggest(null); }}>
+                      <img src={b.url} alt="" /><span>{b.cat.split(" ")[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="pt-tip">💡 المنتجات بأكثر من صورة تُباع <b>أضعافاً</b>. لا صورة حقيقية؟ ولّد صورة متناسقة بألوان القسم بنقرة — تبدو نظيفة كبلينكيت.</div>
               <input className="pt-in" style={{ marginTop: 6 }} value={modal.data.e} onChange={(e) => upd({ e: e.target.value })} placeholder="الإيموجي (يظهر إن لم توجد صورة)" />
             </div>
 
@@ -229,6 +251,13 @@ function ProductManager({ scope = "admin", mid = null }) {
             </div>
             <div className="pt-field"><label>السعر قبل الخصم (اختياري)</label>
               <input className="pt-in" type="number" step="50" value={modal.data.mrpIQD} onChange={(e) => upd({ mrpIQD: e.target.value })} /></div>
+            <div className="pt-row2">
+              <div className="pt-field"><label>الكمية المتوفّرة في المخزون</label>
+                <input className="pt-in" type="number" min="0" value={modal.data.qty ?? 50} onChange={(e) => upd({ qty: e.target.value })} /></div>
+              <div className="pt-field"><label>تنبيه عند اقتراب النفاد (كمية)</label>
+                <input className="pt-in" type="number" min="0" value={modal.data.lowAt ?? 10} onChange={(e) => upd({ lowAt: e.target.value })} /></div>
+            </div>
+            <div className="pt-tip">📦 عند بيع المنتج تنقص الكمية تلقائياً. عند وصولها للحد ينبّهك النظام، وعند الصفر يختفي المنتج من المتجر.</div>
 
             {/* خيارات المنتج (variants) */}
             <div className="pt-field"><label>خيارات المنتج (أحجام/أنواع متعددة تظهر كـ «N خيارات»)</label>

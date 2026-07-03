@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useRef, useEffect } from "react";
 import { DEALS_ROWS } from "../data/rowSections.js";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
-import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
+import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
 import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState } from "../store/appStore.js";
@@ -314,11 +314,12 @@ function Couriers() {
 /* ---------------- الإعدادات ---------------- */
 function SettingsPage() {
   const settings = useStore((s) => s.settings);
+  const baked = hasBakedConfig();
   return (
     <>
       <div className="pt-h1">إعدادات المتجر<small>تنعكس فوراً على واجهة الزبائن</small></div>
       <div className="pt-card">
-        <div className="cap">🗄️ تكامل Supabase — رفع صور المنتجات</div>
+        <div className="cap">🗄️ تكامل Supabase — رفع صور المنتجات{baked && <span className="save-badge" style={{ marginRight: 8 }}>✓ مزامَن لكل الأجهزة</span>}</div>
         <SupabaseCard />
       </div>
       <div className="pt-card">
@@ -653,6 +654,7 @@ function SupabaseCard() {
   const [saved, setSaved] = useState(false);
   const [test, setTest] = useState("");
   const save = () => { setSupabaseCfg(cfg); setSaved(true); setTimeout(() => setSaved(false), 1500); };
+  const baked = hasBakedConfig();
   const runTest = async () => {
     setSupabaseCfg(cfg); setTest("جارٍ الاختبار…");
     try {
@@ -677,7 +679,7 @@ function SupabaseCard() {
         <button className="pt-btn sm ghost" onClick={runTest} disabled={!cfg.url || !cfg.anonKey}>🧪 اختبار الاتصال</button>
       </div>
       {test && <div className={"pt-testres " + (test.startsWith("✅") ? "ok" : test.startsWith("❌") ? "err" : "")}>{test}</div>}
-      <div className="pt-tip" style={{ marginTop: 8 }}>ℹ️ شغّل ملف <b>supabase-setup.sql</b> في Supabase (SQL Editor) أولًا — ينشئ bucket «products» العام وسياساته. استخدم مفتاح <b>anon</b> العام فقط.</div>
+      <div className="pt-tip" style={{ marginTop: 8 }}>{baked ? <>✅ الإعداد الدائم مرفوع مع الموقع — <b>يعمل تلقائياً على كل الأجهزة</b> بلا إعادة إدخال. الحقول أعلاه لتجاوز مؤقت على هذا الجهاز فقط.</> : <>ℹ️ للمزامنة على كل الأجهزة: ضع القيم في <b>src/config.js</b> وارفعها على GitHub. أو أدخلها هنا لهذا الجهاز فقط.</>}</div>
     </div>
   );
 }

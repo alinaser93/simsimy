@@ -381,7 +381,15 @@ export const placeOrder = (items, extra = {}) => {
     note: extra.note || "",
     total: subtotal + fee + s.settings.serviceFee + tip,
   };
-  setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1 });
+  // إنقاص كمية المخزون للمنتجات المطلوبة (إن كانت تُدار بالكمية)
+  const soldQty = {};
+  items.forEach((i) => { soldQty[i.id] = (soldQty[i.id] || 0) + i.qty; });
+  const products = s.products.map((p) => {
+    if (p.qty == null || !soldQty[p.id]) return p;
+    const q = Math.max(0, p.qty - soldQty[p.id]);
+    return { ...p, qty: q, stock: q > 0 };
+  });
+  setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1, products });
   return order;
 };
 
