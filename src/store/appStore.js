@@ -69,6 +69,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
+  layoutVersion: 2, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -165,6 +166,11 @@ const load = () => {
 
 const mergeSaved = (d, saved) => {
   if (!saved) return d;
+  // إن كان التخطيط المحفوظ من إصدار أقدم، جدّده تلقائياً (يعيد الفئات والأقسام الجديدة)
+  const staleLayout = (saved.layoutVersion || 0) < (d.layoutVersion || 0);
+  if (staleLayout) {
+    saved = { ...saved, homeBlocks: undefined, tabBlocks: undefined, banners: undefined, trio: undefined, bigStores: undefined, layoutVersion: d.layoutVersion };
+  }
   const out = { ...d, ...saved };
   ["settings", "appearance", "texts"].forEach((k) => { out[k] = { ...d[k], ...(saved[k] || {}) }; });
   ["banners", "trio", "bigStores", "addresses", "homeBlocks", "customTabs"].forEach((k) => { if (!Array.isArray(saved[k])) out[k] = d[k]; });
