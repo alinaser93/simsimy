@@ -88,6 +88,15 @@ function Dash({ mid }) {
   const pending = orders.filter((o) => ["جديد", "قيد التجهيز"].includes(o.status)).length;
   const outOfStock = products.filter((p) => p.qty === 0 || (p.qty == null && p.stock === false));
   const lowStock = products.filter((p) => p.qty != null && p.qty > 0 && p.qty <= (p.lowAt || 0));
+  // الأكثر مبيعًا (من الطلبات المُسلَّمة)
+  const soldMap = {};
+  orders.filter((o) => o.status === "تم التوصيل").forEach((o) => {
+    (o.items || []).filter((i) => i.merchantId === mid).forEach((i) => {
+      soldMap[i.id] = soldMap[i.id] || { name: i.name, e: i.e, qty: 0, rev: 0 };
+      soldMap[i.id].qty += i.qty; soldMap[i.id].rev += i.priceIQD * i.qty;
+    });
+  });
+  const bestSellers = Object.values(soldMap).sort((a, b) => b.qty - a.qty).slice(0, 5);
   return (
     <>
       <div className="pt-h1">لوحة المتجر<small>أداء متجرك اليوم</small></div>
@@ -118,6 +127,23 @@ function Dash({ mid }) {
         <Stat Icon={PackageSearch} l="منتجاتي" v={products.length} />
         {outOfStock.length > 0 && <Stat Icon={PackageSearch} l="نفدت من المخزون" v={outOfStock.length} />}
       </div>
+      {bestSellers.length > 0 && (
+        <div className="pt-card">
+          <div className="cap">🔥 الأكثر مبيعاً في متجرك</div>
+          <div className="bs-list">
+            {bestSellers.map((p, i) => (
+              <div className="bs-row" key={i}>
+                <span className="bs-rank">{i + 1}</span>
+                <span className="bs-e">{p.e}</span>
+                <span className="bs-nm">{p.name}</span>
+                <span className="bs-qty">{p.qty} مبيع</span>
+                <span className="bs-rev">{fmt(p.rev)} {CUR}</span>
+              </div>
+            ))}
+          </div>
+          <div className="pt-note" style={{ margin: "8px 12px 12px" }}>💡 تأكّد من توفّر هذه المنتجات دائماً — فهي مصدر دخلك الأساسي.</div>
+        </div>
+      )}
       <div className="pt-card">
         <div className="cap">أحدث طلبات متجري</div>
         <div className="mw-list">
@@ -137,6 +163,44 @@ function Dash({ mid }) {
         </div>
       </div>
     </>
+  );
+}
+
+// معلومات المندوب للطلب (للتاجر): الإسناد، الاسم، اتصال/واتساب، حالة الوصول
+function CourierInfo({ order }) {
+  const couriers = useStore((s) => s.couriers);
+  const courier = order.courierId ? couriers.find((c) => c.id === order.courierId) : null;
+  if (!courier) {
+    return (
+      <div className="ci-box pending">
+        <span className="ci-ic">🚚</span>
+        <div className="ci-tx"><b>لم يُسنَد مندوب بعد</b><small>سيُعيَّن مندوب عند جاهزية الطلب</small></div>
+      </div>
+    );
+  }
+  const ph = (courier.phone || "").replace(/\s/g, "");
+  // حالة وصول المندوب للمتجر (تقديرياً من الحالة)
+  const atStore = ["وصل المندوب"].includes(order.status);
+  const onWay = order.status === "في الطريق";
+  const statusTxt = order.status === "جاهز للتوصيل" ? "المندوب قادم لاستلام الطلب"
+    : onWay ? "🛵 المندوب انطلق للزبون"
+    : atStore ? "✅ المندوب استلم الطلب"
+    : order.status === "تم التوصيل" ? "✅ تم التوصيل"
+    : "المندوب مُسنَد للطلب";
+  return (
+    <div className="ci-box">
+      <div className="ci-head">
+        <span className="ci-ic">🛵</span>
+        <div className="ci-tx"><b>المندوب: {courier.name}</b><small>{statusTxt}</small></div>
+      </div>
+      <div className="ci-btns">
+        <a className="ord-cbtn call" href={`tel:${ph}`}><Phone size={14} /> اتصال</a>
+        <a className="ord-cbtn wa" target="_blank" rel="noreferrer" href={`https://wa.me/964${ph.replace(/^0/, "")}?text=${encodeURIComponent(`مرحباً ${courier.name}، بخصوص الطلب #${order.id}`)}`}><MessageCircle size={14} /> واتساب</a>
+      </div>
+      {(order.courierLat != null) && (onWay || atStore) && (
+        <div className="ci-track">📍 موقع المندوب مُحدَّث لحظياً — <b>{onWay ? "في الطريق للزبون" : "عند المتجر"}</b></div>
+      )}
+    </div>
   );
 }
 
@@ -170,7 +234,7 @@ function Orders({ mid }) {
                 <div className="ord-head" onClick={() => setExpanded(isOpen ? null : o.id)}>
                   <div className="ord-l">
                     <div className="ord-id">#{o.id} <span className="ord-time">{timeAgo(o.time)}</span></div>
-                    <div className="ord-cust">{o.customer.name}{(o.merchantCount || 1) > 1 ? ` · مشترك مع ${o.merchantCount - 1} متجر` : ""}</div>
+                    <div className="ord-cust">طلب توصيل{(o.merchantCount || 1) > 1 ? ` · مشترك مع ${o.merchantCount - 1} متجر` : ""}</div>
                     <div className="ord-items-mini">{myShare.map((i, x) => <span key={x}>{i.e}</span>)}</div>
                   </div>
                   <div className="ord-r">
@@ -181,12 +245,9 @@ function Orders({ mid }) {
                 </div>
                 {isOpen && (
                   <div className="ord-body">
-                    <div className="ord-contact">
-                      <span className="ord-phone">{o.customer.phone}</span>
-                      <a className="ord-cbtn call" href={`tel:${ph}`}><Phone size={15} /> اتصال</a>
-                      <a className="ord-cbtn wa" target="_blank" rel="noreferrer" href={`https://wa.me/964${ph.replace(/^0/, "")}?text=${encodeURIComponent(`مرحباً ${o.customer.name}، بخصوص طلبك #${o.id}`)}`}><MessageCircle size={15} /> واتساب</a>
-                    </div>
+                    {/* العنوان فقط — نُخفي اسم/هاتف الزبون حمايةً من سرقة الطلب */}
                     <div className="ord-addr">📍 {o.customer.address}</div>
+                    <CourierInfo order={o} />
                     <div className="ord-sec-t">📦 عناصر طلبك {canEdit(o) ? "— احذف الناقص أو عدّل الكمية" : "(لا يمكن التعديل بعد انطلاق المندوب)"}</div>
                     <div className="mc-items">
                       {myShare.map((i) => (
@@ -195,9 +256,8 @@ function Orders({ mid }) {
                           <span className="nm">{i.name}</span>
                           {canEdit(o) ? (
                             <span className="qtybox">
-                              <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty - 1)}><Minus size={12} /></button>
+                              <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty - 1)} title="تقليل الكمية"><Minus size={12} /></button>
                               <b>{i.qty}</b>
-                              <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty + 1)}><Plus size={12} /></button>
                             </span>
                           ) : <span className="qty">×{i.qty}</span>}
                           <span className="pr">{fmt(i.priceIQD * i.qty)} {CUR}</span>

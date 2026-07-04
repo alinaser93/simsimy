@@ -256,8 +256,12 @@ function ProductManager({ scope = "admin", mid = null }) {
 
       {modal && (
         <div className="pt-dim" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <div className="pt-modal">
-            <h3>{modal.mode === "add" ? "✨ إضافة منتج ذكي" : "تعديل المنتج"}</h3>
+          <div className="pt-modal pm-modal">
+            <div className="pm-modal-head">
+              <h3>{modal.mode === "add" ? "✨ إضافة منتج" : "تعديل المنتج"}</h3>
+              <button className="pm-modal-x" onClick={closeModal}>✕</button>
+            </div>
+            <div className="pm-modal-body">
 
             {/* صور متعددة */}
             <div className="pt-field"><label>صور المنتج (يمكن إضافة أكثر من صورة)</label>
@@ -369,9 +373,10 @@ function ProductManager({ scope = "admin", mid = null }) {
               <select className="pt-in" style={{ width: "100%" }} value={modal.data.merchantId} onChange={(e) => upd({ merchantId: e.target.value })}>
                 {merchants.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select></div>}
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              <button className="pt-btn" style={{ flex: 1 }} onClick={save}>💾 {modal.mode === "add" ? "إضافة المنتج" : "حفظ"}</button>
+            </div>
+            <div className="pm-modal-foot">
               <button className="pt-btn ghost" onClick={closeModal}>إلغاء</button>
+              <button className="pt-btn" style={{ flex: 1 }} onClick={save}>💾 {modal.mode === "add" ? "إضافة المنتج" : "حفظ التعديلات"}</button>
             </div>
           </div>
         </div>

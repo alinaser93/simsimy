@@ -421,3 +421,47 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .pm-price s{font-size:11px;color:var(--p-mut);}
 .pm-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:0 0 auto;}
 .pm-btns{display:flex;gap:5px;}
+
+/* معلومات المندوب (بطاقة التاجر) */
+.ci-box{margin-top:12px;background:#eef4fb;border:1px solid #d5e3f5;border-radius:11px;padding:11px 13px;}
+.ci-box.pending{background:#fff6e6;border-color:#f0dca8;display:flex;align-items:center;gap:10px;}
+.ci-head{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.ci-ic{font-size:22px;flex:0 0 auto;}
+.ci-tx{flex:1;min-width:0;}
+.ci-tx b{font-size:13px;font-weight:800;color:var(--p-ink);display:block;}
+.ci-tx small{font-size:11px;color:var(--p-mut2,#666);}
+.ci-btns{display:flex;gap:8px;}
+.ci-track{margin-top:9px;font-size:11px;color:#2A6ED9;font-weight:700;background:#fff;padding:7px 10px;border-radius:8px;}
+
+/* ═══ مودال تعديل المنتج المحسّن (رأس/تذييل ثابت) ═══ */
+.pm-modal{padding:0 !important;display:flex;flex-direction:column;max-height:92vh;direction:rtl;}
+.pm-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--p-border,#eee);flex:0 0 auto;background:var(--p-card,#fff);border-radius:16px 16px 0 0;position:sticky;top:0;z-index:2;}
+.pm-modal-head h3{margin:0 !important;font-size:16px;font-weight:900;}
+.pm-modal-x{border:none;background:var(--p-hover,#f2f2f2);width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;color:var(--p-mut);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.pm-modal-body{flex:1;overflow-y:auto;padding:16px 18px;}
+.pm-modal-foot{display:flex;gap:10px;padding:12px 18px;border-top:1px solid var(--p-border,#eee);flex:0 0 auto;background:var(--p-card,#fff);border-radius:0 0 16px 16px;position:sticky;bottom:0;box-shadow:0 -3px 12px rgba(0,0,0,.05);}
+.pm-modal-foot .pt-btn{padding:12px;font-size:14px;}
+/* محاذاة صحيحة داخل المودال */
+.pm-modal .pt-in,.pm-modal textarea.pt-in{text-align:right;direction:rtl;width:100%;}
+.pm-modal input.pt-in[dir="ltr"]{direction:ltr;text-align:right;}
+.pm-modal .pt-field label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between;}
+.pm-modal .pt-field label .ai-chip{margin-right:auto;}
+.pm-modal select.pt-in{width:100% !important;}
+.pm-modal .pt-row2{gap:12px;}
+
+/* حماية من أي تمرير أفقي في المودال */
+.pm-modal-body{overflow-x:hidden;}
+.pm-modal .pt-imgbtns{flex-wrap:wrap;}
+.pm-modal .pt-imgbtns .ai-chip{flex:1;min-width:calc(50% - 4px);justify-content:center;}
+.pm-modal .pt-variant-row{flex-wrap:wrap;}
+.pm-modal .pt-variant-row input{min-width:0;}
+
+/* الأكثر مبيعًا */
+.bs-list{padding:10px 12px;display:flex;flex-direction:column;gap:7px;}
+.bs-row{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--p-hover,#f7f7f7);border-radius:10px;}
+.bs-rank{width:22px;height:22px;border-radius:50%;background:#F8CB46;color:#3a2e00;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.bs-row:first-child .bs-rank{background:#FFD700;}
+.bs-e{font-size:19px;flex:0 0 auto;}
+.bs-nm{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--p-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bs-qty{font-size:11px;font-weight:800;color:#0C831F;background:#e6f8ec;padding:3px 8px;border-radius:8px;flex:0 0 auto;}
+.bs-rev{font-size:11.5px;font-weight:800;color:var(--p-ink);flex:0 0 auto;}
