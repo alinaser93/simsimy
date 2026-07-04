@@ -849,3 +849,20 @@ html,body{margin:0;height:100%;}
 .bk-cart .view{display:flex;align-items:center;gap:6px;color:#fff;font-size:14px;font-weight:800;padding:0 6px;cursor:pointer;position:relative;z-index:2;letter-spacing:-.2px;}
 .bk-cart .view:active{transform:scale(.95);}
 .bk-cart-count{background:rgba(255,255,255,.24);color:#fff;font-size:12px;font-weight:900;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+
+/* ═══ احتفال التوصيل المجاني (بصري خالص) ═══ */
+.bk-celebrate{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none;overflow:hidden;animation:bkCelebFade 2.6s ease forwards;}
+@keyframes bkCelebFade{0%{opacity:0;}8%{opacity:1;}82%{opacity:1;}100%{opacity:0;}}
+/* شارة دائرية نابضة */
+.bk-celebrate-badge{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center;z-index:2;}
+.bk-celebrate-emoji{font-size:64px;animation:bkCelebPop .6s cubic-bezier(.34,1.6,.5,1);z-index:3;filter:drop-shadow(0 6px 14px rgba(0,0,0,.25));}
+@keyframes bkCelebPop{0%{transform:scale(0) rotate(-30deg);}70%{transform:scale(1.25) rotate(8deg);}100%{transform:scale(1) rotate(0);}}
+.bk-celebrate-ring{position:absolute;inset:0;border-radius:50%;border:3px solid #0C831F;opacity:0;animation:bkRing 1.6s ease-out infinite;}
+.bk-celebrate-ring.r2{border-color:#F8CB46;animation-delay:.5s;}
+@keyframes bkRing{0%{transform:scale(.5);opacity:.7;}100%{transform:scale(1.7);opacity:0;}}
+/* حبّة نصّية أنيقة */
+.bk-celebrate-pill{background:linear-gradient(120deg,#0C831F,#0a7a1c);color:#fff;font-size:19px;font-weight:900;padding:13px 28px;border-radius:30px;box-shadow:0 10px 28px rgba(12,131,31,.4);z-index:2;letter-spacing:-.3px;animation:bkCelebPill .55s cubic-bezier(.34,1.5,.5,1) .12s both;}
+@keyframes bkCelebPill{0%{transform:translateY(20px) scale(.8);opacity:0;}100%{transform:translateY(0) scale(1);opacity:1;}}
+/* قصاصات ملوّنة */
+.bk-confetti{position:absolute;top:-24px;border-radius:2px;animation:bkConfetti linear forwards;z-index:1;}
+@keyframes bkConfetti{0%{transform:translateY(0) rotate(0);opacity:1;}100%{transform:translateY(920px) rotate(720deg);opacity:.25;}}

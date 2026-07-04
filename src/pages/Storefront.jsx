@@ -284,13 +284,21 @@ export default function Storefront() {
         {/* الشريط السفلي يظهر فقط على المتجر وصفحة التصنيف — يُخفى داخل الصفحات الكاملة كي لا يغطّي أزرارها */}
         {celebrate && (
           <div className="bk-celebrate">
-            <div className="bk-celebrate-card">
+            <div className="bk-celebrate-badge">
               <div className="bk-celebrate-emoji">🎉</div>
-              <div className="bk-celebrate-t">توصيل مجاني!</div>
-              <div className="bk-celebrate-s">وصلت إلى {fmt(freeAbove)} د.ع — طلبك يُوصَّل مجاناً</div>
+              <div className="bk-celebrate-ring" />
+              <div className="bk-celebrate-ring r2" />
             </div>
-            {Array.from({ length: 24 }).map((_, i) => (
-              <span className="bk-confetti" key={i} style={{ left: (i * 4.2) + "%", animationDelay: (i % 8 * 0.12) + "s", background: ["#F8CB46","#0C831F","#E23744","#2A6ED9","#F0851C"][i % 5] }} />
+            <div className="bk-celebrate-pill">🚚 توصيل مجاني!</div>
+            {Array.from({ length: 40 }).map((_, i) => (
+              <span className="bk-confetti" key={i} style={{
+                left: (i * 2.5) + "%",
+                animationDelay: (i % 10 * 0.09) + "s",
+                animationDuration: (2 + (i % 5) * 0.35) + "s",
+                background: ["#F8CB46","#0C831F","#E23744","#2A6ED9","#F0851C","#9B59B6"][i % 6],
+                width: (i % 3 === 0 ? 11 : 8) + "px",
+                height: (i % 2 === 0 ? 14 : 9) + "px",
+              }} />
             ))}
           </div>
         )}
