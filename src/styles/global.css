@@ -821,31 +821,31 @@ html,body{margin:0;height:100%;}
 .bk-fly img{width:100%;height:100%;object-fit:cover;}
 
 
-/* ═══ شريط السلة المدمج الأنيق ═══ */
-.bk-cartbar{position:absolute;left:12px;right:12px;bottom:74px;z-index:29;border-radius:14px;overflow:hidden;
+
+/* ═══ شريط السلة المضغوط المتوسّط (بلينكيت) ═══ */
+.bk-cartbar{position:absolute;left:50%;transform:translateX(-50%);bottom:80px;z-index:29;
+  width:auto;max-width:88%;border-radius:30px;overflow:hidden;
   animation:bkCartRise .34s cubic-bezier(.34,1.3,.5,1);
-  box-shadow:0 8px 22px rgba(12,131,31,.28), 0 1px 4px rgba(0,0,0,.1);}
-@keyframes bkCartRise{0%{transform:translateY(130%);opacity:0;}100%{transform:translateY(0);opacity:1;}}
-/* خط تقدّم رفيع أعلى الشريط (مدموج) */
-.bk-cbar-line{height:3px;background:rgba(255,255,255,.28);}
+  box-shadow:0 8px 24px rgba(12,131,31,.34), 0 2px 6px rgba(0,0,0,.16);}
+@keyframes bkCartRise{0%{transform:translateX(-50%) translateY(140%);opacity:0;}100%{transform:translateX(-50%) translateY(0);opacity:1;}}
+/* خط تقدّم رفيع أعلى الشريط */
+.bk-cbar-line{height:3px;background:rgba(255,255,255,.3);}
 .bk-cbar-line-fill{height:100%;background:linear-gradient(90deg,#FFD24D,#FFB020);transition:width .5s cubic-bezier(.34,1.2,.5,1);box-shadow:0 0 6px rgba(255,176,32,.7);}
 .bk-cartbar.is-free .bk-cbar-line-fill{background:#FFE08A;}
-/* الشريط الرئيسي — مضغوط 50px */
+/* الشريط — بعرض المحتوى فقط، ارتفاع 46px */
 .bk-cartbar .bk-cart{position:static;left:auto;right:auto;bottom:auto;margin:0;border-radius:0;box-shadow:none;animation:none;
-  height:50px;background:linear-gradient(115deg,#0C831F,#0a7a1c);padding:0 14px 0 8px;overflow:hidden;}
+  height:46px;background:linear-gradient(115deg,#0C831F,#0a7a1c);padding:0 6px 0 8px;overflow:hidden;
+  display:inline-flex;align-items:center;gap:9px;white-space:nowrap;}
 .bk-cart-shine{position:absolute;top:0;left:-60%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-20deg);animation:bkShine 4s ease-in-out infinite;pointer-events:none;}
 @keyframes bkShine{0%{left:-60%;}50%,100%{left:130%;}}
-.bk-cart .l{display:flex;align-items:center;gap:10px;color:#fff;position:relative;z-index:2;min-width:0;}
-/* صور مصغّرة أصغر ومتناسقة */
-.bk-cart-thumbs{display:flex;direction:ltr;align-items:center;flex:0 0 auto;}
-.bk-cart-thumbs .th{width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:17px;flex:0 0 auto;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+/* صور مصغّرة صغيرة */
+.bk-cart-thumbs{display:flex;direction:ltr;align-items:center;flex:0 0 auto;position:relative;z-index:2;}
+.bk-cart-thumbs .th{width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:16px;flex:0 0 auto;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
 .bk-cart-thumbs .th img{width:100%;height:100%;object-fit:cover;}
-.bk-cart-thumbs .th.more{background:rgba(255,255,255,.24);color:#fff;font-size:11px;font-weight:800;}
+.bk-cart-thumbs .th.more{background:rgba(255,255,255,.24);color:#fff;font-size:10px;font-weight:800;}
 .bk-cart-thumbs.bump .th:first-child{animation:bkThumbBump .5s cubic-bezier(.34,1.56,.64,1);}
 @keyframes bkThumbBump{0%{transform:scale(1);}40%{transform:scale(1.3);}100%{transform:scale(1);}}
-.bk-cart .txt{min-width:0;overflow:hidden;}
-.bk-cart .txt b{font-size:13.5px;font-weight:800;display:block;line-height:1.2;}
-.bk-cart .txt span{font-size:10.5px;opacity:.9;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
-/* زرّ عرض السلة مضغوط */
-.bk-cart .view{display:flex;align-items:center;gap:3px;color:#fff;font-size:13.5px;font-weight:800;height:50px;padding:0 4px;cursor:pointer;position:relative;z-index:2;flex:0 0 auto;}
-.bk-cart .view:active{transform:scale(.96);}
+/* عرض السلة + عدد */
+.bk-cart .view{display:flex;align-items:center;gap:6px;color:#fff;font-size:14px;font-weight:800;padding:0 6px;cursor:pointer;position:relative;z-index:2;letter-spacing:-.2px;}
+.bk-cart .view:active{transform:scale(.95);}
+.bk-cart-count{background:rgba(255,255,255,.24);color:#fff;font-size:12px;font-weight:900;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
