@@ -2,7 +2,7 @@ import { useState , useEffect } from "react";
 import MapView from "../components/MapView.jsx";
 import { getCurrentLocation } from "../utils/geo.js";
 import { Bike, PackageCheck, Wallet, MapPin, Phone, CheckCircle2, HandCoins, Navigation, DoorOpen, Banknote } from "lucide-react";
-import { useStore, setOrderStatus, assignCourier, toggleCourier, courierRemit } from "../store/appStore.js";
+import { useStore, setOrderStatus, assignCourier, toggleCourier, courierRemit , updateCourierLocation } from "../store/appStore.js";
 import { courierWageOf, courierCash } from "../store/finance.js";
 import { fmt, CUR } from "../utils/currency.js";
 import { Shell, StatusBadge, Switch, Stat, timeAgo, usePortalPrefs, useOrderAlert } from "../portal/PortalKit.jsx";
@@ -81,6 +81,23 @@ function Courier({ cid, onLogout }) {
 
 
 // خريطة المندوب: موقعه + موقع الزبون + المسار
+
+// يبثّ موقع المندوب الحيّ للطلبات النشطة (watchPosition)
+function useCourierLocationBroadcast(activeOrderIds) {
+  useEffect(() => {
+    if (!activeOrderIds.length || !navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        activeOrderIds.forEach((id) => updateCourierLocation(id, coords));
+      },
+      () => { /* رُفض الإذن أو تعذّر */ },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [activeOrderIds.join(",")]);
+}
+
 function CourierMap({ order }) {
   const storeLoc = useStore((s) => s.storeLocation);
   const home = order.lat && order.lng ? { lat: order.lat, lng: order.lng } : { lat: storeLoc.lat + 0.012, lng: storeLoc.lng + 0.008 };
@@ -153,7 +170,7 @@ function Available({ me }) {
 
 function Mine({ me }) {
   const orders = useStore((s) => s.orders).filter((o) => o.courierId === me.id && ["في الطريق", "وصل المندوب"].includes(o.status));
-  const withMap = true;
+  useCourierLocationBroadcast(orders.filter((o) => o.status === "في الطريق").map((o) => o.id)); // بثّ موقعي الحيّ للزبون
   const nextOf = (o) =>
     o.status === "في الطريق"
       ? { l: "وصلتُ للعنوان", to: "وصل المندوب", Icon: DoorOpen }

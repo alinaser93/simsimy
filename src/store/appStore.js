@@ -317,6 +317,7 @@ export const removeCustomTab = (id) => {
   setState((s) => ({ customTabs: s.customTabs.filter((t) => t.id !== id), histV: (s.histV || 0) + 1 }));
 };
 
+export const setStoreLocation = (coords, name) => setState((s) => ({ storeLocation: { lat: coords.lat, lng: coords.lng, name: name || s.storeLocation.name } }));
 export const updateSettings = (patch) =>
   setState((s) => ({ settings: { ...s.settings, ...patch } }));
 
@@ -454,6 +455,19 @@ export const placeOrder = (items, extra = {}) => {
   setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1, products });
   afterOrderChange(order.id);
   return order;
+};
+
+// تحديث موقع التوصيل للطلب (موقع الزبون الحقيقي بالGPS)
+export const updateOrderLocation = (id, coords) => {
+  if (!coords) return;
+  setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, lat: coords.lat, lng: coords.lng } : o)) }));
+  afterOrderChange(id);
+};
+// تحديث موقع المندوب الحيّ (يُبثّ للزبون لحظياً)
+export const updateCourierLocation = (id, coords) => {
+  if (!coords) return;
+  setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, courierLat: coords.lat, courierLng: coords.lng, courierAt: Date.now() } : o)) }));
+  afterOrderChange(id);
 };
 
 // تسوية التاجر: الأدمن يدفع مستحقات الطلبات المُسلّمة غير المسوّاة → بانتظار تأكيد التاجر

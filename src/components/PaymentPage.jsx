@@ -1,19 +1,27 @@
 import { useState } from "react";
 import { ChevronRight, CreditCard } from "lucide-react";
-import { useStore, placeOrder } from "../store/appStore.js";
+import { useStore, placeOrder, updateOrderLocation } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
+import { getCurrentLocation } from "../utils/geo.js";
 
 /* صفحة اختيار طريقة الدفع — مطابقة للتدفق الأصلي (بطاقات/محافظ/نقداً) */
 export default function PaymentPage({ pending, onBack, onPlaced }) {
   const settings = useStore((s) => s.settings);
   const [method, setMethod] = useState("نقداً عند الاستلام");
+  const [placing, setPlacing] = useState(false);
 
   const subtotal = pending.items.reduce((a, i) => a + i.priceIQD * i.qty, 0);
   const fee = subtotal >= settings.freeAbove ? 0 : settings.deliveryFee;
   const total = subtotal + fee + settings.serviceFee + (pending.tip || 0);
 
-  const confirm = () => {
+  const confirm = async () => {
+    setPlacing(true);
+    // التقط موقع الزبون الحقيقي بالGPS (لتوصيل دقيق)
+    let coords = null;
+    try { const loc = await getCurrentLocation(); coords = { lat: loc.lat, lng: loc.lng }; } catch { /* سيُستخدم موقع العنوان */ }
     const order = placeOrder(pending.items, { tip: pending.tip, note: pending.note, payMethod: method });
+    if (coords) updateOrderLocation(order.id, coords); // استبدل بالموقع الحقيقي
+    setPlacing(false);
     onPlaced(order);
   };
 
@@ -57,9 +65,9 @@ export default function PaymentPage({ pending, onBack, onPlaced }) {
       </div>
 
       <div className="bk-pfoot">
-        <div className="bk-paybtn" onClick={confirm}>
+        <div className={"bk-paybtn" + (placing ? " dis" : "")} onClick={() => !placing && confirm()}>
           <div>{fmt(total)} {CUR}<small>{method}</small></div>
-          <div>تأكيد الطلب ✓</div>
+          <div>{placing ? "جارٍ تحديد موقعك…" : "تأكيد الطلب ✓"}</div>
         </div>
       </div>
     </div>

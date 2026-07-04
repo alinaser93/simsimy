@@ -1,16 +1,16 @@
 import React from "react";
+import { getCurrentLocation, reverseGeocode } from "../utils/geo.js";
 import { useState, useRef, useEffect } from "react";
 import { DEALS_ROWS } from "../data/rowSections.js";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
 import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
-import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState } from "../store/appStore.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
-  Coins, Phone, MessageCircle, MapPin, CheckCircle2,
-} from "lucide-react";
+  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown } from "lucide-react";
 import {
   useStore, updateProduct, addProduct, removeProduct, updateSettings,
   setOrderStatus, assignCourier, autoAssignCourier, findFreeCourier, toggleCourier, addCourier, addMerchant,
@@ -148,77 +148,94 @@ function Orders() {
   const [filter, setFilter] = useState("الكل");
   const list = filter === "الكل" ? orders : orders.filter((o) => o.status === filter);
   const mName = (id) => merchants.find((m) => m.id === id)?.name || "—";
+  const [open, setOpen] = useState(null);
   return (
     <>
-      <div className="pt-h1">إدارة الطلبات<small>تغيير الحالات وتعيين المندوبين — يدوياً أو تلقائياً</small></div>
+      <div className="pt-h1">إدارة الطلبات<small>اضغط على أي طلب لعرض التفاصيل وتغيير الحالة وتعيين المندوب</small></div>
       <div className="pt-card">
         <div className="cap">
-          كل الطلبات<span className="sp" />
-          <select className="pt-in" value={filter} onChange={(e) => setFilter(e.target.value)}>
+          كل الطلبات ({list.length})<span className="sp" />
+          <select className="pt-in" style={{ width: 150 }} value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option>الكل</option>
             {ORDER_STATUSES.map((s) => <option key={s}>{s}</option>)}
           </select>
         </div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>رقم</th><th>الزبون</th><th>العناصر</th><th>المتجر</th><th>الإجمالي</th><th>الدفع</th><th>بقشيش</th><th>الحالة</th><th>المندوب</th><th>الوقت</th></tr></thead>
-            <tbody>
-              {list.map((o) => (
-                <tr key={o.id}>
-                  <td><b>#{o.id}</b></td>
-                  <td>
-                    {o.customer.name}
-                    <div style={{ color: "var(--p-mut)", fontSize: 10.5, direction: "ltr", textAlign: "right" }}>{o.customer.phone}</div>
-                    <div style={{ display: "flex", gap: 5, marginTop: 5 }}>
-                      <a className="pt-icobtn" title="اتصال" href={`tel:${(o.customer.phone || "").replace(/\s/g, "")}`}><Phone size={13} /></a>
-                      <a className="pt-icobtn wa" title="واتساب" target="_blank" rel="noreferrer"
-                        href={`https://wa.me/964${(o.customer.phone || "").replace(/\s/g, "").replace(/^0/, "")}?text=${encodeURIComponent(`مرحباً ${o.customer.name}، بخصوص طلبك رقم ${o.id}`)}`}><MessageCircle size={13} /></a>
-                      <a className="pt-icobtn" title="الموقع على الخريطة" target="_blank" rel="noreferrer"
-                        href={`https://maps.google.com/?q=${encodeURIComponent(o.customer.address || "")}`}><MapPin size={13} /></a>
+        <div className="ord-list">
+          {list.map((o) => {
+            const isOpen = open === o.id;
+            const ph = (o.customer.phone || "").replace(/\s/g, "");
+            const wa = "964" + ph.replace(/^0/, "");
+            return (
+              <div key={o.id} className={"ord-card" + (isOpen ? " open" : "")}>
+                <div className="ord-head" onClick={() => setOpen(isOpen ? null : o.id)}>
+                  <div className="ord-l">
+                    <div className="ord-id">#{o.id} <span className="ord-time">{timeAgo(o.time)}</span></div>
+                    <div className="ord-cust">{o.customer.name}</div>
+                    <div className="ord-items-mini">{o.items.slice(0, 5).map((i, x) => <span key={x}>{i.e}</span>)}{o.items.length > 5 ? "…" : ""}</div>
+                  </div>
+                  <div className="ord-r">
+                    <StatusBadge s={o.status} />
+                    <div className="ord-total">{fmt(o.total)} {CUR}</div>
+                    <ChevronDown size={16} className="ord-chev" style={{ transform: isOpen ? "rotate(180deg)" : "none" }} />
+                  </div>
+                </div>
+                {isOpen && (
+                  <div className="ord-body">
+                    {/* تواصل */}
+                    <div className="ord-contact">
+                      <span className="ord-phone">{o.customer.phone}</span>
+                      <a className="ord-cbtn call" href={`tel:${ph}`}><Phone size={15} /> اتصال</a>
+                      <a className="ord-cbtn wa" target="_blank" rel="noreferrer" href={`https://wa.me/${wa}?text=${encodeURIComponent(`مرحباً ${o.customer.name}، بخصوص طلبك #${o.id}`)}`}><MessageCircle size={15} /> واتساب</a>
+                      <a className="ord-cbtn map" target="_blank" rel="noreferrer" href={o.lat ? `https://maps.google.com/?q=${o.lat},${o.lng}` : `https://maps.google.com/?q=${encodeURIComponent(o.customer.address || "")}`}><MapPin size={15} /> الموقع</a>
                     </div>
-                  </td>
-                  <td><span className="pt-items-mini">{o.items.slice(0, 4).map((i, x) => <span key={x}>{i.e}</span>)}</span></td>
-                  <td>
-                    {(o.merchantCount || 1) > 1 ? `${o.merchantCount} متاجر` : mName(o.merchantId)}
-                    <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>
-                      {Object.entries(o.readiness || {}).map(([mid, ok]) => (
-                        <span key={mid} className={"pt-mini-chip" + (ok ? " ok" : "")} title={mName(mid)}>
-                          {ok ? "✓" : "⌛"} {mName(mid).split(" ")[0]}
-                        </span>
-                      ))}
+                    <div className="ord-addr">📍 {o.customer.address}</div>
+                    {/* العناصر */}
+                    <div className="ord-sec-t">العناصر ({o.items.length})</div>
+                    <div className="ord-items-full">
+                      {o.items.map((i, x) => <div key={x} className="ord-item"><span>{i.e} {i.name}</span><b>×{i.qty}</b></div>)}
                     </div>
-                  </td>
-                  <td><b>{fmt(o.total)} {CUR}</b></td>
-                  <td style={{ fontSize: 11 }}>{o.payMethod || "نقداً"}{o.note ? <div style={{ color: "#c99a24", fontSize: 10 }}>📝 {o.note}</div> : null}</td>
-                  <td style={{ color: "#0C831F", fontWeight: 800 }}>{o.tip ? "+" + fmt(o.tip) : "—"}</td>
-                  <td>
-                    <select className="pt-in" value={o.status} onChange={(e) => setOrderStatus(o.id, e.target.value)}>
-                      {ORDER_STATUSES.map((s) => <option key={s}>{s}</option>)}
-                    </select>
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <select className="pt-in" value={o.courierId || ""} onChange={(e) => assignCourier(o.id, e.target.value || null)}>
-                        <option value="">بدون مندوب</option>
-                        {couriers.map((c) => {
-                          const load = orders.filter((x) => x.courierId === c.id && ["في الطريق", "وصل المندوب"].includes(x.status)).length;
-                          return <option key={c.id} value={c.id}>{c.name}{c.active === false ? " (غير متاح)" : load ? ` (${load} طلب)` : " (متاح)"}</option>;
-                        })}
-                      </select>
-                      {!o.courierId && ["جاهز للتوصيل", "قيد التجهيز"].includes(o.status) && (
-                        <button className="pt-btn sm" style={{ fontSize: 10.5, padding: "4px 8px" }}
-                          onClick={() => { const f = autoAssignCourier(o.id); alert(f ? `🛵 عُيّن تلقائياً: ${f.name}` : "لا يوجد مندوب متاح الآن"); }}>
-                          ⚡ تعيين تلقائي
-                        </button>
-                      )}
+                    {/* المتجر والجاهزية */}
+                    <div className="ord-meta">
+                      <span>🏪 {(o.merchantCount || 1) > 1 ? `${o.merchantCount} متاجر` : mName(o.merchantId)}</span>
+                      <span>{o.payMethod || "نقداً"}</span>
+                      {o.tip > 0 && <span style={{ color: "#0C831F", fontWeight: 800 }}>بقشيش +{fmt(o.tip)}</span>}
                     </div>
-                  </td>
-                  <td>{timeAgo(o.time)}</td>
-                </tr>
-              ))}
-              {list.length === 0 && <tr><td colSpan="10"><div className="pt-empty">لا توجد طلبات بهذه الحالة</div></td></tr>}
-            </tbody>
-          </table>
+                    {Object.keys(o.readiness || {}).length > 0 && (
+                      <div className="ord-ready">
+                        {Object.entries(o.readiness).map(([mid, ok]) => (
+                          <span key={mid} className={"pt-mini-chip" + (ok ? " ok" : "")}>{ok ? "✓" : "⌛"} {mName(mid).split(" ")[0]}</span>
+                        ))}
+                      </div>
+                    )}
+                    {o.note && <div className="ord-note">📝 {o.note}</div>}
+                    {/* التحكم */}
+                    <div className="ord-controls">
+                      <label>الحالة
+                        <select className="pt-in" value={o.status} onChange={(e) => setOrderStatus(o.id, e.target.value)}>
+                          {ORDER_STATUSES.map((st) => <option key={st}>{st}</option>)}
+                        </select>
+                      </label>
+                      <label>المندوب
+                        <select className="pt-in" value={o.courierId || ""} onChange={(e) => assignCourier(o.id, e.target.value || null)}>
+                          <option value="">بدون مندوب</option>
+                          {couriers.map((c) => {
+                            const load = orders.filter((x) => x.courierId === c.id && ["في الطريق", "وصل المندوب"].includes(x.status)).length;
+                            return <option key={c.id} value={c.id}>{c.name}{c.active === false ? " (غير متاح)" : load ? ` (${load} طلب)` : " (متاح)"}</option>;
+                          })}
+                        </select>
+                      </label>
+                    </div>
+                    {!o.courierId && ["جاهز للتوصيل", "قيد التجهيز"].includes(o.status) && (
+                      <button className="ord-autobtn" onClick={() => { const f = autoAssignCourier(o.id); alert(f ? `🛵 عُيّن تلقائياً: ${f.name}` : "لا يوجد مندوب متاح الآن"); }}>
+                        ⚡ تعيين مندوب تلقائياً (أقل حملاً)
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {list.length === 0 && <div className="pt-empty">لا توجد طلبات بهذه الحالة</div>}
         </div>
       </div>
     </>
@@ -329,6 +346,10 @@ function SettingsPage() {
   return (
     <>
       <div className="pt-h1">إعدادات المتجر<small>تنعكس فوراً على واجهة الزبائن</small></div>
+      <div className="pt-card">
+        <div className="cap">📍 موقع المتجر — يظهر للزبون على خريطة التتبّع</div>
+        <StoreLocationCard />
+      </div>
       <div className="pt-card">
         <div className="cap">🗄️ تكامل Supabase — رفع صور المنتجات{baked && <span className="save-badge" style={{ marginRight: 8 }}>✓ مزامَن لكل الأجهزة</span>}</div>
         <SupabaseCard />
@@ -659,6 +680,35 @@ function PageBuilder() {
   );
 }
 
+
+function StoreLocationCard() {
+  const loc = useStore((s) => s.storeLocation);
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState("");
+  const detect = async () => {
+    setBusy(true); setMsg("");
+    try {
+      const p = await getCurrentLocation();
+      setStoreLocation({ lat: p.lat, lng: p.lng });
+      const addr = await reverseGeocode(p.lat, p.lng);
+      setStoreLocation({ lat: p.lat, lng: p.lng }, addr);
+      setMsg("✓ حُدّد موقع المتجر: " + addr);
+    } catch (e) { setMsg("⚠️ " + e.message); }
+    setBusy(false);
+  };
+  return (
+    <div style={{ padding: 14 }}>
+      <div style={{ fontSize: 12.5, color: "var(--p-mut)", marginBottom: 10 }}>
+        الموقع الحالي: <b style={{ color: "var(--p-ink)" }}>{loc.name}</b> ({loc.lat.toFixed(4)}, {loc.lng.toFixed(4)})
+      </div>
+      <button className="bk-gps-btn" style={{ maxWidth: 320 }} onClick={detect} disabled={busy}>
+        {busy ? "جارٍ التحديد…" : "📍 حدّد موقع المتجر (GPS)"}
+      </button>
+      {msg && <div style={{ fontSize: 12, marginTop: 8, color: msg.startsWith("✓") ? "#0C831F" : "#c0303a", fontWeight: 700 }}>{msg}</div>}
+      <div style={{ fontSize: 11, color: "var(--p-mut)", marginTop: 8 }}>💡 قِف في المتجر واضغط الزرّ، أو افتح الإعدادات من جهاز داخل المتجر.</div>
+    </div>
+  );
+}
 
 function SupabaseCard() {
   const [cfg, setCfg] = useState(() => getSupabaseCfg() || { url: "", anonKey: "", bucket: "products" });

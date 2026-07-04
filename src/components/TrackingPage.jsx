@@ -68,7 +68,9 @@ export default function TrackingPage({ orderId, onBack }) {
     prevStatus.current = order.status;
   }, [order.status, notifEnabled, order.id, order.rejectReason]);
 
-  const courierPos = lerp(store, home, progress);
+  // موقع المندوب: الحقيقي الحيّ (من جهاز المندوب) إن توفّر، وإلا محاكاة تقريبية
+  const liveCourier = order.courierLat != null && order.courierLng != null;
+  const courierPos = liveCourier ? { lat: order.courierLat, lng: order.courierLng } : lerp(store, home, progress);
   const showCourier = order.status === "في الطريق" || order.status === "وصل المندوب";
   const mapMarkers = [
     { lat: home.lat, lng: home.lng, type: "home", label: "موقع التوصيل" },
@@ -97,9 +99,9 @@ export default function TrackingPage({ orderId, onBack }) {
           <div className="bk-trkmap">
             <MapView center={[home.lat, home.lng]} zoom={14} height={240}
               markers={mapMarkers}
-              route={showCourier && !done ? [[store.lat, store.lng], [home.lat, home.lng]] : null} />
+              route={showCourier && !done ? [[courierPos.lat, courierPos.lng], [home.lat, home.lng]] : null} />
             {showCourier && !done && (
-              <div className="bk-trkmap-badge">🛵 المندوب في الطريق إليك — {Math.round((1 - progress) * (eta || 15))} دقيقة تقريباً</div>
+              <div className="bk-trkmap-badge">🛵 {liveCourier ? "تتبّع مباشر لموقع المندوب" : "المندوب في الطريق إليك"} — {Math.round((1 - progress) * (eta || 15))} دقيقة تقريباً</div>
             )}
           </div>
         )}

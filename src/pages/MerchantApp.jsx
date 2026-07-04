@@ -1,7 +1,7 @@
 import React from "react";
 import ProductManager from "../components/ProductManager.jsx";
 import { useState } from "react";
-import { LayoutDashboard, ShoppingCart, PackageSearch, Wallet, Clock3, CheckCircle2, Store, Hourglass, Trash2, ChevronDown, XCircle, Plus, Minus } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, PackageSearch, Wallet, Clock3, CheckCircle2, Store, Hourglass, Trash2, ChevronDown, XCircle, Plus, Minus , Phone, MessageCircle} from "lucide-react";
 import { useStore, updateProduct, updateMerchant, setOrderStatus, setMerchantReady, confirmSettlement , removeOrderItem, updateOrderItemQty, rejectOrder } from "../store/appStore.js";
 import { merchantDues, merchantInvoices } from "../store/finance.js";
 import { fmt, CUR } from "../utils/currency.js";
@@ -155,69 +155,73 @@ function Orders({ mid }) {
   };
   return (
     <>
-      <div className="pt-h1">طلبات متجري<small>قبول الطلبات وتجهيزها للمندوب</small></div>
+      <div className="pt-h1">طلبات متجري<small>اضغط على الطلب لعرضه — اقبله، جهّزه، أو احذف الناقص</small></div>
       <div className="pt-card">
-        <div className="cap">قائمة الطلبات</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>رقم</th><th>العناصر</th><th>الزبون</th><th>قيمة السلة</th><th>الحالة</th><th>إجراء</th></tr></thead>
-            <tbody>
-              {orders.map((o) => {
-                const n = actionFor(o);
-                const myShare = (o.items || []).filter((i) => i.merchantId === mid);
-                const isOpen = expanded === o.id;
-                return (
-                  <React.Fragment key={o.id}>
-                  <tr className="mc-ordrow" onClick={() => setExpanded(isOpen ? null : o.id)}>
-                    <td><b>#{o.id}</b> <ChevronDown size={12} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: ".2s", verticalAlign: -1 }} /><div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{timeAgo(o.time)}</div></td>
-                    <td><span className="pt-items-mini">{myShare.map((i, x) => <span key={x}>{i.e}</span>)}</span>
-                      <div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>
-                        {myShare.length} من عناصري{(o.merchantCount || 1) > 1 ? ` · طلب مشترك مع ${o.merchantCount - 1} متجر` : ""}
-                      </div></td>
-                    <td>{o.customer.name}</td>
-                    <td><b>{fmt(myShare.reduce((a, i) => a + i.priceIQD * i.qty, 0))} {CUR}</b></td>
-                    <td><StatusBadge s={o.status} /></td>
-                    <td>
-                      {n?.kind === "status" && <button className="pt-btn sm" onClick={() => setOrderStatus(o.id, n.to)}><CheckCircle2 size={12} style={{ verticalAlign: -2 }} /> {n.l}</button>}
-                      {n?.kind === "ready" && <button className="pt-btn sm" onClick={() => setMerchantReady(o.id, mid, true)}>{n.l}</button>}
-                      {n?.kind === "unready" && <button className="pt-btn ghost sm" onClick={() => setMerchantReady(o.id, mid, false)}>{n.l}</button>}
-                      {n?.kind === "waiting" && <span className="pt-mini-chip"><Hourglass size={10} /> بانتظار المتاجر الأخرى</span>}
-                      {!n && <span style={{ color: "var(--p-mut)", fontSize: 11.5 }}>—</span>}
-                    </td>
-                  </tr>
-                  {isOpen && (
-                    <tr className="mc-orddetail"><td colSpan="6">
-                      <div className="mc-items">
-                        <div className="mc-items-h">📦 عناصر طلبك {canEdit(o) ? "— احذف الناقص أو عدّل الكمية" : "(لا يمكن التعديل بعد انطلاق المندوب)"}</div>
-                        {myShare.map((i) => (
-                          <div className="mc-item" key={i.id}>
-                            <span className="e">{i.e}</span>
-                            <span className="nm">{i.name}</span>
-                            {canEdit(o) ? (
-                              <span className="qtybox">
-                                <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty - 1)}><Minus size={12} /></button>
-                                <b>{i.qty}</b>
-                                <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty + 1)}><Plus size={12} /></button>
-                              </span>
-                            ) : <span className="qty">×{i.qty}</span>}
-                            <span className="pr">{fmt(i.priceIQD * i.qty)} {CUR}</span>
-                            {canEdit(o) && <button className="rm" title="نفد المنتج — حذف" onClick={() => { if (confirm(`حذف «${i.name}» من الطلب؟ (نفد من المخزون)`)) removeOrderItem(o.id, i.id); }}><Trash2 size={13} /></button>}
-                          </div>
-                        ))}
-                        {canEdit(o) && (
-                          <button className="mc-reject" onClick={() => { if (confirm("رفض الطلب كاملاً؟ سيُلغى ويُخطر الزبون.")) rejectOrder(o.id, "المنتجات غير متوفرة"); }}>
-                            <XCircle size={14} /> رفض الطلب كاملاً
-                          </button>
-                        )}
-                      </div>
-                    </td></tr>
-                  )}
-                  </React.Fragment>
-                );
-              })}
-              {orders.length === 0 && <tr><td colSpan="6"><div className="pt-empty">لا توجد طلبات بعد</div></td></tr>}
-            </tbody>
-          </table>
+        <div className="cap">قائمة الطلبات ({orders.length})</div>
+        <div className="ord-list">
+          {orders.map((o) => {
+            const n = actionFor(o);
+            const myShare = (o.items || []).filter((i) => i.merchantId === mid);
+            const isOpen = expanded === o.id;
+            const ph = (o.customer.phone || "").replace(/\s/g, "");
+            return (
+              <div key={o.id} className={"ord-card" + (isOpen ? " open" : "")}>
+                <div className="ord-head" onClick={() => setExpanded(isOpen ? null : o.id)}>
+                  <div className="ord-l">
+                    <div className="ord-id">#{o.id} <span className="ord-time">{timeAgo(o.time)}</span></div>
+                    <div className="ord-cust">{o.customer.name}{(o.merchantCount || 1) > 1 ? ` · مشترك مع ${o.merchantCount - 1} متجر` : ""}</div>
+                    <div className="ord-items-mini">{myShare.map((i, x) => <span key={x}>{i.e}</span>)}</div>
+                  </div>
+                  <div className="ord-r">
+                    <StatusBadge s={o.status} />
+                    <div className="ord-total">{fmt(myShare.reduce((a, i) => a + i.priceIQD * i.qty, 0))} {CUR}</div>
+                    <ChevronDown size={16} className="ord-chev" style={{ transform: isOpen ? "rotate(180deg)" : "none" }} />
+                  </div>
+                </div>
+                {isOpen && (
+                  <div className="ord-body">
+                    <div className="ord-contact">
+                      <span className="ord-phone">{o.customer.phone}</span>
+                      <a className="ord-cbtn call" href={`tel:${ph}`}><Phone size={15} /> اتصال</a>
+                      <a className="ord-cbtn wa" target="_blank" rel="noreferrer" href={`https://wa.me/964${ph.replace(/^0/, "")}?text=${encodeURIComponent(`مرحباً ${o.customer.name}، بخصوص طلبك #${o.id}`)}`}><MessageCircle size={15} /> واتساب</a>
+                    </div>
+                    <div className="ord-addr">📍 {o.customer.address}</div>
+                    <div className="ord-sec-t">📦 عناصر طلبك {canEdit(o) ? "— احذف الناقص أو عدّل الكمية" : "(لا يمكن التعديل بعد انطلاق المندوب)"}</div>
+                    <div className="mc-items">
+                      {myShare.map((i) => (
+                        <div className="mc-item" key={i.id}>
+                          <span className="e">{i.e}</span>
+                          <span className="nm">{i.name}</span>
+                          {canEdit(o) ? (
+                            <span className="qtybox">
+                              <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty - 1)}><Minus size={12} /></button>
+                              <b>{i.qty}</b>
+                              <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty + 1)}><Plus size={12} /></button>
+                            </span>
+                          ) : <span className="qty">×{i.qty}</span>}
+                          <span className="pr">{fmt(i.priceIQD * i.qty)} {CUR}</span>
+                          {canEdit(o) && <button className="rm" title="نفد المنتج — حذف" onClick={() => { if (confirm(`حذف «${i.name}» من الطلب؟ (نفد من المخزون)`)) removeOrderItem(o.id, i.id); }}><Trash2 size={13} /></button>}
+                        </div>
+                      ))}
+                    </div>
+                    {/* إجراء رئيسي */}
+                    <div style={{ marginTop: 12 }}>
+                      {n?.kind === "status" && <button className="ord-autobtn" onClick={() => setOrderStatus(o.id, n.to)}><CheckCircle2 size={15} style={{ verticalAlign: -3 }} /> {n.l}</button>}
+                      {n?.kind === "ready" && <button className="ord-autobtn" onClick={() => setMerchantReady(o.id, mid, true)}>{n.l}</button>}
+                      {n?.kind === "unready" && <button className="mc-reject" onClick={() => setMerchantReady(o.id, mid, false)}>{n.l}</button>}
+                      {n?.kind === "waiting" && <div className="ord-note" style={{ textAlign: "center" }}><Hourglass size={12} style={{ verticalAlign: -1 }} /> بانتظار المتاجر الأخرى لإكمال تجهيزها</div>}
+                    </div>
+                    {canEdit(o) && (
+                      <button className="mc-reject" style={{ marginTop: 8 }} onClick={() => { if (confirm("رفض الطلب كاملاً؟ سيُلغى ويُخطر الزبون.")) rejectOrder(o.id, "المنتجات غير متوفرة"); }}>
+                        <XCircle size={14} /> رفض الطلب كاملاً
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {orders.length === 0 && <div className="pt-empty">لا توجد طلبات بعد</div>}
         </div>
       </div>
     </>
