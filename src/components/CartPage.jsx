@@ -54,6 +54,14 @@ export default function CartPage({ cart, add, inc, dec, onBack, onChangeAddress,
         </div>
         {merchants > 1 && <div className="bk-multi">📦 توقّع أكثر من تسليم — عناصر طلبك من {merchants} متاجر مختلفة</div>}
 
+        {/* شريط تقدّم التوصيل المجاني — يشجّع على إضافة المزيد */}
+        <div className={"bk-freeship" + (free ? " done" : "")}>
+          <div className="bk-freeship-tx">
+            {free ? <>🎉 مبروك! حصلت على <b>توصيل مجاني</b></> : <>أضِف <b>{fmt(settings.freeAbove - subtotal)} {CUR}</b> أخرى واحصل على <b>توصيل مجاني!</b> 🚚</>}
+          </div>
+          <div className="bk-freeship-bar"><div className="bk-freeship-fill" style={{ width: Math.min(100, (subtotal / settings.freeAbove) * 100) + "%" }} /></div>
+        </div>
+
         <div className="bk-cardbox">
           {items.map((i) => (
             <div className="bk-crow" key={i.id}>

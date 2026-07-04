@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { ChevronRight, FileText, Image as ImageIcon, Upload, Shield, Zap, Tag, Check } from "lucide-react";
+import { ChevronRight, FileText, Image as ImageIcon, Upload, Shield, Zap, Tag, Check, Loader2 } from "lucide-react";
+import { placePrintOrder, useStore } from "../store/appStore.js";
+import { uploadImage } from "../utils/supabase.js";
+import { fmt, CUR } from "../utils/currency.js";
 
 const OPTIONS = [
   { id: "docs", ic: FileText, t: "طباعة مستندات", d: "Word · PDF · صور — أبيض/أسود أو ملوّن، حجم A4", price: "من 250 د.ع/ورقة" },
@@ -14,13 +17,47 @@ const FEATURES = [
 ];
 
 /* صفحة خدمة الطباعة (خانة الطابعة) */
-export default function PrintPage({ onBack }) {
+const UNIT = { docs: 250, photos: 500, passport: 3000 };
+export default function PrintPage({ onBack, onPlaced }) {
+  const loggedIn = useStore((s) => s.user.loggedIn);
   const [picked, setPicked] = useState(null);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState([]); // {name, url, isImage, raw}
   const [color, setColor] = useState("bw");
   const [copies, setCopies] = useState(1);
+  const [placing, setPlacing] = useState(false);
 
-  const onFiles = (e) => setFiles([...files, ...Array.from(e.target.files).map((f) => f.name)]);
+  // حساب السعر التقديري
+  const unit = UNIT[picked] || 0;
+  const colorMul = color === "color" ? 2 : 1;
+  const price = picked === "passport" ? unit * files.length : unit * files.length * copies * (picked === "docs" ? colorMul : 1);
+  const labels = { docs: "طباعة مستندات", photos: "طباعة صور", passport: "صور شخصية (جواز)" };
+
+  const submit = async () => {
+    if (files.length === 0) return;
+    if (!loggedIn) { onPlaced && onPlaced(null, "login"); return; } // يتطلب تسجيل دخول
+    setPlacing(true);
+    // ارفع الصور لـSupabase كي يراها متجر الطباعة (المستندات تُحفظ بالاسم)
+    const uploaded = [];
+    for (const f of files) {
+      let url = f.url;
+      if (f.isImage && f.raw) { try { const up = await uploadImage(f.raw); if (up) url = up; } catch { /* يبقى الاسم */ } }
+      uploaded.push({ name: f.name, isImage: f.isImage, url });
+    }
+    const label = `${labels[picked]}${picked !== "passport" ? ` (${color === "color" ? "ملوّن" : "أبيض/أسود"} × ${copies})` : ""} — ${files.length} ملف`;
+    const order = placePrintOrder({ type: picked, label, color, copies, files: uploaded, price });
+    setPlacing(false);
+    onPlaced && onPlaced(order);
+  };
+
+  const onFiles = (e) => {
+    const added = Array.from(e.target.files).map((f) => ({
+      name: f.name,
+      isImage: f.type.startsWith("image/"),
+      url: f.type.startsWith("image/") ? URL.createObjectURL(f) : null,
+      raw: f,
+    }));
+    setFiles([...files, ...added]);
+  };
 
   return (
     <div className="bk-print-page">
@@ -89,9 +126,13 @@ export default function PrintPage({ onBack }) {
               <input type="file" multiple hidden accept={picked === "docs" ? ".pdf,.doc,.docx,image/*" : "image/*"} onChange={onFiles} />
             </label>
             {files.length > 0 && (
-              <div className="bk-print-files">
+              <div className="bk-print-thumbs">
                 {files.map((f, i) => (
-                  <div className="bk-print-file" key={i}><FileText size={14} /> {f}<button onClick={() => setFiles(files.filter((_, x) => x !== i))}>✕</button></div>
+                  <div className="bk-print-thumb" key={i}>
+                    {f.isImage && f.url ? <img src={f.url} alt={f.name} /> : <div className="bk-print-thumb-doc"><FileText size={26} /><span>{f.name.split(".").pop().toUpperCase()}</span></div>}
+                    <div className="bk-print-thumb-nm">{f.name}</div>
+                    <button className="bk-print-thumb-x" onClick={() => setFiles(files.filter((_, x) => x !== i))}>✕</button>
+                  </div>
                 ))}
               </div>
             )}
@@ -105,9 +146,10 @@ export default function PrintPage({ onBack }) {
       {/* زرّ الطلب */}
       {picked && (
         <div className="bk-print-foot">
-          <button className="bk-print-order" disabled={files.length === 0}
-            onClick={() => alert(files.length ? "🖨️ تم استلام طلب الطباعة! سنتواصل معك لتأكيد التفاصيل والسعر النهائي." : "ارفع ملفاتك أولاً")}>
-            {files.length === 0 ? "ارفع ملفاتك للمتابعة" : `اطلب الطباعة (${files.length} ملف)`}
+          {files.length > 0 && <div className="bk-print-total">الإجمالي التقديري: <b>{fmt(price)} {CUR}</b><small>+ رسوم التوصيل</small></div>}
+          <button className="bk-print-order" disabled={files.length === 0 || placing}
+            onClick={submit}>
+            {placing ? <><Loader2 size={17} className="spin" /> جارٍ الإرسال…</> : files.length === 0 ? "ارفع ملفاتك للمتابعة" : `اطلب الطباعة (${fmt(price)} ${CUR})`}
           </button>
         </div>
       )}

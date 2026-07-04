@@ -132,6 +132,7 @@ const defaults = () => {
       { id: "m1", name: "سوبرماركت النخيل", cat: "بقالة وأغذية", phone: "0770 100 1000", password: "1111", commission: 10, open: true },
       { id: "m2", name: "بيوتي لاند", cat: "جمال وعناية", phone: "0781 200 2000", password: "2222", commission: 12, open: true },
       { id: "m3", name: "تك ستور", cat: "إلكترونيات", phone: "0790 300 3000", password: "3333", commission: 10, open: true },
+      { id: "m4", name: "مطبعة بلينكيت", cat: "طباعة وتصوير", phone: "0770 400 4000", password: "4444", commission: 15, open: true, isPrintShop: true, desc: "طباعة مستندات وصور — توصيل سريع" },
     ],
     couriers: [
       { id: "c1", name: "أحمد كريم", phone: "0770 111 0001", active: true, password: "1111" },
@@ -516,6 +517,27 @@ export const placeOrder = (items, extra = {}) => {
   const coupons = extra.couponCode ? (s.coupons || []).map((c) => (c.code === extra.couponCode ? { ...c, uses: (c.uses || 0) + 1 } : c)) : s.coupons;
   setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1, products, coupons });
   awardPoints(order.id, order.total); // منح نقاط الولاء
+  afterOrderChange(order.id);
+  return order;
+};
+
+// إنشاء طلب طباعة حقيقي → يصل لمتجر الطباعة (m4) كأي طلب
+export const placePrintOrder = (printJob, extra = {}) => {
+  const s = state;
+  const price = printJob.price || 0;
+  const item = { id: "print-" + Date.now(), name: printJob.label, qty: 1, priceIQD: price, e: "🖨️", merchantId: "m4" };
+  const addr = s.addresses.find((a) => a.id === s.selectedAddress);
+  const order = {
+    id: s.nextOrderId, items: [item], merchantId: "m4", merchantCount: 1,
+    readiness: { m4: false }, courierId: null, status: "جديد",
+    time: new Date().toISOString(), customer: { name: s.user.name || "زبون", phone: s.user.phone || "", address: addr ? addr.details : "" },
+    mine: true, lat: addr?.lat, lng: addr?.lng,
+    subtotal: price, fee: s.settings.deliveryFee, serviceFee: s.settings.serviceFee, tip: 0,
+    discount: 0, couponCode: null, payMethod: extra.payMethod || "نقداً عند الاستلام", note: extra.note || "",
+    total: price + s.settings.deliveryFee + s.settings.serviceFee,
+    printJob, // { type, label, color, copies, files:[{name,isImage,url}], price }
+  };
+  setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1 });
   afterOrderChange(order.id);
   return order;
 };

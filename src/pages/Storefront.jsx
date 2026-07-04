@@ -157,7 +157,12 @@ export default function Storefront() {
         ) : nav === "cats" ? (
           <CategoriesPage onOpen={(t) => { setNav("home"); openList(t); }} onBack={() => setNav("home")} />
         ) : nav === "print" ? (
-          <PrintPage onBack={() => setNav("home")} />
+          <PrintPage onBack={() => setNav("home")} onPlaced={(order, needs) => {
+            if (needs === "login") { setLoginNext("print"); setNav("home"); setPage("login"); }
+            else if (order) { setNav("home"); setPage({ tracking: order.id }); }
+          }} />
+        ) : nav === "again" ? (
+          <OrdersPage onBack={() => setNav("home")} onOpen={(id) => { setNav("home"); setPage({ tracking: id }); }} onReorder={reorder} add={add} cart={cart} inc={inc} dec={dec} />
         ) : (
           <>
             {!settings.storeOpen && <div className="bk-closed">{texts.closedMsg}</div>}
@@ -219,7 +224,7 @@ export default function Storefront() {
           <WishlistPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage("profile")} />
         )}
         {page === "login" && (
-          <LoginPage onBack={() => setPage(loginNext === "payment" ? "cart" : "profile")} onDone={() => setPage(loginNext)} />
+          <LoginPage onBack={() => setPage(loginNext === "payment" ? "cart" : "profile")} onDone={() => { if (loginNext === "print") { setPage(null); setNav("print"); } else setPage(loginNext); }} />
         )}
         {page === "search" && (
           <SearchPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage(null)} />
@@ -235,7 +240,7 @@ export default function Storefront() {
         {!page && !productId && (
           <BottomNav nav={nav} onChange={(id) => {
             setListing(null); setProductId(null);
-            if (id === "again") { setNav("home"); setPage("orders"); }
+            if (id === "again") { setNav("again"); setPage(null); }
             else if (id === "print") { setNav("print"); setPage(null); }
             else { setNav(id); setPage(null); }
           }} />

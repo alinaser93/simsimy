@@ -53,7 +53,7 @@ function MerchantLogin({ merchants, onOk }) {
         </div>
         {err && <div className="pt-err">كلمة المرور غير صحيحة لهذا المتجر</div>}
         <button className="pt-btn" style={{ width: "100%", marginTop: 6 }} onClick={submit}>دخول</button>
-        <div className="demo">🔑 تجريبي — النخيل: <b>1111</b> · بيوتي لاند: <b>2222</b> · تك ستور: <b>3333</b><br />يغيّرها الأدمن من تبويب «التجار»</div>
+        <div className="demo">🔑 تجريبي — النخيل: <b>1111</b> · بيوتي لاند: <b>2222</b> · تك ستور: <b>3333</b> · مطبعة: <b>4444</b><br />يغيّرها الأدمن من تبويب «التجار»</div>
       </div>
     </div>
   );
@@ -248,8 +248,28 @@ function Orders({ mid }) {
                     {/* العنوان فقط — نُخفي اسم/هاتف الزبون حمايةً من سرقة الطلب */}
                     <div className="ord-addr">📍 {o.customer.address}</div>
                     <CourierInfo order={o} />
-                    <div className="ord-sec-t">📦 عناصر طلبك {canEdit(o) ? "— احذف الناقص أو عدّل الكمية" : "(لا يمكن التعديل بعد انطلاق المندوب)"}</div>
-                    <div className="mc-items">
+                    {o.printJob && (
+                      <div className="pj-box">
+                        <div className="pj-t">🖨️ تفاصيل الطباعة</div>
+                        <div className="pj-spec">
+                          <span>النوع: <b>{{ docs: "مستندات", photos: "صور", passport: "صور شخصية" }[o.printJob.type] || o.printJob.type}</b></span>
+                          {o.printJob.type !== "passport" && <span>اللون: <b>{o.printJob.color === "color" ? "ملوّن" : "أبيض/أسود"}</b></span>}
+                          {o.printJob.type !== "passport" && <span>النسخ: <b>{o.printJob.copies}</b></span>}
+                          <span>الملفات: <b>{o.printJob.files.length}</b></span>
+                        </div>
+                        <div className="pj-files">
+                          {o.printJob.files.map((f, x) => (
+                            <a className="pj-file" key={x} href={f.url || undefined} target="_blank" rel="noreferrer" download={f.name}>
+                              {f.isImage && f.url ? <img src={f.url} alt={f.name} /> : <div className="pj-file-doc">📄<span>{(f.name.split(".").pop() || "").toUpperCase()}</span></div>}
+                              <span className="pj-file-nm">{f.name}</span>
+                            </a>
+                          ))}
+                        </div>
+                        <div className="pj-hint">💡 اطبع الملفات وجهّزها للمندوب. اضغط أي ملف لفتحه/تنزيله.</div>
+                      </div>
+                    )}
+                    {!o.printJob && <div className="ord-sec-t">📦 عناصر طلبك {canEdit(o) ? "— احذف الناقص أو عدّل الكمية" : "(لا يمكن التعديل بعد انطلاق المندوب)"}</div>}
+                    {!o.printJob && <div className="mc-items">
                       {myShare.map((i) => (
                         <div className="mc-item" key={i.id}>
                           <span className="e">{i.e}</span>
@@ -264,7 +284,7 @@ function Orders({ mid }) {
                           {canEdit(o) && <button className="rm" title="نفد المنتج — حذف" onClick={() => { if (confirm(`حذف «${i.name}» من الطلب؟ (نفد من المخزون)`)) removeOrderItem(o.id, i.id); }}><Trash2 size={13} /></button>}
                         </div>
                       ))}
-                    </div>
+                    </div>}
                     {/* إجراء رئيسي */}
                     <div style={{ marginTop: 12 }}>
                       {n?.kind === "status" && <button className="ord-autobtn" onClick={() => setOrderStatus(o.id, n.to)}><CheckCircle2 size={15} style={{ verticalAlign: -3 }} /> {n.l}</button>}
