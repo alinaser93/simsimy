@@ -72,8 +72,15 @@ export default function StoreEditor({ mid, prefs }) {
       <div className="pt-card se-sec">
         <div className="se-t"><ImageIcon size={16} /> غلاف المتجر (صورة وفيديو)</div>
         <div className="se-cover">
-          {me.cover ? <img src={me.cover} alt="غلاف" /> : <div className="se-cover-ph"><ImageIcon size={30} /><span>لا يوجد غلاف بعد</span></div>}
+          {me.coverVideo ? (
+            <video src={me.coverVideo} controls playsInline poster={me.cover || undefined} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : me.cover ? (
+            <img src={me.cover} alt="غلاف" />
+          ) : (
+            <div className="se-cover-ph"><ImageIcon size={30} /><span>لا يوجد غلاف بعد</span></div>
+          )}
         </div>
+        {me.cover && me.coverVideo && <div className="se-desc" style={{ marginTop: 6, marginBottom: 0 }}>🎬 يظهر الفيديو للزبون؛ الصورة تُستخدم كغلاف احتياطي.</div>}
         <div className="se-btns">
           <label className="se-btn"><Camera size={15} /> {uploading === "cover" ? "جارٍ الرفع…" : "تغيير الصورة"}<input type="file" accept="image/*" hidden onChange={(e) => uploadTo("cover", e.target.files[0])} /></label>
           {me.cover && <button className="se-btn del" onClick={() => upd({ cover: "" })}><Trash2 size={14} /> حذف الصورة</button>}
@@ -97,8 +104,10 @@ export default function StoreEditor({ mid, prefs }) {
       {/* البيانات الأساسية */}
       <div className="pt-card se-sec">
         <div className="pt-field"><label>التصنيف</label>
-          <select className="pt-in" value={me.cat || CATS[0]} onChange={(e) => upd({ cat: e.target.value })}>
-            {[...new Set([me.cat, ...CATS].filter(Boolean))].map((c) => <option key={c}>{c}</option>)}
+          <select className="pt-in" value={me.cat || CATS[0]}
+            onChange={(e) => { if (e.target.value === "__new") { const nc = prompt("اسم التصنيف الجديد:"); if (nc && nc.trim()) upd({ cat: nc.trim() }); } else upd({ cat: e.target.value }); }}>
+            {[...new Set([me.cat, ...CATS].filter(Boolean))].map((c) => <option key={c} value={c}>{c}{!CATS.includes(c) ? " 🆕" : ""}</option>)}
+            <option value="__new">➕ إضافة تصنيف جديد…</option>
           </select>
         </div>
         <div className="pt-field"><label>هاتف المتجر</label>

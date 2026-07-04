@@ -120,20 +120,20 @@ function Dash({ mid }) {
       </div>
       <div className="pt-card">
         <div className="cap">أحدث طلبات متجري</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>رقم</th><th>الزبون</th><th>الحالة</th><th>قيمة السلة</th><th>الوقت</th></tr></thead>
-            <tbody>
-              {orders.slice(0, 6).map((o) => (
-                <tr key={o.id}>
-                  <td><b>#{o.id}</b></td><td>{o.customer.name}</td>
-                  <td><StatusBadge s={o.status} /></td>
-                  <td>{fmt(o.subtotal)} {CUR}</td><td>{timeAgo(o.time)}</td>
-                </tr>
-              ))}
-              {orders.length === 0 && <tr><td colSpan="5"><div className="pt-empty">لا توجد طلبات بعد</div></td></tr>}
-            </tbody>
-          </table>
+        <div className="mw-list">
+          {orders.slice(0, 6).map((o) => (
+            <div className="mw-row" key={o.id}>
+              <div className="mw-l">
+                <div className="mw-id">#{o.id} <span className="mw-time">{timeAgo(o.time)}</span></div>
+                <div className="mw-sub">{o.customer.name}</div>
+              </div>
+              <div className="mw-r">
+                <StatusBadge s={o.status} />
+                <div className="mw-amt">{fmt(o.subtotal)} {CUR}</div>
+              </div>
+            </div>
+          ))}
+          {orders.length === 0 && <div className="pt-empty">لا توجد طلبات بعد</div>}
         </div>
       </div>
     </>
@@ -250,44 +250,37 @@ function MyWallet({ mid }) {
       {awaiting.length > 0 && (
         <div className="pt-card">
           <div className="cap">💸 دفعات بانتظار تأكيدك</div>
-          <div className="pt-scroll">
-            <table className="pt-table">
-              <thead><tr><th>الدفعة</th><th>المبلغ</th><th>طلبات</th><th>الوقت</th><th></th></tr></thead>
-              <tbody>
-                {awaiting.map((x) => (
-                  <tr key={x.id}>
-                    <td style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{x.id.slice(-5)}</td>
-                    <td style={{ fontWeight: 900 }}>{fmt(x.amount)} {CUR}</td>
-                    <td>{(x.orders || []).length}</td>
-                    <td>{timeAgo(x.time)}</td>
-                    <td><button className="pt-btn sm" onClick={() => confirmSettlement(x.id)}>استلمتها ✓</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mw-list">
+            {awaiting.map((x) => (
+              <div className="mw-pay" key={x.id}>
+                <div className="mw-pay-top">
+                  <div><div className="mw-amt-big">{fmt(x.amount)} {CUR}</div><div className="mw-sub">{(x.orders || []).length} طلبات · {timeAgo(x.time)} · رقم {x.id.slice(-5)}</div></div>
+                  <button className="pt-btn sm" onClick={() => confirmSettlement(x.id)}>استلمتها ✓</button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
       <div className="pt-card">
         <div className="cap">🧾 سجل الفواتير (لكل طلب مُسلَّم)</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>طلب</th><th>بضاعتي</th><th>العمولة</th><th>صافي مستحقي</th><th>الحالة</th><th>الوقت</th></tr></thead>
-            <tbody>
-              {invoices.map((r) => (
-                <tr key={r.id}>
-                  <td><b>#{r.id}</b></td>
-                  <td>{fmt(r.goods)} {CUR}</td>
-                  <td style={{ color: "#b3261e" }}>− {fmt(r.commission)}</td>
-                  <td style={{ fontWeight: 900, color: "#0C831F" }}>{fmt(r.due)} {CUR}</td>
-                  <td><span className={"pt-badge " + (r.settled ? "pt-b-done" : "pt-b-prep")}>{r.settled ? "مسوّاة" : "قيد التحصيل"}</span></td>
-                  <td>{timeAgo(r.time)}</td>
-                </tr>
-              ))}
-              {invoices.length === 0 && <tr><td colSpan="6"><div className="pt-empty">لا فواتير بعد — تُنشأ تلقائياً عند تسليم الطلبات</div></td></tr>}
-            </tbody>
-          </table>
+        <div className="mw-list">
+          {invoices.map((r) => (
+            <div className="mw-inv" key={r.id}>
+              <div className="mw-inv-head">
+                <b>#{r.id}</b>
+                <span className={"pt-badge " + (r.settled ? "pt-b-done" : "pt-b-prep")}>{r.settled ? "مسوّاة" : "قيد التحصيل"}</span>
+                <span className="mw-time">{timeAgo(r.time)}</span>
+              </div>
+              <div className="mw-inv-nums">
+                <span>بضاعتي<b>{fmt(r.goods)}</b></span>
+                <span>العمولة<b style={{ color: "#b3261e" }}>− {fmt(r.commission)}</b></span>
+                <span>صافي مستحقي<b style={{ color: "#0C831F" }}>{fmt(r.due)} {CUR}</b></span>
+              </div>
+            </div>
+          ))}
+          {invoices.length === 0 && <div className="pt-empty">لا فواتير بعد — تُنشأ تلقائياً عند تسليم الطلبات</div>}
         </div>
       </div>
     </>

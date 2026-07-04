@@ -371,3 +371,26 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 /* toast */
 .se-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0C831F;color:#fff;font-size:13px;font-weight:800;padding:10px 20px;border-radius:24px;display:flex;align-items:center;gap:7px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:seToast .3s;}
 @keyframes seToast{from{opacity:0;transform:translate(-50%,10px);}to{opacity:1;transform:translate(-50%,0);}}
+
+/* ═══ قوائم/بطاقات محفظتي ولوحة التاجر (هاتف) ═══ */
+.mw-list{display:flex;flex-direction:column;gap:8px;padding:12px;}
+/* صف طلب مضغوط */
+.mw-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;background:var(--p-hover,#f7f7f7);border-radius:11px;}
+.mw-l{flex:1;min-width:0;}
+.mw-id{font-size:13.5px;font-weight:800;color:var(--p-ink);}
+.mw-time{font-size:10.5px;font-weight:500;color:var(--p-mut);margin-right:6px;}
+.mw-sub{font-size:11.5px;color:var(--p-mut2,#666);margin-top:2px;}
+.mw-r{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto;}
+.mw-amt{font-size:13px;font-weight:800;color:var(--p-ink);}
+/* بطاقة دفعة */
+.mw-pay{background:#eaf5ec;border:1px solid #c8e6cf;border-radius:12px;padding:12px 14px;}
+.mw-pay-top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.mw-amt-big{font-size:18px;font-weight:900;color:#0C831F;}
+/* بطاقة فاتورة */
+.mw-inv{background:var(--p-hover,#f7f7f7);border-radius:12px;padding:12px 14px;}
+.mw-inv-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.mw-inv-head b{font-size:14px;color:var(--p-ink);}
+.mw-inv-head .mw-time{margin-right:auto;}
+.mw-inv-nums{display:flex;gap:8px;}
+.mw-inv-nums span{flex:1;display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--p-mut);text-align:center;background:var(--p-card,#fff);padding:8px 4px;border-radius:8px;}
+.mw-inv-nums span b{font-size:12.5px;color:var(--p-ink);font-weight:800;}
