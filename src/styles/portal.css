@@ -394,3 +394,30 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .mw-inv-nums{display:flex;gap:8px;}
 .mw-inv-nums span{flex:1;display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--p-mut);text-align:center;background:var(--p-card,#fff);padding:8px 4px;border-radius:8px;}
 .mw-inv-nums span b{font-size:12.5px;color:var(--p-ink);font-weight:800;}
+
+/* إصلاح محاذاة حقول بيانات المتجر (RTL) */
+.se-wrap .pt-in{text-align:right;direction:rtl;}
+.se-wrap .se-phone{direction:ltr;text-align:right;}
+.se-wrap .pt-field label{text-align:right;display:block;}
+.se-wrap select.pt-in{text-align:right;}
+
+/* ═══ بطاقات المنتجات (منتجاتي — هاتف) ═══ */
+.pm-list{padding:10px;display:flex;flex-direction:column;gap:12px;}
+.pm-group{display:flex;flex-direction:column;gap:7px;}
+.pm-grouphead{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--p-ink);padding:9px 12px;background:var(--p-hover,#f2f2f2);border-radius:10px;cursor:pointer;}
+.pm-grouphead .gchev{color:var(--p-mut);font-size:11px;}
+.pm-grouphead .gcount{margin-right:auto;background:var(--p-card,#fff);color:var(--p-mut);font-size:11px;font-weight:800;padding:2px 9px;border-radius:10px;}
+.pm-card{display:flex;align-items:center;gap:11px;padding:10px 12px;background:var(--p-card,#fff);border:1px solid var(--p-border,#eee);border-radius:12px;}
+.pm-card.off{opacity:.55;}
+.pm-thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;background:var(--p-hover,#f5f5f5);flex:0 0 auto;}
+.pm-thumb.emoji{display:flex;align-items:center;justify-content:center;font-size:26px;}
+.pm-info{flex:1;min-width:0;}
+.pm-name{font-size:13px;font-weight:800;color:var(--p-ink);display:flex;align-items:center;gap:5px;flex-wrap:wrap;line-height:1.35;}
+.pm-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.pm-wt{font-size:10.5px;color:var(--p-mut);}
+.pm-mrch{font-size:10.5px;color:var(--p-mut);background:var(--p-hover,#f2f2f2);padding:2px 7px;border-radius:8px;}
+.pm-price{margin-top:5px;display:flex;align-items:center;gap:7px;}
+.pm-price b{font-size:14px;font-weight:900;color:var(--p-ink);}
+.pm-price s{font-size:11px;color:var(--p-mut);}
+.pm-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:0 0 auto;}
+.pm-btns{display:flex;gap:5px;}

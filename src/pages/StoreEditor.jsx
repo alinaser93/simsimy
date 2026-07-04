@@ -111,7 +111,7 @@ export default function StoreEditor({ mid, prefs }) {
           </select>
         </div>
         <div className="pt-field"><label>هاتف المتجر</label>
-          <input className="pt-in" dir="ltr" placeholder="07XXXXXXXXX" value={me.phone || ""} onChange={(e) => upd({ phone: e.target.value })} /></div>
+          <input className="pt-in se-phone" dir="ltr" placeholder="07XXXXXXXXX" value={me.phone || ""} onChange={(e) => upd({ phone: e.target.value })} /></div>
         <div className="pt-field"><label>وصف قصير للمتجر</label>
           <input className="pt-in" placeholder="مثال: متجرك العراقي الطازج — توصيل سريع" value={me.desc || ""} onChange={(e) => upd({ desc: e.target.value })} /></div>
       </div>

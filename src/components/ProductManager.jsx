@@ -211,45 +211,46 @@ function ProductManager({ scope = "admin", mid = null }) {
           <button className={"pt-btn sm" + (dealsOnly ? "" : " ghost")} onClick={() => setDealsOnly(!dealsOnly)}>🏷️ العروض</button>
           <button className="pt-btn sm" onClick={() => setModal({ mode: "add", data: emptyFor(isMerchant ? mid : "m1") })}><Plus size={13} style={{ verticalAlign: -2 }} /> إضافة</button>
         </div>
-        <div className="pt-scroll">
-          <table className="pt-table pt-ptable">
-            <thead><tr><th>المنتج</th><th>القسم</th><th>التفرّع</th><th>السعر</th><th>التاجر</th><th>متوفر</th><th></th></tr></thead>
-            <tbody>
-              {groups.map(([gname, items]) => {
-                const gkey = groupBy + ":" + gname;
-                const isOpen = !collapsed[gkey];
-                return (
-                  <React.Fragment key={gkey}>
-                    <tr className="pt-grouprow" onClick={() => setCollapsed((c) => ({ ...c, [gkey]: isOpen }))}>
-                      <td colSpan={7}>
-                        <span className="gchev">{isOpen ? "▾" : "◂"}</span>
-                        {groupBy === "merchant" ? "🏪 " : "📂 "}<b>{gname}</b>
-                        <span className="gcount">{items.length}</span>
-                      </td>
-                    </tr>
-                    {isOpen && items.map((p) => (
-                <tr key={p.id} style={p.stock === false ? { opacity: 0.55 } : undefined}>
-                  <td><div className="pt-prodcell">{(p.img || (p.images && p.images[0])) ? <img className="pt-thumb" src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="pt-thumb emoji">{p.e}</span>}<div><b>{p.name}</b>{p.deal && <span className="pt-deal-tag">🏷️ عرض</span>}{(p.variants || []).length > 0 && <span className="pt-deal-tag" style={{ background: "#eef4fb", color: "#2a5a8a" }}>{p.variants.length} خيارات</span>}<div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{p.weight}</div></div></div></td>
-                  <td style={{ fontSize: 11.5 }}>{p.cat || "—"}</td>
-                  <td>{p.sub ? <span className="pt-mini-chip">{p.sub}</span> : <span style={{ color: "var(--p-mut)" }}>—</span>}</td>
-                  <td><b>{fmt(p.priceIQD)} {CUR}</b><div style={{ color: "var(--p-mut)", fontSize: 10, textDecoration: "line-through" }}>{fmt(p.mrpIQD)}</div></td>
-                  <td>{merchants.find((m) => m.id === p.merchantId)?.name || "—"}</td>
-                  <td>
-                    {p.qty != null ? (
-                      <span className={"pt-qty" + (p.qty === 0 ? " out" : p.qty <= (p.lowAt || 0) ? " low" : "")}>{p.qty === 0 ? "نفد" : p.qty <= (p.lowAt || 0) ? `${p.qty} ⚠️` : p.qty}</span>
-                    ) : <Switch on={p.stock !== false} onToggle={() => updateProduct(p.id, { stock: !(p.stock !== false) })} />}
-                  </td>
-                  <td style={{ display: "flex", gap: 6 }}>
-                    <button className="pt-btn ghost sm" onClick={() => openEdit(p)}><Pencil size={12} /></button>
-                    <button className="pt-btn warn sm" onClick={() => confirm(`حذف «${p.name}»؟`) && removeProduct(p.id)}><Trash2 size={12} /></button>
-                  </td>
-                </tr>
-                    ))}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="pm-list">
+          {groups.map(([gname, items]) => {
+            const gkey = groupBy + ":" + gname;
+            const isOpen = !collapsed[gkey];
+            return (
+              <div className="pm-group" key={gkey}>
+                <div className="pm-grouphead" onClick={() => setCollapsed((c) => ({ ...c, [gkey]: isOpen }))}>
+                  <span className="gchev">{isOpen ? "▾" : "◂"}</span>
+                  {groupBy === "merchant" ? "🏪 " : "📂 "}<b>{gname}</b>
+                  <span className="gcount">{items.length}</span>
+                </div>
+                {isOpen && items.map((p) => (
+                  <div className={"pm-card" + (p.stock === false ? " off" : "")} key={p.id}>
+                    {(p.img || (p.images && p.images[0])) ? <img className="pm-thumb" src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="pm-thumb emoji">{p.e}</span>}
+                    <div className="pm-info">
+                      <div className="pm-name">{p.name}
+                        {p.deal && <span className="pt-deal-tag">🏷️ عرض</span>}
+                        {(p.variants || []).length > 0 && <span className="pt-deal-tag" style={{ background: "#eef4fb", color: "#2a5a8a" }}>{p.variants.length} خيارات</span>}
+                      </div>
+                      <div className="pm-meta">
+                        {p.sub && <span className="pt-mini-chip">{p.sub}</span>}
+                        {p.weight && <span className="pm-wt">{p.weight}</span>}
+                        {!isMerchant && <span className="pm-mrch">{merchants.find((m) => m.id === p.merchantId)?.name || "—"}</span>}
+                      </div>
+                      <div className="pm-price"><b>{fmt(p.priceIQD)} {CUR}</b>{p.mrpIQD > p.priceIQD && <s>{fmt(p.mrpIQD)}</s>}</div>
+                    </div>
+                    <div className="pm-actions">
+                      {p.qty != null ? (
+                        <span className={"pt-qty" + (p.qty === 0 ? " out" : p.qty <= (p.lowAt || 0) ? " low" : "")}>{p.qty === 0 ? "نفد" : p.qty <= (p.lowAt || 0) ? `${p.qty} ⚠️` : p.qty}</span>
+                      ) : <Switch on={p.stock !== false} onToggle={() => updateProduct(p.id, { stock: !(p.stock !== false) })} />}
+                      <div className="pm-btns">
+                        <button className="pt-btn ghost sm" onClick={() => openEdit(p)}><Pencil size={13} /></button>
+                        <button className="pt-btn warn sm" onClick={() => confirm(`حذف «${p.name}»؟`) && removeProduct(p.id)}><Trash2 size={13} /></button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
 
