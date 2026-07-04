@@ -1,5 +1,6 @@
 import React from "react";
 import ProductManager from "../components/ProductManager.jsx";
+import StoreEditor from "./StoreEditor.jsx";
 import { useState } from "react";
 import { LayoutDashboard, ShoppingCart, PackageSearch, Wallet, Clock3, CheckCircle2, Store, Hourglass, Trash2, ChevronDown, XCircle, Plus, Minus , Phone, MessageCircle} from "lucide-react";
 import { useStore, updateProduct, updateMerchant, setOrderStatus, setMerchantReady, confirmSettlement , removeOrderItem, updateOrderItemQty, rejectOrder } from "../store/appStore.js";
@@ -75,7 +76,7 @@ function Merchant({ mid, onLogout }) {
       {tab === "orders" && <Orders mid={me.id} />}
       {tab === "products" && <ProductManager scope="merchant" mid={me.id} />}
       {tab === "wallet" && <MyWallet mid={me.id} />}
-      {tab === "shop" && <MyShop mid={me.id} />}
+      {tab === "shop" && <StoreEditor mid={me.id} prefs={prefs} />}
     </Shell>
   );
 }
@@ -287,43 +288,6 @@ function MyWallet({ mid }) {
               {invoices.length === 0 && <tr><td colSpan="6"><div className="pt-empty">لا فواتير بعد — تُنشأ تلقائياً عند تسليم الطلبات</div></td></tr>}
             </tbody>
           </table>
-        </div>
-      </div>
-    </>
-  );
-}
-
-/* ---------------- متجري: بيانات المتجر وساعاته وحالته ---------------- */
-function MyShop({ mid }) {
-  const me = useStore((s) => s.merchants.find((m) => m.id === mid)) || {};
-  const T = (label, key, dir, ph) => (
-    <div className="pt-field"><label>{label}</label>
-      <input className="pt-in" dir={dir} placeholder={ph} value={me[key] || ""}
-        onChange={(e) => updateMerchant(mid, { [key]: e.target.value })} /></div>
-  );
-  return (
-    <>
-      <div className="pt-h1">متجري<small>بياناتك تظهر للأدمن وتُستخدم في الفوترة</small></div>
-      <div className="pt-card">
-        <div className="cap">حالة المتجر</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 14 }}>
-          <Switch on={me.open !== false} onToggle={() => updateMerchant(mid, { open: !(me.open !== false) })} />
-          <div>
-            <b style={{ fontSize: 13.5 }}>{me.open !== false ? "متجري مفتوح ويستقبل الطلبات" : "متجري مغلق مؤقتاً"}</b>
-            <div style={{ fontSize: 11.5, color: "var(--p-mut)" }}>أغلقه يدوياً في الإجازات أو خارج الدوام</div>
-          </div>
-        </div>
-      </div>
-      <div className="pt-card">
-        <div className="cap">البيانات الأساسية</div>
-        <div style={{ padding: 14 }}>
-          <div className="pt-row2">
-            {T("الهاتف", "phone", "ltr")}
-            {T("ساعات العمل", "hours", undefined, "مثال: 9 صباحاً — 11 مساءً")}
-          </div>
-          {T("وصف قصير للمتجر", "desc", undefined, "مثال: أفضل البقالة الطازجة في بغداد")}
-          {T("رابط صورة/شعار المتجر", "img", "ltr", "https://…")}
-          <div className="pt-note">💡 عمولة المنصة على متجرك: <b>{me.commission ?? 10}%</b> — يضبطها الأدمن من تبويب «التجار».</div>
         </div>
       </div>
     </>

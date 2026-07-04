@@ -326,3 +326,48 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .ord-controls .pt-in{width:100%;}
 .ord-autobtn{margin-top:10px;width:100%;background:#0C831F;color:#fff;border:none;font-size:13px;font-weight:800;padding:11px;border-radius:10px;cursor:pointer;}
 .ord-autobtn:active{transform:scale(.99);}
+
+/* ═══ بيانات المتجر (StoreEditor) ═══ */
+.se-wrap{padding-bottom:30px;}
+.se-status{display:flex;align-items:center;gap:12px;padding:14px;}
+.se-sec{padding:14px;}
+.se-t{font-size:14px;font-weight:800;color:var(--p-ink);display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.se-desc{font-size:11.5px;color:var(--p-mut);margin-bottom:12px;line-height:1.6;}
+/* غلاف */
+.se-cover{width:100%;height:150px;border-radius:12px;overflow:hidden;background:var(--p-hover,#f2f2f2);margin-bottom:10px;}
+.se-cover img{width:100%;height:100%;object-fit:cover;}
+.se-cover-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#bbb;font-size:12px;}
+.se-btns{display:flex;flex-wrap:wrap;gap:8px;}
+.se-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:9px 13px;border-radius:9px;background:var(--p-hover,#f0f0f0);color:var(--p-ink);border:1px solid var(--p-border,#e5e5e5);cursor:pointer;}
+.se-btn:active{transform:scale(.97);}
+.se-btn.del{background:#fdeaea;color:#c0303a;border-color:#f2d0d0;}
+/* شعار */
+.se-logo-row{display:flex;align-items:center;gap:14px;}
+.se-logo{width:66px;height:66px;border-radius:50%;overflow:hidden;background:#fff;border:2px solid var(--p-border,#e5e5e5);display:flex;align-items:center;justify-content:center;color:#bbb;flex:0 0 auto;}
+.se-logo img{width:100%;height:100%;object-fit:cover;}
+/* إشعارات مميزة */
+.se-highlight{background:linear-gradient(120deg,#fff6ee,var(--p-card,#fff));border:1.5px solid #F0A868;}
+.se-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;font-size:13.5px;font-weight:800;padding:13px;border-radius:11px;cursor:pointer;border:none;background:#C4622D;color:#fff;}
+.se-cta:active{transform:scale(.99);}
+.se-cta.on{background:#0C831F;}
+.se-cta.green{background:#0f7a34;}
+/* QR */
+.se-qr{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.se-qr img{width:200px;height:200px;border-radius:12px;border:1px solid var(--p-border,#eee);background:#fff;padding:6px;}
+.se-qr-url{font-size:11px;color:var(--p-mut);direction:ltr;word-break:break-all;text-align:center;}
+/* موقع */
+.se-locmsg{font-size:12px;font-weight:700;margin-top:8px;color:#c0303a;}
+.se-locmsg.ok{color:#0C831F;}
+.se-locsaved{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#0C831F;margin-top:8px;}
+/* ساعات */
+.se-autohours{display:flex;align-items:center;gap:12px;background:var(--p-hover,#f7f7f7);padding:11px;border-radius:10px;margin-bottom:12px;}
+.se-days{display:flex;flex-direction:column;gap:7px;}
+.se-day{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;}
+.se-dname{font-size:12.5px;font-weight:800;color:var(--p-ink);width:56px;flex:0 0 auto;}
+.se-dtoggle{font-size:11px;font-weight:800;padding:6px 10px;border-radius:7px;border:none;cursor:pointer;background:#e6f8ec;color:#0C831F;flex:0 0 auto;min-width:50px;}
+.se-dtoggle.closed{background:#fdeaea;color:#c0303a;}
+.se-time{font-size:11px !important;padding:6px 4px !important;flex:1;min-width:0;text-align:center;}
+.se-dash{color:var(--p-mut);flex:0 0 auto;}
+/* toast */
+.se-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0C831F;color:#fff;font-size:13px;font-weight:800;padding:10px 20px;border-radius:24px;display:flex;align-items:center;gap:7px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:seToast .3s;}
+@keyframes seToast{from{opacity:0;transform:translate(-50%,10px);}to{opacity:1;transform:translate(-50%,0);}}
