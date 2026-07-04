@@ -11,6 +11,8 @@ export function useCollapsingHeader(theme) {
   const scrollRef = useRef(null);
   const rafPending = useRef(false);
   const onHeadRgbRef = useRef([255, 255, 255]);
+  const lastY = useRef(0);
+  const navHidden = useRef(false);
 
   const onScroll = () => {
     if (rafPending.current) return;
@@ -24,6 +26,11 @@ export function useCollapsingHeader(theme) {
       ph.style.setProperty("--t", String(t));
       ph.style.setProperty("--hf", String(clamp01(1 - y / FADE)));
       ph.style.setProperty("--tc", rgb(mix(onHeadRgbRef.current, INK_RGB, t)));
+      // إخفاء الشريط السفلي عند التمرير للأسفل، إظهاره عند التمرير للأعلى
+      const dy = y - lastY.current;
+      if (y > 90 && dy > 6 && !navHidden.current) { navHidden.current = true; ph.style.setProperty("--nav-hidden", "1"); }
+      else if ((dy < -6 || y < 40) && navHidden.current) { navHidden.current = false; ph.style.setProperty("--nav-hidden", "0"); }
+      lastY.current = y;
     });
   };
 
@@ -35,6 +42,8 @@ export function useCollapsingHeader(theme) {
     ph.style.setProperty("--t", "0");
     ph.style.setProperty("--hf", "1");
     ph.style.setProperty("--tc", rgb(onHeadRgbRef.current));
+    ph.style.setProperty("--nav-hidden", "0");
+    navHidden.current = false; lastY.current = 0;
   }, [theme]);
 
   return { phoneRef, scrollRef, onScroll };

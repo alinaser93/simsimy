@@ -18,6 +18,7 @@ import Listing from "../components/Listing.jsx";
 import CartBar from "../components/CartBar.jsx";
 import BottomNav from "../components/BottomNav.jsx";
 import CategoriesPage from "../components/CategoriesPage.jsx";
+import PrintPage from "../components/PrintPage.jsx";
 import CartPage from "../components/CartPage.jsx";
 import PaymentPage from "../components/PaymentPage.jsx";
 import AddressPage from "../components/AddressPage.jsx";
@@ -155,6 +156,8 @@ export default function Storefront() {
           <Listing title={listing} cart={cart} add={add} inc={inc} dec={dec} onBack={() => window.history.back()} />
         ) : nav === "cats" ? (
           <CategoriesPage onOpen={(t) => { setNav("home"); openList(t); }} onBack={() => setNav("home")} />
+        ) : nav === "print" ? (
+          <PrintPage onBack={() => setNav("home")} />
         ) : (
           <>
             {!settings.storeOpen && <div className="bk-closed">{texts.closedMsg}</div>}
@@ -197,7 +200,7 @@ export default function Storefront() {
         {page === "orders" && (
           <OrdersPage onBack={() => setPage(null)}
             onOpen={(id) => setPage({ tracking: id })}
-            onReorder={reorder} />
+            onReorder={reorder} add={add} cart={cart} inc={inc} dec={dec} />
         )}
         {page && page.tracking && (
           <TrackingPage orderId={page.tracking} onBack={() => setPage("orders")} />
@@ -233,7 +236,7 @@ export default function Storefront() {
           <BottomNav nav={nav} onChange={(id) => {
             setListing(null); setProductId(null);
             if (id === "again") { setNav("home"); setPage("orders"); }
-            else if (id === "print") { setNav("home"); setPage("search"); }
+            else if (id === "print") { setNav("print"); setPage(null); }
             else { setNav(id); setPage(null); }
           }} />
         )}

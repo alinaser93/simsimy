@@ -10,8 +10,18 @@ const BADGE = {
 };
 
 /* طلباتي — تفتح تتبّع أي طلب + إعادة الطلب بضغطة */
-export default function OrdersPage({ onBack, onOpen, onReorder }) {
+export default function OrdersPage({ onBack, onOpen, onReorder, add, cart, inc, dec }) {
   const orders = useStore((s) => s.orders).filter((o) => o.mine);
+  const products = useStore((s) => s.products);
+
+  // المنتجات الأكثر شراءً (كروس) — تُحسب من طلبات الزبون السابقة
+  const freqMap = {};
+  orders.forEach((o) => (o.items || []).forEach((i) => { freqMap[i.id] = (freqMap[i.id] || 0) + i.qty; }));
+  const frequent = Object.entries(freqMap)
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => products.find((p) => p.id === +id))
+    .filter((p) => p && p.stock !== false && p.qty !== 0)
+    .slice(0, 10);
   return (
     <div className="bk-page">
       <div className="bk-phead">
@@ -19,6 +29,33 @@ export default function OrdersPage({ onBack, onOpen, onReorder }) {
         <div className="ti">طلباتي<small>اضغط أي طلب لتتبّعه لحظياً</small></div>
       </div>
       <div className="bk-pbody">
+        {frequent.length > 0 && (
+          <div className="bk-freq">
+            <div className="bk-freq-t">🔁 اشتريتها من قبل — أضِفها بسرعة</div>
+            <div className="bk-freq-row">
+              {frequent.map((p) => {
+                const qty = cart?.[p.id] || 0;
+                return (
+                  <div className="bk-freq-card" key={p.id}>
+                    <div className="bk-freq-img" style={{ background: p.bg || "#f5f5f5" }}>
+                      {(p.img || (p.images && p.images[0])) ? <img src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="e">{p.e}</span>}
+                    </div>
+                    <div className="bk-freq-nm">{p.name}</div>
+                    <div className="bk-freq-pr">{fmt(p.priceIQD)} {CUR}</div>
+                    {qty === 0 ? (
+                      <button className="bk-freq-add" onClick={() => add && add(p.id)}>+ إضافة</button>
+                    ) : (
+                      <div className="bk-freq-qty">
+                        <button onClick={() => dec && dec(p.id)}>−</button><b>{qty}</b><button onClick={() => inc && inc(p.id)}>+</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {orders.length > 0 && <div className="bk-freq-divider">طلباتك السابقة</div>}
         {orders.map((o) => {
           const [bg, fg] = BADGE[o.status] || BADGE["جديد"];
           return (
