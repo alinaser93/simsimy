@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronRight, CreditCard, Tag, X } from "lucide-react";
-import { useStore, placeOrder, updateOrderLocation, validateCoupon } from "../store/appStore.js";
+import { useStore, placeOrder, updateOrderLocation, validateCoupon, redeemPoints, POINT_VALUE } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import { getCurrentLocation } from "../utils/geo.js";
 
@@ -12,11 +12,18 @@ export default function PaymentPage({ pending, onBack, onPlaced }) {
   const [codeInput, setCodeInput] = useState("");
   const [coupon, setCoupon] = useState(null);
   const [codeErr, setCodeErr] = useState("");
+  const userPoints = useStore((s) => s.user.points) || 0;
+  const [usePoints, setUsePoints] = useState(false);
 
   const subtotal = pending.items.reduce((a, i) => a + i.priceIQD * i.qty, 0);
   const fee = subtotal >= settings.freeAbove ? 0 : settings.deliveryFee;
-  const discount = coupon ? coupon.discount : 0;
-  const total = Math.max(0, subtotal + fee + settings.serviceFee + (pending.tip || 0) - discount);
+  const couponDisc = coupon ? coupon.discount : 0;
+  const preTotal = subtotal + fee + settings.serviceFee + (pending.tip || 0) - couponDisc;
+  const maxPointsDisc = Math.min(userPoints * POINT_VALUE, Math.max(0, preTotal)); // لا يتجاوز الإجمالي
+  const pointsToUse = usePoints ? Math.floor(maxPointsDisc / POINT_VALUE) : 0;
+  const pointsDisc = pointsToUse * POINT_VALUE;
+  const discount = couponDisc + pointsDisc;
+  const total = Math.max(0, preTotal - pointsDisc);
 
   const applyCode = () => {
     setCodeErr("");
@@ -30,6 +37,7 @@ export default function PaymentPage({ pending, onBack, onPlaced }) {
     // التقط موقع الزبون الحقيقي بالGPS (لتوصيل دقيق)
     let coords = null;
     try { const loc = await getCurrentLocation(); coords = { lat: loc.lat, lng: loc.lng }; } catch { /* سيُستخدم موقع العنوان */ }
+    if (pointsToUse > 0) redeemPoints(pointsToUse);
     const order = placeOrder(pending.items, { tip: pending.tip, note: pending.note, payMethod: method, discount, couponCode: coupon?.code });
     if (coords) updateOrderLocation(order.id, coords); // استبدل بالموقع الحقيقي
     setPlacing(false);
@@ -91,13 +99,28 @@ export default function PaymentPage({ pending, onBack, onPlaced }) {
           {codeErr && <div className="bk-coupon-err">⚠️ {codeErr}</div>}
         </div>
 
+        {userPoints > 0 && (
+          <div className="bk-pay-sec">
+            <div className="cap">🎁 نقاط الولاء</div>
+            <div className={"bk-points-toggle" + (usePoints ? " on" : "")} onClick={() => setUsePoints(!usePoints)}>
+              <span className="bk-pt-ic">🎁</span>
+              <div className="bk-pt-inf">
+                <b>استخدم نقاطك ({userPoints} نقطة)</b>
+                <small>{usePoints ? `خصم ${fmt(pointsDisc)} ${CUR} — تُستخدم ${pointsToUse} نقطة` : `متاح خصم حتى ${fmt(Math.floor(maxPointsDisc))} ${CUR}`}</small>
+              </div>
+              <span className={"bk-pt-check" + (usePoints ? " on" : "")}>{usePoints ? "✓" : ""}</span>
+            </div>
+          </div>
+        )}
+
         {/* ملخص المبلغ */}
         <div className="bk-pay-summary">
           <div className="r"><span>قيمة المنتجات</span><b>{fmt(subtotal)} {CUR}</b></div>
           <div className="r"><span>التوصيل</span><b>{fee === 0 ? "مجاني 🎁" : `${fmt(fee)} ${CUR}`}</b></div>
           {settings.serviceFee > 0 && <div className="r"><span>رسوم الخدمة</span><b>{fmt(settings.serviceFee)} {CUR}</b></div>}
           {(pending.tip || 0) > 0 && <div className="r"><span>بقشيش المندوب</span><b>{fmt(pending.tip)} {CUR}</b></div>}
-          {discount > 0 && <div className="r disc"><span>خصم ({coupon.code})</span><b>− {fmt(discount)} {CUR}</b></div>}
+          {couponDisc > 0 && <div className="r disc"><span>خصم ({coupon.code})</span><b>− {fmt(couponDisc)} {CUR}</b></div>}
+          {pointsDisc > 0 && <div className="r disc"><span>خصم النقاط ({pointsToUse} نقطة)</span><b>− {fmt(pointsDisc)} {CUR}</b></div>}
           <div className="r tot"><span>الإجمالي</span><span>{fmt(total)} {CUR}</span></div>
         </div>
         <div style={{ height: 10 }} />

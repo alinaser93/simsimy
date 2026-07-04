@@ -148,7 +148,7 @@ const defaults = () => {
       { id: "a2", label: "العمل", details: "الكرادة، شارع السعدون، بناية 40، ط3", phone: "0770 000 0000", lat: 33.3080, lng: 44.4020 },
     ],
     selectedAddress: "a1",
-    user: { name: "", phone: "", birthday: "", email: "", notifications: true, loggedIn: false },
+    user: { name: "", phone: "", birthday: "", email: "", notifications: true, loggedIn: false, points: 0, pointsHistory: [] },
     wishlist: [],
     orders: seedOrders(products),
     settlements: [],   // تسويات التجار والمندوبين
@@ -321,6 +321,37 @@ export const removeCustomTab = (id) => {
   setState((s) => ({ customTabs: s.customTabs.filter((t) => t.id !== id), histV: (s.histV || 0) + 1 }));
 };
 
+// ═══ نقاط ومكافآت الولاء ═══
+// إعدادات: نقطة لكل 1000 د.ع، 100 نقطة = 1000 د.ع خصم
+export const POINTS_PER_IQD = 1 / 1000; // 1 نقطة لكل 1000 د.ع
+export const POINT_VALUE = 10; // قيمة النقطة الواحدة عند الاستبدال (د.ع)
+// امنح نقاطاً عند إتمام طلب
+export const awardPoints = (orderId, orderTotal) => {
+  const earned = Math.floor(orderTotal * POINTS_PER_IQD);
+  if (earned <= 0) return;
+  setState((s) => ({
+    user: {
+      ...s.user,
+      points: (s.user.points || 0) + earned,
+      pointsHistory: [{ id: "p" + Date.now(), type: "earn", amount: earned, orderId, at: Date.now() }, ...(s.user.pointsHistory || [])].slice(0, 50),
+    },
+  }));
+};
+// استبدل نقاطاً بخصم (يُخصم من الرصيد)
+export const redeemPoints = (points) => {
+  setState((s) => {
+    const have = s.user.points || 0;
+    if (points > have) return {};
+    return {
+      user: {
+        ...s.user,
+        points: have - points,
+        pointsHistory: [{ id: "p" + Date.now(), type: "redeem", amount: -points, at: Date.now() }, ...(s.user.pointsHistory || [])].slice(0, 50),
+      },
+    };
+  });
+};
+
 // ═══ أكواد الخصم ═══
 export const addCoupon = (coupon) =>
   setState((s) => ({ coupons: [...(s.coupons || []), { ...coupon, code: coupon.code.toUpperCase().trim(), uses: 0, active: true }] }));
@@ -478,6 +509,7 @@ export const placeOrder = (items, extra = {}) => {
   });
   const coupons = extra.couponCode ? (s.coupons || []).map((c) => (c.code === extra.couponCode ? { ...c, uses: (c.uses || 0) + 1 } : c)) : s.coupons;
   setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1, products, coupons });
+  awardPoints(order.id, order.total); // منح نقاط الولاء
   afterOrderChange(order.id);
   return order;
 };

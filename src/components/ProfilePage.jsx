@@ -3,6 +3,7 @@ import {
   ChevronRight, ChevronLeft, ShoppingBag, Wallet, HelpCircle, MapPin, Heart,
   CreditCard, Gift, Bell, Share2, Info, Shield, Phone, Moon, Sun, LogOut, Pencil, User, Cake,
 } from "lucide-react";
+import { fmt } from "../utils/currency.js";
 import { useStore, updateUser } from "../store/appStore.js";
 import { requestNotifyPermission, notifyPermission } from "../utils/notify.js";
 
@@ -78,6 +79,18 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
               onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           </div>
         )}
+
+        {/* بطاقة نقاط الولاء */}
+        <div className="pf-points">
+          <div className="pf-points-l">
+            <span className="pf-points-ic">🎁</span>
+            <div>
+              <div className="pf-points-val">{user.points || 0} <small>نقطة</small></div>
+              <div className="pf-points-sub">تساوي {fmt((user.points || 0) * 10)} د.ع خصم</div>
+            </div>
+          </div>
+          <div className="pf-points-hint">اجمع نقاطاً مع كل طلب واستبدلها خصماً!</div>
+        </div>
 
         {/* البطاقات الثلاث السريعة */}
         <div className="pf-cards">

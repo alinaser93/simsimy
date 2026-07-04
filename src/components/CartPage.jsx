@@ -22,6 +22,17 @@ export default function CartPage({ cart, add, inc, dec, onBack, onChangeAddress,
     .filter(Boolean);
   const subtotal = items.reduce((a, i) => a + i.priceIQD * i.qty, 0);
   const savings = items.reduce((a, i) => a + (i.mrpIQD - i.priceIQD) * i.qty, 0);
+
+  // منتجات مقترحة (بيع متقاطع): من أقسام السلة، غير موجودة فيها، متوفّرة
+  const cartCats = [...new Set(items.map((i) => i.cat).filter(Boolean))];
+  const inCart = new Set(items.map((i) => i.id));
+  let suggestions = products.filter((p) => !inCart.has(p.id) && p.stock !== false && p.qty !== 0 && cartCats.includes(p.cat));
+  // إن قلّت، أضِف الأكثر مبيعاً عمومًا
+  if (suggestions.length < 6) {
+    const extra = products.filter((p) => !inCart.has(p.id) && p.stock !== false && p.qty !== 0 && !suggestions.some((x) => x.id === p.id));
+    suggestions = [...suggestions, ...extra];
+  }
+  suggestions = suggestions.slice(0, 10);
   const free = subtotal >= settings.freeAbove;
   const fee = free ? 0 : settings.deliveryFee;
   const total = subtotal + fee + settings.serviceFee + tip;
@@ -97,6 +108,24 @@ export default function CartPage({ cart, add, inc, dec, onBack, onChangeAddress,
             ))}
           </div>
         </div>
+
+        {items.length > 0 && suggestions.length > 0 && (
+          <div className="bk-cardbox">
+            <div className="cap">💡 أضِف هذه أيضاً</div>
+            <div className="bk-suggest">
+              {suggestions.map((p) => (
+                <div className="bk-sug" key={p.id}>
+                  <div className="bk-sug-img" style={{ background: p.bg || "#f5f5f5" }}>
+                    {(p.img || (p.images && p.images[0])) ? <img src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="e">{p.e}</span>}
+                  </div>
+                  <div className="bk-sug-nm">{p.name}</div>
+                  <div className="bk-sug-pr">{fmt(p.priceIQD)} {CUR}</div>
+                  <button className="bk-sug-add" onClick={() => add(p.id)}>+ إضافة</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bk-cardbox">
           <div className="cap">أكرم مندوبك 🤝</div>
