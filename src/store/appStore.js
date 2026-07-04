@@ -198,6 +198,9 @@ const emit = () => {
   listeners.forEach((l) => l());
 };
 
+let orderChangeHook = null;
+export const setOrderChangeHook = (fn) => { orderChangeHook = fn; };
+const afterOrderChange = (id) => { try { orderChangeHook && orderChangeHook(id); } catch { /* تجاهل */ } };
 export const getState = () => state;
 export const setState = (patch) => {
   state = { ...state, ...(typeof patch === "function" ? patch(state) : patch) };
@@ -323,7 +326,7 @@ export const toggleWishlist = (id) =>
   setState((s) => ({ wishlist: s.wishlist.includes(id) ? s.wishlist.filter((x) => x !== id) : [...s.wishlist, id] }));
 
 // جاهزية التاجر (بوابة الجاهزية): عندما تكتمل كل المتاجر ينتقل الطلب تلقائياً لـ«جاهز للتوصيل»
-export const setMerchantReady = (orderId, mid, val = true) =>
+export const setMerchantReady = (orderId, mid, val = true) => {
   setState((s) => ({
     orders: s.orders.map((o) => {
       if (o.id !== orderId) return o;
@@ -336,6 +339,8 @@ export const setMerchantReady = (orderId, mid, val = true) =>
       return { ...o, readiness, status };
     }),
   }));
+  afterOrderChange(orderId);
+};
 
 export const updateCourier = (id, patch) =>
   setState((s) => ({ couriers: s.couriers.map((c) => (c.id === id ? { ...c, ...patch } : c)) }));
@@ -355,7 +360,8 @@ export const setOrderStatus = (id, status) =>
     }),
   }));
 
-export const assignCourier = (id, courierId) =>
+export const assignCourier = (id, courierId) => { _assignCourier(id, courierId); afterOrderChange(id); };
+const _assignCourier = (id, courierId) =>
   setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, courierId } : o)) }));
 
 
@@ -367,28 +373,25 @@ function recomputeOrder(o, s) {
   return { ...o, subtotal, fee, total: subtotal + fee + (o.serviceFee || 0) + (o.tip || 0) };
 }
 // حذف عنصر من الطلب (نفاد المنتج) — يعيد حساب المبالغ
-export const removeOrderItem = (orderId, itemId) =>
-  setState((s) => ({
+export const removeOrderItem = (orderId, itemId) => { setState((s) => ({
     orders: s.orders.map((o) => {
       if (o.id !== orderId) return o;
       const items = o.items.filter((i) => i.id !== itemId);
       if (items.length === 0) return { ...o, status: "ملغي", items }; // لا عناصر → إلغاء
       return recomputeOrder({ ...o, items }, s);
     }),
-  }));
+  })); afterOrderChange(orderId); };
 // تعديل كمية عنصر في الطلب
-export const updateOrderItemQty = (orderId, itemId, qty) =>
-  setState((s) => ({
+export const updateOrderItemQty = (orderId, itemId, qty) => { setState((s) => ({
     orders: s.orders.map((o) => {
       if (o.id !== orderId) return o;
       if (qty <= 0) { const items = o.items.filter((i) => i.id !== itemId); return items.length ? recomputeOrder({ ...o, items }, s) : { ...o, status: "ملغي", items }; }
       const items = o.items.map((i) => (i.id === itemId ? { ...i, qty } : i));
       return recomputeOrder({ ...o, items }, s);
     }),
-  }));
+  })); afterOrderChange(orderId); };
 // التاجر يرفض الطلب كاملاً
-export const rejectOrder = (orderId, reason) =>
-  setState((s) => ({ orders: s.orders.map((o) => (o.id === orderId ? { ...o, status: "ملغي", rejectReason: reason || "رفضه المتجر" } : o)) }));
+export const rejectOrder = (orderId, reason) => { setState((s) => ({ orders: s.orders.map((o) => (o.id === orderId ? { ...o, status: "ملغي", rejectReason: reason || "رفضه المتجر" } : o)) })); afterOrderChange(orderId); };
 
 // ═══ تعيين المندوب تلقائياً ═══
 // يجد مندوباً متاحاً بلا طلبات نشطة (الأقل حملاً)
@@ -403,6 +406,7 @@ export const autoAssignCourier = (orderId) => {
   const free = findFreeCourier();
   if (!free) return null;
   setState((s) => ({ orders: s.orders.map((o) => (o.id === orderId ? { ...o, courierId: free.id, status: "في الطريق" } : o)) }));
+  afterOrderChange(orderId);
   return free;
 };
 export const toggleCourier = (id) =>
@@ -448,6 +452,7 @@ export const placeOrder = (items, extra = {}) => {
     return { ...p, qty: q, stock: q > 0 };
   });
   setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1, products });
+  afterOrderChange(order.id);
   return order;
 };
 
@@ -474,7 +479,8 @@ export const courierRemit = (cid, amount, orderIds) => {
 export const confirmSettlement = (id) =>
   setState((s) => ({ settlements: s.settlements.map((x) => (x.id === id ? { ...x, status: "مؤكدة" } : x)) }));
 
-export const cancelOrder = (id) =>
+export const cancelOrder = (id) => { _cancelOrder(id); afterOrderChange(id); };
+const _cancelOrder = (id) =>
   setState((s) => ({ orders: s.orders.map((o) => (o.id === id && o.status === "جديد" ? { ...o, status: "ملغي" } : o)) }));
 
 export const addAddress = (label, details, phone, coords) => {

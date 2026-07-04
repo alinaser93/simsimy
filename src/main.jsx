@@ -1,3 +1,6 @@
+import { initSync } from "./store/sync.js";
+import { setOrderChangeHook } from "./store/appStore.js";
+import { pushOrder } from "./store/sync.js";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -12,3 +15,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// فعّل المزامنة الحيّة عبر Supabase (إن كانت متاحة)
+setOrderChangeHook(pushOrder);
+initSync();
