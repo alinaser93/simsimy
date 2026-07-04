@@ -1,4 +1,7 @@
+import { useState, useEffect, useRef } from "react";
 import { ChevronRight, Phone } from "lucide-react";
+import MapView from "./MapView.jsx";
+import { lerp } from "../utils/geo.js";
 import { useStore, cancelOrder } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import { timeAgo } from "../portal/PortalKit.jsx";
@@ -25,6 +28,34 @@ export default function TrackingPage({ orderId, onBack }) {
   const courier = couriers.find((c) => c.id === order.courierId);
   const done = order.status === "تم التوصيل";
 
+  // مواقع الخريطة
+  const storeLoc = useStore((s) => s.storeLocation);
+  const home = order.lat && order.lng ? { lat: order.lat, lng: order.lng } : { lat: storeLoc.lat + 0.012, lng: storeLoc.lng + 0.008 };
+  const store = { lat: storeLoc.lat, lng: storeLoc.lng };
+
+  // محاكاة حركة المندوب من المتجر للمنزل عند «في الطريق»
+  const [progress, setProgress] = useState(0);
+  const startRef = useRef(Date.now());
+  useEffect(() => {
+    if (order.status !== "في الطريق") { setProgress(order.status === "وصل المندوب" || done ? 1 : 0); return; }
+    startRef.current = Date.now();
+    const TRIP = 90000; // ~90 ثانية للمحاكاة
+    const iv = setInterval(() => {
+      const p = Math.min(1, (Date.now() - startRef.current) / TRIP);
+      setProgress(p);
+      if (p >= 1) clearInterval(iv);
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [order.status, done]);
+
+  const courierPos = lerp(store, home, progress);
+  const showCourier = order.status === "في الطريق" || order.status === "وصل المندوب";
+  const mapMarkers = [
+    { lat: home.lat, lng: home.lng, type: "home", label: "موقع التوصيل" },
+    { lat: store.lat, lng: store.lng, type: "store", label: "المتجر" },
+  ];
+  if (showCourier && !done) mapMarkers.push({ lat: courierPos.lat, lng: courierPos.lng, type: "courier", label: courier ? courier.name : "المندوب" });
+
   return (
     <div className="bk-page">
       <div className="bk-trk-head" style={{ background: `linear-gradient(160deg, ${appearance.green}, #063d10)` }}>
@@ -43,12 +74,13 @@ export default function TrackingPage({ orderId, onBack }) {
 
       <div className="bk-pbody" style={{ background: "#f7f7f9" }}>
         {!cancelled && (
-          <div className="bk-map">
-            <div className="road" />
-            <span className="store">🏪</span>
-            <span className="home">🏠</span>
-            {order.status === "في الطريق" && <span className="bike">🛵</span>}
-            {done && <span style={{ position: "absolute", top: "20%", left: "9%", fontSize: 20 }}>✅</span>}
+          <div className="bk-trkmap">
+            <MapView center={[home.lat, home.lng]} zoom={14} height={240}
+              markers={mapMarkers}
+              route={showCourier && !done ? [[store.lat, store.lng], [home.lat, home.lng]] : null} />
+            {showCourier && !done && (
+              <div className="bk-trkmap-badge">🛵 المندوب في الطريق إليك — {Math.round((1 - progress) * (eta || 15))} دقيقة تقريباً</div>
+            )}
           </div>
         )}
 

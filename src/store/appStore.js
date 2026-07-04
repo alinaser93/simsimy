@@ -138,9 +138,10 @@ const defaults = () => {
       { id: "c3", name: "مرتضى سعد", phone: "0790 333 0003", active: false, password: "3333" },
     ],
     products,
+    storeLocation: { lat: 33.3152, lng: 44.3661, name: "المتجر الرئيسي" }, // بغداد
     addresses: [
-      { id: "a1", label: "المنزل", details: "علي، 22، منطقة راجباث", phone: "0770 000 0000" },
-      { id: "a2", label: "العمل", details: "شارع السعدون، بناية 40، ط3", phone: "0770 000 0000" },
+      { id: "a1", label: "المنزل", details: "المنصور، شارع 14 رمضان، دار 22", phone: "0770 000 0000", lat: 33.3260, lng: 44.3560 },
+      { id: "a2", label: "العمل", details: "الكرادة، شارع السعدون، بناية 40، ط3", phone: "0770 000 0000", lat: 33.3080, lng: 44.4020 },
     ],
     selectedAddress: "a1",
     user: { name: "", phone: "", birthday: "", email: "", notifications: true, loggedIn: false },
@@ -385,6 +386,7 @@ export const placeOrder = (items, extra = {}) => {
   const order = {
     id: s.nextOrderId, items, merchantId, merchantCount, readiness, courierId: null, status: "جديد",
     time: new Date().toISOString(), customer, mine: true,
+    lat: addr?.lat, lng: addr?.lng,
     subtotal, fee, serviceFee: s.settings.serviceFee, tip,
     payMethod: extra.payMethod || "نقداً عند الاستلام",
     note: extra.note || "",
@@ -428,9 +430,9 @@ export const confirmSettlement = (id) =>
 export const cancelOrder = (id) =>
   setState((s) => ({ orders: s.orders.map((o) => (o.id === id && o.status === "جديد" ? { ...o, status: "ملغي" } : o)) }));
 
-export const addAddress = (label, details, phone) => {
+export const addAddress = (label, details, phone, coords) => {
   const id = "a" + Date.now();
-  setState((s) => ({ addresses: [...s.addresses, { id, label, details, phone }], selectedAddress: id }));
+  setState((s) => ({ addresses: [...s.addresses, { id, label, details, phone, lat: coords?.lat, lng: coords?.lng }], selectedAddress: id }));
 };
 export const selectAddress = (id) => setState({ selectedAddress: id });
 export const removeAddress = (id) =>

@@ -1,19 +1,37 @@
 import { useState } from "react";
-import { ChevronRight, Search, Plus, MapPin, Trash2 } from "lucide-react";
+import { ChevronRight, Search, Plus, MapPin, Trash2, LocateFixed, Loader2 } from "lucide-react";
 import { useStore, addAddress, selectAddress, removeAddress } from "../store/appStore.js";
+import MapView from "./MapView.jsx";
+import { getCurrentLocation, reverseGeocode } from "../utils/geo.js";
 
 /* اختيار موقع التوصيل + إضافة عنوان جديد — كما في التطبيق الأصلي */
 export default function AddressPage({ onBack }) {
   const addresses = useStore((s) => s.addresses);
   const selected = useStore((s) => s.selectedAddress);
   const [adding, setAdding] = useState(false);
+  const storeLoc = useStore((s) => s.storeLocation);
   const [f, setF] = useState({ label: "المنزل", details: "", phone: "" });
+  const [coords, setCoords] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [locErr, setLocErr] = useState("");
+
+  const detectLocation = async () => {
+    setLocating(true); setLocErr("");
+    try {
+      const loc = await getCurrentLocation();
+      setCoords({ lat: loc.lat, lng: loc.lng });
+      const addr = await reverseGeocode(loc.lat, loc.lng);
+      setF((prev) => ({ ...prev, details: addr }));
+    } catch (e) { setLocErr(e.message); }
+    setLocating(false);
+  };
 
   const save = () => {
     if (!f.details) return;
-    addAddress(f.label || "عنوان", f.details, f.phone || "0770 000 0000");
+    addAddress(f.label || "عنوان", f.details, f.phone || "0770 000 0000", coords);
     setAdding(false);
     setF({ label: "المنزل", details: "", phone: "" });
+    setCoords(null);
     onBack();
   };
 
@@ -40,6 +58,19 @@ export default function AddressPage({ onBack }) {
                 ))}
               </div>
             </div>
+            <button className="bk-gps-btn" onClick={detectLocation} disabled={locating}>
+              {locating ? <Loader2 size={17} className="spin" /> : <LocateFixed size={17} />}
+              {locating ? "جارٍ تحديد موقعك…" : "📍 حدّد موقعي تلقائياً (GPS)"}
+            </button>
+            {locErr && <div className="lg-err" style={{ marginBottom: 8 }}>{locErr}</div>}
+            {coords && (
+              <div className="bk-map-pick">
+                <MapView center={[coords.lat, coords.lng]} zoom={16} height={200} draggablePin
+                  markers={[{ lat: coords.lat, lng: coords.lng, type: "home", label: "اسحب الدبّوس لضبط موقعك" }]}
+                  onPinMove={async (lat, lng) => { setCoords({ lat, lng }); const addr = await reverseGeocode(lat, lng); setF((prev) => ({ ...prev, details: addr })); }} />
+                <div className="bk-map-hint">🎯 اسحب الدبّوس لضبط موقعك بدقّة</div>
+              </div>
+            )}
             <div className="pt-field"><label>تفاصيل العنوان (المنطقة، الشارع، الدار/الطابق)</label>
               <input className="pt-in" placeholder="مثال: الكرادة، شارع 62، بناية 14، ط2" value={f.details}
                 onChange={(e) => setF({ ...f, details: e.target.value })} /></div>

@@ -18,7 +18,7 @@ function DeliveryInfo({ theme }) {
             ? <span className="bk-surge"><TrendingUp size={12} strokeWidth={2.6} />أسعار الذروة</span>
             : <span className="bk-247" style={{ color: theme.badge, borderColor: theme.badgeBorder }}>على مدار الساعة</span>}
         </div>
-        <div className="bk-loc" style={{ color: theme.sub }}>
+        <div className="bk-loc" style={{ color: theme.sub, cursor: "pointer" }} onClick={() => window.dispatchEvent(new CustomEvent("bk:openAddress"))}>
           <b style={{ color: rgb(oh) }}>{t.addressTitle}</b> - {t.address} <ChevronDown size={16} strokeWidth={2.6} />
         </div>
       </div>

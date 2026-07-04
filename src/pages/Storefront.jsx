@@ -37,6 +37,8 @@ export default function Storefront() {
   const [listing, setListing] = useState(null);
   const [page, setPage] = useState(null);        // cart | payment | address | orders | search | {tracking:id}
   const [pending, setPending] = useState(null);  // بيانات السلة قبل الدفع
+  const [loginNext, setLoginNext] = useState("profile"); // الوجهة بعد تسجيل الدخول
+  const loggedIn = useStore((s) => s.user.loggedIn);
   const [productId, setProductId] = useState(null); // ورقة تفاصيل المنتج
   const [toast, setToast] = useState(null);
   const settings = useStore((st) => st.settings);
@@ -72,7 +74,9 @@ export default function Storefront() {
   }, []);
   useEffect(() => {
     const openProf = () => { pushBK(); setPage("profile"); };
+    const openAddr = () => { pushBK(); setPage("address"); };
     window.addEventListener("bk:openProfile", openProf);
+    window.addEventListener("bk:openAddress", openAddr);
     const h = (e) => { pushBK(); setProductId(e.detail); };
     const hl = (e) => { pushBK(); setListing(e.detail); };
     window.addEventListener("bk:openProduct", h);
@@ -177,7 +181,11 @@ export default function Storefront() {
           <CartPage cart={cart} add={add} inc={inc} dec={dec}
             onBack={() => setPage(null)}
             onChangeAddress={() => setPage("address")}
-            onPay={(data) => { setPending(data); setPage("payment"); }} />
+            onPay={(data) => {
+              setPending(data);
+              if (loggedIn) setPage("payment");
+              else { setLoginNext("payment"); setPage("login"); }
+            }} />
         )}
         {page === "payment" && pending && (
           <PaymentPage pending={pending} onBack={() => setPage("cart")} onPlaced={placed} />
@@ -199,13 +207,13 @@ export default function Storefront() {
             onWishlist={() => setPage("wishlist")}
             onWallet={() => setPage("orders")}
             onHelp={() => setPage("orders")}
-            onLogin={() => setPage("login")} />
+            onLogin={() => { setLoginNext("profile"); setPage("login"); }} />
         )}
         {page === "wishlist" && (
           <WishlistPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage("profile")} />
         )}
         {page === "login" && (
-          <LoginPage onBack={() => setPage("profile")} onDone={() => setPage("profile")} />
+          <LoginPage onBack={() => setPage(loginNext === "payment" ? "cart" : "profile")} onDone={() => setPage(loginNext)} />
         )}
         {page === "search" && (
           <SearchPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage(null)} />

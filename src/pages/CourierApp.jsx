@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState , useEffect } from "react";
+import MapView from "../components/MapView.jsx";
+import { getCurrentLocation } from "../utils/geo.js";
 import { Bike, PackageCheck, Wallet, MapPin, Phone, CheckCircle2, HandCoins, Navigation, DoorOpen, Banknote } from "lucide-react";
 import { useStore, setOrderStatus, assignCourier, toggleCourier, courierRemit } from "../store/appStore.js";
 import { courierWageOf, courierCash } from "../store/finance.js";
@@ -77,7 +79,30 @@ function Courier({ cid, onLogout }) {
   );
 }
 
-function OrderCard({ o, action }) {
+
+// خريطة المندوب: موقعه + موقع الزبون + المسار
+function CourierMap({ order }) {
+  const storeLoc = useStore((s) => s.storeLocation);
+  const home = order.lat && order.lng ? { lat: order.lat, lng: order.lng } : { lat: storeLoc.lat + 0.012, lng: storeLoc.lng + 0.008 };
+  const [myPos, setMyPos] = useState(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    let active = true;
+    getCurrentLocation().then((loc) => { if (active) setMyPos({ lat: loc.lat, lng: loc.lng }); }).catch((e) => { if (active) setErr(e.message); });
+    return () => { active = false; };
+  }, []);
+  const markers = [{ lat: home.lat, lng: home.lng, type: "home", label: order.customer.name }];
+  if (myPos) markers.push({ lat: myPos.lat, lng: myPos.lng, type: "courier", label: "موقعك" });
+  return (
+    <div style={{ borderRadius: 10, overflow: "hidden", marginTop: 4 }}>
+      <MapView center={[home.lat, home.lng]} zoom={14} height={200} markers={markers}
+        route={myPos ? [[myPos.lat, myPos.lng], [home.lat, home.lng]] : null} />
+      {err && <div style={{ fontSize: 11, color: "#c0303a", padding: "5px 8px", fontWeight: 700 }}>📍 {err}</div>}
+    </div>
+  );
+}
+
+function OrderCard({ o, action, showMap }) {
   const settings = useStore((s) => s.settings);
   const wage = courierWageOf(o, settings);
   return (
@@ -95,6 +120,7 @@ function OrderCard({ o, action }) {
         </div>
         <div className="pt-items-mini" style={{ fontSize: 20 }}>{o.items.map((i, x) => <span key={x}>{i.e}</span>)}</div>
         {o.note && <div style={{ background: "#FFF8E1", color: "#7a5c00", borderRadius: 8, padding: "6px 9px", fontSize: 11, fontWeight: 700 }}>📝 {o.note}</div>}
+        {showMap && <CourierMap order={o} />}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
           <span style={{ color: "var(--p-mut2)" }}>
             {(o.payMethod || "").includes("نقد") ? "تحصيل نقدي" : "مدفوع مسبقاً"}: <b style={{ color: "var(--p-ink)" }}>{fmt(o.total)} {CUR}</b>
@@ -127,6 +153,7 @@ function Available({ me }) {
 
 function Mine({ me }) {
   const orders = useStore((s) => s.orders).filter((o) => o.courierId === me.id && ["في الطريق", "وصل المندوب"].includes(o.status));
+  const withMap = true;
   const nextOf = (o) =>
     o.status === "في الطريق"
       ? { l: "وصلتُ للعنوان", to: "وصل المندوب", Icon: DoorOpen }
@@ -137,7 +164,7 @@ function Mine({ me }) {
       {orders.map((o) => {
         const n = nextOf(o);
         return (
-          <OrderCard key={o.id} o={o}
+          <OrderCard key={o.id} o={o} showMap
             action={<button className="pt-btn sm" onClick={() => setOrderStatus(o.id, n.to)}>
               <n.Icon size={12} style={{ verticalAlign: -2 }} /> {n.l}</button>} />
         );
