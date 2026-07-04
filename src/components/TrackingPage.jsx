@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronRight, Phone } from "lucide-react";
+import { ChevronRight, Phone, Star } from "lucide-react";
 import MapView from "./MapView.jsx";
 import { lerp } from "../utils/geo.js";
 import { showNotification, playBeep } from "../utils/notify.js";
-import { useStore, cancelOrder } from "../store/appStore.js";
+import { useStore, cancelOrder, rateOrder } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import { timeAgo } from "../portal/PortalKit.jsx";
 
@@ -17,6 +17,56 @@ const STEP_INFO = {
 };
 
 /* تتبّع الطلب الحي — الحالة تتحدث لحظياً مع إجراءات التاجر والمندوب */
+
+// بطاقة تقييم الطلب والمندوب (تظهر بعد التوصيل)
+function RatingCard({ order, courier }) {
+  const [orderStars, setOrderStars] = useState(order.rating?.orderStars || 0);
+  const [courierStars, setCourierStars] = useState(order.rating?.courierStars || 0);
+  const [comment, setComment] = useState(order.rating?.comment || "");
+  const [submitted, setSubmitted] = useState(!!order.rating);
+
+  const Stars = ({ value, onSet }) => (
+    <div className="rt-stars">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button key={n} className={"rt-star" + (n <= value ? " on" : "")} onClick={() => onSet(n)} aria-label={`${n} نجوم`}>
+          <Star size={30} fill={n <= value ? "#F8B400" : "none"} strokeWidth={1.5} />
+        </button>
+      ))}
+    </div>
+  );
+
+  if (submitted) {
+    return (
+      <div className="bk-cardbox rt-done">
+        <div className="rt-thanks">🙏 شكراً لتقييمك!</div>
+        <div className="rt-summary">
+          <span>الطلب: {"⭐".repeat(order.rating?.orderStars || orderStars)}</span>
+          {courier && <span>المندوب: {"⭐".repeat(order.rating?.courierStars || courierStars)}</span>}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="bk-cardbox rt-card">
+      <div className="rt-title">⭐ قيّم تجربتك</div>
+      <div className="rt-row">
+        <span className="rt-label">كيف كان طلبك؟</span>
+        <Stars value={orderStars} onSet={setOrderStars} />
+      </div>
+      {courier && (
+        <div className="rt-row">
+          <span className="rt-label">كيف كان المندوب {courier.name}؟</span>
+          <Stars value={courierStars} onSet={setCourierStars} />
+        </div>
+      )}
+      <textarea className="rt-comment" placeholder="أضف ملاحظة (اختياري)…" value={comment} onChange={(e) => setComment(e.target.value)} rows="2" />
+      <button className="rt-submit" disabled={!orderStars} onClick={() => { rateOrder(order.id, { orderStars, courierStars, comment }); setSubmitted(true); }}>
+        إرسال التقييم
+      </button>
+    </div>
+  );
+}
+
 export default function TrackingPage({ orderId, onBack }) {
   const order = useStore((s) => s.orders.find((o) => o.id === orderId));
   const couriers = useStore((s) => s.couriers);
@@ -119,6 +169,8 @@ export default function TrackingPage({ orderId, onBack }) {
             </div>
           ))}
         </div>
+
+        {done && <RatingCard order={order} courier={courier} />}
 
         {courier && !cancelled && (
           <div className="bk-courier">

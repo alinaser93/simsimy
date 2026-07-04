@@ -139,6 +139,10 @@ const defaults = () => {
     ],
     products,
     storeLocation: { lat: 33.3152, lng: 44.3661, name: "المتجر الرئيسي" }, // بغداد
+    coupons: [
+      { code: "WELCOME", type: "percent", value: 20, minOrder: 5000, active: true, uses: 0, maxUses: 0, desc: "خصم 20% لأول طلب" },
+      { code: "SAVE1000", type: "fixed", value: 1000, minOrder: 10000, active: true, uses: 0, maxUses: 0, desc: "خصم 1000 د.ع على الطلبات فوق 10 آلاف" },
+    ],
     addresses: [
       { id: "a1", label: "المنزل", details: "المنصور، شارع 14 رمضان، دار 22", phone: "0770 000 0000", lat: 33.3260, lng: 44.3560 },
       { id: "a2", label: "العمل", details: "الكرادة، شارع السعدون، بناية 40، ط3", phone: "0770 000 0000", lat: 33.3080, lng: 44.4020 },
@@ -317,6 +321,25 @@ export const removeCustomTab = (id) => {
   setState((s) => ({ customTabs: s.customTabs.filter((t) => t.id !== id), histV: (s.histV || 0) + 1 }));
 };
 
+// ═══ أكواد الخصم ═══
+export const addCoupon = (coupon) =>
+  setState((s) => ({ coupons: [...(s.coupons || []), { ...coupon, code: coupon.code.toUpperCase().trim(), uses: 0, active: true }] }));
+export const updateCoupon = (code, patch) =>
+  setState((s) => ({ coupons: (s.coupons || []).map((c) => (c.code === code ? { ...c, ...patch } : c)) }));
+export const removeCoupon = (code) =>
+  setState((s) => ({ coupons: (s.coupons || []).filter((c) => c.code !== code) }));
+// تحقّق من كود وأرجع الخصم (أو خطأ)
+export const validateCoupon = (code, subtotal) => {
+  const s = state;
+  const c = (s.coupons || []).find((x) => x.code === (code || "").toUpperCase().trim());
+  if (!c) return { ok: false, error: "الكود غير صحيح" };
+  if (!c.active) return { ok: false, error: "هذا الكود غير مُفعّل" };
+  if (c.maxUses > 0 && c.uses >= c.maxUses) return { ok: false, error: "انتهت صلاحية هذا الكود" };
+  if (subtotal < (c.minOrder || 0)) return { ok: false, error: `الحد الأدنى للطلب ${c.minOrder} د.ع` };
+  const discount = c.type === "percent" ? Math.round(subtotal * c.value / 100) : c.value;
+  return { ok: true, discount, coupon: c };
+};
+
 export const setStoreLocation = (coords, name) => setState((s) => ({ storeLocation: { lat: coords.lat, lng: coords.lng, name: name || s.storeLocation.name } }));
 export const updateSettings = (patch) =>
   setState((s) => ({ settings: { ...s.settings, ...patch } }));
@@ -440,9 +463,10 @@ export const placeOrder = (items, extra = {}) => {
     time: new Date().toISOString(), customer, mine: true,
     lat: addr?.lat, lng: addr?.lng,
     subtotal, fee, serviceFee: s.settings.serviceFee, tip,
+    discount: extra.discount || 0, couponCode: extra.couponCode || null,
     payMethod: extra.payMethod || "نقداً عند الاستلام",
     note: extra.note || "",
-    total: subtotal + fee + s.settings.serviceFee + tip,
+    total: Math.max(0, subtotal + fee + s.settings.serviceFee + tip - (extra.discount || 0)),
   };
   // إنقاص كمية المخزون للمنتجات المطلوبة (إن كانت تُدار بالكمية)
   const soldQty = {};
@@ -452,7 +476,8 @@ export const placeOrder = (items, extra = {}) => {
     const q = Math.max(0, p.qty - soldQty[p.id]);
     return { ...p, qty: q, stock: q > 0 };
   });
-  setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1, products });
+  const coupons = extra.couponCode ? (s.coupons || []).map((c) => (c.code === extra.couponCode ? { ...c, uses: (c.uses || 0) + 1 } : c)) : s.coupons;
+  setState({ orders: [order, ...s.orders], nextOrderId: s.nextOrderId + 1, products, coupons });
   afterOrderChange(order.id);
   return order;
 };
@@ -469,6 +494,8 @@ export const updateCourierLocation = (id, coords) => {
   setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, courierLat: coords.lat, courierLng: coords.lng, courierAt: Date.now() } : o)) }));
   afterOrderChange(id);
 };
+// تقييم الزبون للطلب والمندوب بعد التوصيل
+export const rateOrder = (id, rating) => { setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, rating: { orderStars: rating.orderStars, courierStars: rating.courierStars, comment: rating.comment || "", at: Date.now() } } : o)) })); afterOrderChange(id); };
 
 // تسوية التاجر: الأدمن يدفع مستحقات الطلبات المُسلّمة غير المسوّاة → بانتظار تأكيد التاجر
 export const settleMerchant = (mid, amount, orderIds) => {

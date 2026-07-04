@@ -6,11 +6,11 @@ import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from 
 import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
-import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation } from "../store/appStore.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
-  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown } from "lucide-react";
+  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag } from "lucide-react";
 import {
   useStore, updateProduct, addProduct, removeProduct, updateSettings,
   setOrderStatus, assignCourier, autoAssignCourier, findFreeCourier, toggleCourier, addCourier, addMerchant,
@@ -34,6 +34,7 @@ const TABS = [
   { id: "look", l: "المظهر", Icon: Palette },
   { id: "merchants", l: "التجار", Icon: Store },
   { id: "couriers", l: "المندوبون", Icon: Bike },
+  { id: "coupons", l: "أكواد الخصم", Icon: Tag },
   { id: "settings", l: "الإعدادات", Icon: Settings2 },
 ];
 
@@ -61,6 +62,7 @@ function Admin({ onLogout }) {
       {tab === "look" && <Look />}
       {tab === "merchants" && <Merchants />}
       {tab === "couriers" && <Couriers />}
+      {tab === "coupons" && <Coupons />}
       {tab === "settings" && <SettingsPage />}
     </Shell>
   );
@@ -121,19 +123,20 @@ function Dash() {
       </div>
       <div className="pt-card">
         <div className="cap">أحدث الطلبات</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>رقم</th><th>الزبون</th><th>الحالة</th><th>الإجمالي</th><th>الوقت</th></tr></thead>
-            <tbody>
-              {orders.slice(0, 5).map((o) => (
-                <tr key={o.id}>
-                  <td><b>#{o.id}</b></td><td>{o.customer.name}</td>
-                  <td><StatusBadge s={o.status} /></td>
-                  <td>{fmt(o.total)} {CUR}</td><td>{timeAgo(o.time)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mw-list">
+          {orders.slice(0, 6).map((o) => (
+            <div className="mw-row" key={o.id}>
+              <div className="mw-l">
+                <div className="mw-id">#{o.id} <span className="mw-time">{timeAgo(o.time)}</span></div>
+                <div className="mw-sub">{o.customer.name}</div>
+              </div>
+              <div className="mw-r">
+                <StatusBadge s={o.status} />
+                <div className="mw-amt">{fmt(o.total)} {CUR}</div>
+              </div>
+            </div>
+          ))}
+          {orders.length === 0 && <div className="pt-empty">لا طلبات بعد</div>}
         </div>
       </div>
     </>
@@ -208,6 +211,7 @@ function Orders() {
                       </div>
                     )}
                     {o.note && <div className="ord-note">📝 {o.note}</div>}
+                    {o.rating && <div className="ord-rating">⭐ تقييم الزبون: الطلب {o.rating.orderStars}/5{o.rating.courierStars ? ` · المندوب ${o.rating.courierStars}/5` : ""}{o.rating.comment ? ` — «${o.rating.comment}»` : ""}</div>}
                     {/* التحكم */}
                     <div className="ord-controls">
                       <label>الحالة
@@ -269,27 +273,26 @@ function Merchants() {
         </div>
       </div>
       <div className="pt-card">
-        <div className="cap">قائمة التجار</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>المتجر</th><th>التخصص</th><th>الهاتف</th><th>كلمة المرور</th><th>العمولة %</th><th>مفتوح</th><th>المنتجات</th><th>الطلبات</th><th></th></tr></thead>
-            <tbody>
-              {merchants.map((m) => (
-                <tr key={m.id}>
-                  <td><b>{m.name}</b></td><td>{m.cat}</td><td style={{ direction: "ltr" }}>{m.phone}</td>
-                  <td><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><KeyRound size={13} color="#c99a24" />
-                    <input className="pt-in" style={{ width: 90, padding: "5px 9px", fontSize: 12 }} dir="ltr"
-                      value={m.password || ""} onChange={(e) => updateMerchant(m.id, { password: e.target.value })} /></span></td>
-                  <td><input className="pt-in" type="number" style={{ width: 62, padding: "5px 8px", fontSize: 12 }}
-                    value={m.commission ?? 10} onChange={(e) => updateMerchant(m.id, { commission: +e.target.value || 0 })} /></td>
-                  <td><Switch on={m.open !== false} onToggle={() => updateMerchant(m.id, { open: !(m.open !== false) })} /></td>
-                  <td>{products.filter((p) => p.merchantId === m.id).length}</td>
-                  <td>{orders.filter((o) => o.merchantId === m.id || (o.readiness && o.readiness[m.id] !== undefined)).length}</td>
-                  <td><button className="pt-btn warn sm" onClick={() => removeMerchant(m.id)}><Trash2 size={12} /></button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="cap">قائمة التجار ({merchants.length})</div>
+        <div className="ad-list">
+          {merchants.map((m) => (
+            <div className="ad-card" key={m.id}>
+              <div className="ad-head">
+                <div className="ad-title"><b>{m.name}</b><span className="ad-sub">{m.cat}</span></div>
+                <Switch on={m.open !== false} onToggle={() => updateMerchant(m.id, { open: !(m.open !== false) })} />
+              </div>
+              <div className="ad-stats">
+                <span>📦 {products.filter((p) => p.merchantId === m.id).length} منتج</span>
+                <span>🛒 {orders.filter((o) => o.merchantId === m.id || (o.readiness && o.readiness[m.id] !== undefined)).length} طلب</span>
+                <span style={{ direction: "ltr" }}>📞 {m.phone}</span>
+              </div>
+              <div className="ad-fields">
+                <label>كلمة المرور<input className="pt-in" dir="ltr" value={m.password || ""} onChange={(e) => updateMerchant(m.id, { password: e.target.value })} /></label>
+                <label>العمولة %<input className="pt-in" type="number" value={m.commission ?? 10} onChange={(e) => updateMerchant(m.id, { commission: +e.target.value || 0 })} /></label>
+              </div>
+              <button className="ad-del" onClick={() => confirm(`حذف «${m.name}»؟`) && removeMerchant(m.id)}><Trash2 size={13} /> حذف التاجر</button>
+            </div>
+          ))}
         </div>
       </div>
     </>
@@ -315,24 +318,85 @@ function Couriers() {
         </div>
       </div>
       <div className="pt-card">
-        <div className="cap">الفريق</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>المندوب</th><th>الهاتف</th><th>كلمة المرور</th><th>توصيلات</th><th>نشط</th><th></th></tr></thead>
-            <tbody>
-              {couriers.map((c) => (
-                <tr key={c.id}>
-                  <td><b>{c.name}</b></td><td style={{ direction: "ltr" }}>{c.phone}</td>
-                  <td><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><KeyRound size={13} color="#c99a24" />
-                    <input className="pt-in" style={{ width: 80, padding: "5px 8px", fontSize: 12 }} dir="ltr"
-                      value={c.password || ""} onChange={(e) => updateCourier(c.id, { password: e.target.value })} /></span></td>
-                  <td>{delivered(c.id)}</td>
-                  <td><Switch on={c.active} onToggle={() => toggleCourier(c.id)} /></td>
-                  <td><button className="pt-btn warn sm" onClick={() => removeCourier(c.id)}><Trash2 size={12} /></button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="cap">الفريق ({couriers.length})</div>
+        <div className="ad-list">
+          {couriers.map((c) => (
+            <div className="ad-card" key={c.id}>
+              <div className="ad-head">
+                <div className="ad-title"><b>{c.name}</b><span className="ad-sub" style={{ direction: "ltr" }}>{c.phone}</span></div>
+                <Switch on={c.active} onToggle={() => toggleCourier(c.id)} />
+              </div>
+              <div className="ad-stats">
+                <span>🛵 {delivered(c.id)} توصيلة مكتملة</span>
+                <span className={c.active ? "ad-on" : "ad-off"}>{c.active ? "🟢 نشط" : "🔴 غير نشط"}</span>
+              </div>
+              <div className="ad-fields">
+                <label>كلمة المرور<input className="pt-in" dir="ltr" value={c.password || ""} onChange={(e) => updateCourier(c.id, { password: e.target.value })} /></label>
+              </div>
+              <button className="ad-del" onClick={() => confirm(`حذف «${c.name}»؟`) && removeCourier(c.id)}><Trash2 size={13} /> حذف المندوب</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------------- أكواد الخصم ---------------- */
+function Coupons() {
+  const coupons = useStore((s) => s.coupons) || [];
+  const [f, setF] = useState({ code: "", type: "percent", value: 20, minOrder: 0, maxUses: 0, desc: "" });
+  const submit = () => {
+    if (!f.code.trim() || !f.value) { alert("أدخل الكود وقيمة الخصم"); return; }
+    if (coupons.some((c) => c.code === f.code.toUpperCase().trim())) { alert("هذا الكود موجود مسبقاً"); return; }
+    addCoupon({ ...f, value: +f.value, minOrder: +f.minOrder || 0, maxUses: +f.maxUses || 0, desc: f.desc || (f.type === "percent" ? `خصم ${f.value}%` : `خصم ${f.value} د.ع`) });
+    setF({ code: "", type: "percent", value: 20, minOrder: 0, maxUses: 0, desc: "" });
+  };
+  return (
+    <>
+      <div className="pt-h1">أكواد الخصم<small>أنشئ كوبونات تجذب الزبائن وتزيد الطلبات</small></div>
+      <div className="pt-card">
+        <div className="cap">➕ إنشاء كود خصم</div>
+        <div style={{ padding: 14 }}>
+          <div className="pt-row2">
+            <div className="pt-field"><label>الكود (حروف إنجليزية)</label>
+              <input className="pt-in" dir="ltr" placeholder="WELCOME" value={f.code} onChange={(e) => setF({ ...f, code: e.target.value.toUpperCase() })} /></div>
+            <div className="pt-field"><label>نوع الخصم</label>
+              <select className="pt-in" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>
+                <option value="percent">نسبة مئوية %</option>
+                <option value="fixed">مبلغ ثابت د.ع</option>
+              </select></div>
+          </div>
+          <div className="pt-row2">
+            <div className="pt-field"><label>قيمة الخصم ({f.type === "percent" ? "%" : "د.ع"})</label>
+              <input className="pt-in" type="number" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} /></div>
+            <div className="pt-field"><label>حد أدنى للطلب (د.ع)</label>
+              <input className="pt-in" type="number" placeholder="0 = بلا حد" value={f.minOrder} onChange={(e) => setF({ ...f, minOrder: e.target.value })} /></div>
+          </div>
+          <div className="pt-field"><label>عدد مرات الاستخدام (0 = غير محدود)</label>
+            <input className="pt-in" type="number" placeholder="0" value={f.maxUses} onChange={(e) => setF({ ...f, maxUses: e.target.value })} /></div>
+          <button className="pt-btn" style={{ width: "100%" }} onClick={submit}>➕ إنشاء الكود</button>
+        </div>
+      </div>
+      <div className="pt-card">
+        <div className="cap">الأكواد الحالية ({coupons.length})</div>
+        <div className="ad-list">
+          {coupons.map((c) => (
+            <div className={"cp-card" + (c.active ? "" : " off")} key={c.code}>
+              <div className="cp-head">
+                <span className="cp-code">{c.code}</span>
+                <span className="cp-val">{c.type === "percent" ? `${c.value}%` : `${fmt(c.value)} د.ع`}</span>
+                <Switch on={c.active} onToggle={() => updateCoupon(c.code, { active: !c.active })} />
+              </div>
+              <div className="cp-desc">{c.desc}</div>
+              <div className="cp-meta">
+                {c.minOrder > 0 && <span>حد أدنى {fmt(c.minOrder)} د.ع</span>}
+                <span>استُخدم {c.uses || 0}{c.maxUses > 0 ? ` / ${c.maxUses}` : " مرة"}</span>
+              </div>
+              <button className="ad-del" onClick={() => confirm(`حذف الكود «${c.code}»؟`) && removeCoupon(c.code)}><Trash2 size={13} /> حذف الكود</button>
+            </div>
+          ))}
+          {coupons.length === 0 && <div className="pt-empty">لا أكواد بعد — أنشئ أول كود خصم</div>}
         </div>
       </div>
     </>
@@ -905,79 +969,58 @@ function Finance() {
 
       <div className="pt-card">
         <div className="cap">🏪 تسويات التجار<span className="sp" /><span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--p-mut)" }}>ادفع مستحقاتهم ثم يؤكدون الاستلام من لوحتهم</span></div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>المتجر</th><th>العمولة</th><th>مستحق غير مسوّى</th><th>طلبات</th><th></th></tr></thead>
-            <tbody>
-              {state.merchants.map((m) => {
-                const d = merchantDues(state, m.id);
-                return (
-                  <tr key={m.id}>
-                    <td><b>{m.name}</b></td>
-                    <td>{m.commission ?? 10}%</td>
-                    <td style={{ fontWeight: 900, color: d.amount ? "#0C831F" : "var(--p-mut)" }}>{fmt(d.amount)} {CUR}</td>
-                    <td>{d.rows.length}</td>
-                    <td>
-                      <button className="pt-btn sm" disabled={!d.amount} style={{ opacity: d.amount ? 1 : 0.45 }}
-                        onClick={() => settleMerchant(m.id, d.amount, d.rows.map((r) => r.id))}>
-                        تسوية الآن
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="ad-list">
+          {state.merchants.map((m) => {
+            const d = merchantDues(state, m.id);
+            return (
+              <div className="fin-row" key={m.id}>
+                <div className="fin-l"><b>{m.name}</b><span className="fin-sub">عمولة {m.commission ?? 10}% · {d.rows.length} طلب</span></div>
+                <div className="fin-amt" style={{ color: d.amount ? "#0C831F" : "var(--p-mut)" }}>{fmt(d.amount)} {CUR}</div>
+                <button className="pt-btn sm" disabled={!d.amount} style={{ opacity: d.amount ? 1 : 0.45 }}
+                  onClick={() => settleMerchant(m.id, d.amount, d.rows.map((r) => r.id))}>تسوية</button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       <div className="pt-card">
         <div className="cap">🏍️ نقد المندوبين<span className="sp" /><span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--p-mut)" }}>يسلّمون النقد من لوحتهم وتؤكد الاستلام هنا</span></div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>المندوب</th><th>نقد بذمّته</th><th>أجوره + بقشيشه</th><th>طلبات نقدية</th></tr></thead>
-            <tbody>
-              {state.couriers.map((c) => {
-                const cash = courierCash(state, c.id);
-                return (
-                  <tr key={c.id}>
-                    <td><b>{c.name}</b></td>
-                    <td style={{ fontWeight: 900, color: cash.remitDue ? "#b3261e" : "var(--p-mut)" }}>{fmt(cash.remitDue)} {CUR}</td>
-                    <td style={{ color: "#0C831F", fontWeight: 800 }}>{fmt(cash.wages + cash.tips)} {CUR}</td>
-                    <td>{cash.remitOrderIds.length}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="ad-list">
+          {state.couriers.map((c) => {
+            const cash = courierCash(state, c.id);
+            return (
+              <div className="fin-row" key={c.id}>
+                <div className="fin-l"><b>{c.name}</b><span className="fin-sub">{cash.remitOrderIds.length} طلب نقدي · أجور {fmt(cash.wages + cash.tips)}</span></div>
+                <div className="fin-amt" style={{ color: cash.remitDue ? "#b3261e" : "var(--p-mut)" }}>{fmt(cash.remitDue)} {CUR}<small>بذمّته</small></div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       <div className="pt-card">
         <div className="cap">📜 سجل التسويات</div>
-        <div className="pt-scroll">
-          <table className="pt-table">
-            <thead><tr><th>رقم</th><th>النوع</th><th>الطرف</th><th>المبلغ</th><th>طلبات</th><th>الحالة</th><th>الوقت</th><th></th></tr></thead>
-            <tbody>
-              {state.settlements.map((st) => (
-                <tr key={st.id}>
-                  <td style={{ fontSize: 10.5, color: "var(--p-mut)" }}>{st.id.slice(-5)}</td>
-                  <td>{st.kind === "merchant" ? "🏪 دفعة لتاجر" : "🏍️ نقد من مندوب"}</td>
-                  <td><b>{st.kind === "merchant" ? mName(st.partyId) : cName(st.partyId)}</b></td>
-                  <td style={{ fontWeight: 900 }}>{fmt(st.amount)} {CUR}</td>
-                  <td>{(st.orders || []).length}</td>
-                  <td><span className={"pt-badge " + (st.status === "مؤكدة" ? "pt-b-done" : "pt-b-prep")}>{st.status}</span></td>
-                  <td>{timeAgo(st.time)}</td>
-                  <td>
-                    {st.kind === "courier" && st.status !== "مؤكدة" && (
-                      <button className="pt-btn sm" onClick={() => confirmSettlement(st.id)}>تأكيد الاستلام ✓</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {state.settlements.length === 0 && <tr><td colSpan="8"><div className="pt-empty">لا تسويات بعد — ستظهر هنا عند أول تسوية</div></td></tr>}
-            </tbody>
-          </table>
+        <div className="ad-list">
+          {state.settlements.map((st) => (
+            <div className="fin-log" key={st.id}>
+              <div className="fin-log-top">
+                <b>{st.kind === "merchant" ? "🏪 دفعة لتاجر" : "🏍️ نقد من مندوب"}</b>
+                <span className={"pt-badge " + (st.status === "مؤكدة" ? "pt-b-done" : "pt-b-prep")}>{st.status}</span>
+              </div>
+              <div className="fin-log-mid">
+                <span>{st.kind === "merchant" ? mName(st.partyId) : cName(st.partyId)}</span>
+                <b>{fmt(st.amount)} {CUR}</b>
+              </div>
+              <div className="fin-log-bot">
+                <span>{(st.orders || []).length} طلب · {timeAgo(st.time)} · #{st.id.slice(-5)}</span>
+                {st.kind === "courier" && st.status !== "مؤكدة" && (
+                  <button className="pt-btn sm" onClick={() => confirmSettlement(st.id)}>تأكيد الاستلام ✓</button>
+                )}
+              </div>
+            </div>
+          ))}
+          {state.settlements.length === 0 && <div className="pt-empty">لا تسويات بعد — ستظهر هنا عند أول تسوية</div>}
         </div>
       </div>
     </>
