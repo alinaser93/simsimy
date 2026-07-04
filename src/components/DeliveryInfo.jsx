@@ -24,7 +24,7 @@ function DeliveryInfo({ theme }) {
       </div>
       <div className="bk-headicons">
         <div className="bk-mapw">💳</div>
-        <div className="bk-profile"><User size={22} strokeWidth={2} color={rgb(oh)} /></div>
+        <div className="bk-profile" onClick={() => window.dispatchEvent(new CustomEvent("bk:openProfile"))}><User size={22} strokeWidth={2} color={rgb(oh)} /></div>
       </div>
     </div>
   );

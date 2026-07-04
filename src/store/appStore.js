@@ -143,6 +143,8 @@ const defaults = () => {
       { id: "a2", label: "العمل", details: "شارع السعدون، بناية 40، ط3", phone: "0770 000 0000" },
     ],
     selectedAddress: "a1",
+    user: { name: "", phone: "+964 780 000 0000", birthday: "", email: "", hideSensitive: false, notifications: true },
+    wishlist: [],
     orders: seedOrders(products),
     settlements: [],   // تسويات التجار والمندوبين
     nextOrderId: 1007,
@@ -162,6 +164,8 @@ const mergeSaved = (d, saved) => {
   ["settings", "appearance", "texts"].forEach((k) => { out[k] = { ...d[k], ...(saved[k] || {}) }; });
   ["banners", "trio", "bigStores", "addresses", "homeBlocks", "customTabs"].forEach((k) => { if (!Array.isArray(saved[k])) out[k] = d[k]; });
   out.tabBlocks = { ...d.tabBlocks, ...(saved.tabBlocks || {}) };
+  out.user = { ...d.user, ...(saved.user || {}) };
+  if (!Array.isArray(out.wishlist)) out.wishlist = d.wishlist;
   Object.keys(d.tabBlocks).forEach((k) => { if (!Array.isArray(out.tabBlocks[k])) out.tabBlocks[k] = d.tabBlocks[k]; });
   out.merchants = (saved.merchants || d.merchants).map((m) => ({ password: "0000", commission: 10, open: true, ...m }));
   out.couriers = (saved.couriers || d.couriers).map((c) => ({ password: "0000", ...c }));
@@ -311,6 +315,11 @@ export const removeCustomTab = (id) => {
 
 export const updateSettings = (patch) =>
   setState((s) => ({ settings: { ...s.settings, ...patch } }));
+
+export const updateUser = (patch) =>
+  setState((s) => ({ user: { ...s.user, ...patch } }));
+export const toggleWishlist = (id) =>
+  setState((s) => ({ wishlist: s.wishlist.includes(id) ? s.wishlist.filter((x) => x !== id) : [...s.wishlist, id] }));
 
 // جاهزية التاجر (بوابة الجاهزية): عندما تكتمل كل المتاجر ينتقل الطلب تلقائياً لـ«جاهز للتوصيل»
 export const setMerchantReady = (orderId, mid, val = true) =>

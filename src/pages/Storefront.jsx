@@ -6,6 +6,8 @@ import { useCart } from "../hooks/useCart.js";
 import { useCollapsingHeader } from "../hooks/useCollapsingHeader.js";
 import SplashScreen from "../components/SplashScreen.jsx";
 import DeliveryInfo from "../components/DeliveryInfo.jsx";
+import ProfilePage from "../components/ProfilePage.jsx";
+import WishlistPage from "../components/WishlistPage.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import CategoryTabs from "../components/CategoryTabs.jsx";
 import WelcomeHero from "../components/WelcomeHero.jsx";
@@ -65,9 +67,11 @@ export default function Storefront() {
       if (r.catTab !== "all") setCatTab("all");
     };
     window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("bk:openProfile", () => {}); };
   }, []);
   useEffect(() => {
+    const openProf = () => { pushBK(); setPage("profile"); };
+    window.addEventListener("bk:openProfile", openProf);
     const h = (e) => { pushBK(); setProductId(e.detail); };
     const hl = (e) => { pushBK(); setListing(e.detail); };
     window.addEventListener("bk:openProduct", h);
@@ -185,6 +189,18 @@ export default function Storefront() {
         )}
         {page && page.tracking && (
           <TrackingPage orderId={page.tracking} onBack={() => setPage("orders")} />
+        )}
+        {page === "profile" && (
+          <ProfilePage
+            onBack={() => setPage(null)}
+            onOrders={() => setPage("orders")}
+            onAddress={() => setPage("address")}
+            onWishlist={() => setPage("wishlist")}
+            onWallet={() => setPage("orders")}
+            onHelp={() => setPage("orders")} />
+        )}
+        {page === "wishlist" && (
+          <WishlistPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage("profile")} />
         )}
         {page === "search" && (
           <SearchPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage(null)} />

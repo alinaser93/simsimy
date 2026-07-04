@@ -1,0 +1,125 @@
+import { useState } from "react";
+import {
+  ChevronRight, ChevronLeft, ShoppingBag, Wallet, HelpCircle, MapPin, Heart,
+  CreditCard, Gift, Bell, Share2, Info, Shield, Phone, Moon, Sun, LogOut, Pencil, User, Cake,
+} from "lucide-react";
+import { useStore, updateUser } from "../store/appStore.js";
+
+/* الصفحة الشخصية — بأسلوب بلينكيت، معرّبة لمتجر عراقي */
+export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, onWallet, onHelp }) {
+  const user = useStore((s) => s.user);
+  const wishlist = useStore((s) => s.wishlist);
+  const orders = useStore((s) => s.orders);
+  const [edit, setEdit] = useState(false);
+  const [form, setForm] = useState(user);
+
+  const initial = (user.name || "ز").trim().charAt(0);
+  const saveEdit = () => { updateUser(form); setEdit(false); };
+
+  const Row = ({ Icon, label, sub, onClick, danger, color }) => (
+    <div className={"pf-row" + (danger ? " danger" : "")} onClick={onClick}>
+      <span className="ic" style={color ? { color } : undefined}><Icon size={19} strokeWidth={2} /></span>
+      <span className="tx"><b>{label}</b>{sub && <small>{sub}</small>}</span>
+      <ChevronLeft size={18} className="chev" />
+    </div>
+  );
+
+  const share = () => {
+    const url = window.location.origin;
+    if (navigator.share) navigator.share({ title: "بلينكيت", text: "اطلب بقالتك بأسرع توصيل!", url }).catch(() => {});
+    else { navigator.clipboard?.writeText(url); alert("تم نسخ رابط التطبيق ✓"); }
+  };
+
+  return (
+    <div className="pf-page">
+      {/* الرأس */}
+      <div className="pf-top">
+        <button className="pf-back" onClick={onBack}><ChevronRight size={24} /></button>
+        <h2>حسابي</h2>
+      </div>
+
+      <div className="pf-scroll">
+        {/* بطاقة المستخدم */}
+        <div className="pf-user">
+          <div className="pf-avatar">{initial}</div>
+          <div className="pf-uinfo">
+            {edit ? (
+              <input className="pf-name-input" value={form.name} placeholder="اكتب اسمك" autoFocus
+                onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            ) : (
+              <div className="pf-name">{user.name || "أضف اسمك"}</div>
+            )}
+            <div className="pf-phone">{user.phone}</div>
+          </div>
+          {edit ? (
+            <button className="pf-save" onClick={saveEdit}>حفظ</button>
+          ) : (
+            <button className="pf-editbtn" onClick={() => { setForm(user); setEdit(true); }}><Pencil size={16} /></button>
+          )}
+        </div>
+
+        {edit && (
+          <div className="pf-editfields">
+            <div className="pf-fld"><Cake size={16} /><input placeholder="تاريخ ميلادك (يوم/شهر)" value={form.birthday}
+              onChange={(e) => setForm({ ...form, birthday: e.target.value })} /></div>
+            <div className="pf-fld"><Phone size={16} /><input placeholder="رقم الهاتف" value={form.phone} dir="ltr"
+              onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+          </div>
+        )}
+
+        {/* البطاقات الثلاث السريعة */}
+        <div className="pf-cards">
+          <div className="pf-card" onClick={onOrders}>
+            <ShoppingBag size={22} /><span>طلباتي</span>
+            {orders.length > 0 && <em>{orders.length}</em>}
+          </div>
+          <div className="pf-card" onClick={onWallet}>
+            <Wallet size={22} /><span>محفظتي</span>
+          </div>
+          <div className="pf-card" onClick={onHelp}>
+            <HelpCircle size={22} /><span>المساعدة</span>
+          </div>
+        </div>
+
+        {/* الإعدادات */}
+        <div className="pf-sec">
+          <div className="pf-sectitle">الإعدادات</div>
+          <div className="pf-row" onClick={() => updateUser({ hideSensitive: !user.hideSensitive })}>
+            <span className="ic"><Shield size={19} strokeWidth={2} /></span>
+            <span className="tx"><b>إخفاء المنتجات الحساسة</b><small>منتجات التبغ والكحول تُخفى</small></span>
+            <span className={"pf-switch" + (user.hideSensitive ? " on" : "")}><i /></span>
+          </div>
+          <div className="pf-row" onClick={() => updateUser({ notifications: !user.notifications })}>
+            <span className="ic"><Bell size={19} strokeWidth={2} /></span>
+            <span className="tx"><b>الإشعارات</b><small>تنبيهات الطلبات والعروض</small></span>
+            <span className={"pf-switch" + (user.notifications ? " on" : "")}><i /></span>
+          </div>
+        </div>
+
+        {/* معلوماتي */}
+        <div className="pf-sec">
+          <div className="pf-sectitle">معلوماتي</div>
+          <Row Icon={MapPin} label="دفتر العناوين" sub="أضف أو عدّل عناوين التوصيل" onClick={onAddress} color="#E23744" />
+          <Row Icon={Heart} label="قائمة المفضّلة" sub={wishlist.length ? `${wishlist.length} منتج` : "لم تضف بعد"} onClick={onWishlist} color="#E23744" />
+          <Row Icon={CreditCard} label="طرق الدفع" sub="الدفع عند الاستلام مفعّل" onClick={() => alert("الدفع عند الاستلام مفعّل حالياً")} color="#0C831F" />
+          <Row Icon={Gift} label="قسائم الهدايا" sub="أدخل رمز قسيمة" onClick={() => alert("لا توجد قسائم متاحة حالياً")} color="#7c3aed" />
+        </div>
+
+        {/* أخرى */}
+        <div className="pf-sec">
+          <div className="pf-sectitle">أخرى</div>
+          <Row Icon={Share2} label="شارك التطبيق" onClick={share} />
+          <Row Icon={Info} label="من نحن" onClick={() => alert("بلينكيت — أسرع توصيل بقالة في مدينتك. نوصلك طلبك خلال دقائق.")} />
+          <Row Icon={Shield} label="سياسة الخصوصية" onClick={() => alert("نحترم خصوصيتك ونحمي بياناتك. تُستخدم معلوماتك فقط لإتمام طلباتك.")} />
+          <Row Icon={Phone} label="تواصل معنا" sub="خدمة العملاء على مدار الساعة" onClick={onHelp} />
+        </div>
+
+        <button className="pf-logout" onClick={() => { if (confirm("تسجيل الخروج من حسابك؟")) { updateUser({ name: "" }); onBack(); } }}>
+          <LogOut size={18} /> تسجيل الخروج
+        </button>
+
+        <div className="pf-version">بلينكيت • الإصدار 1.0</div>
+      </div>
+    </div>
+  );
+}

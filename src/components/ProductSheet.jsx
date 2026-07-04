@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ChevronRight, Heart, Share2, Clock, Star } from "lucide-react";
-import { useStore } from "../store/appStore.js";
+import { useStore, toggleWishlist } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
 
@@ -8,6 +8,7 @@ import ProductRow from "./ProductRow.jsx";
    صورة كبيرة، شريط علوي لاصق عند التمرير، لماذا بلينكيت، المواصفات،
    الوصف، سياسة الاستبدال، منتجات مشابهة، واشترى الناس أيضاً */
 export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
+  const wishlisted = useStore((s) => s.wishlist.includes(id));
   const [vi, setVi] = useState(0);
   const [ii, setIi] = useState(0);
   const touch = useRef({ x: 0, dx: 0 });
@@ -53,7 +54,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
         <div className="bk-back" onClick={onClose}><ChevronRight size={22} strokeWidth={2.5} /></div>
         <div className="ti" />
         <Share2 size={19} color="#4a4a4a" />
-        <Heart size={19} color="#4a4a4a" />
+        <Heart size={19} onClick={() => toggleWishlist(id)} fill={wishlisted ? "#E23744" : "none"} color={wishlisted ? "#E23744" : "currentColor"} style={{ cursor: "pointer" }} />
       </div>
 
       <div className="bk-pbody" ref={bodyRef} onScroll={(e) => setBar(e.currentTarget.scrollTop > 230)}>
