@@ -64,7 +64,7 @@ export default function Storefront() {
 
   const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(theme);
   const [celebrate, setCelebrate] = useState(false);
-  const wasFree = useRef(false);
+  const wasFree = useRef(total >= freeAbove); // يبدأ حسب حالة السلة المحفوظة (لا احتفال خاطئ عند التحميل)
   useEffect(() => {
     const isFree = total >= freeAbove;
     if (isFree && !wasFree.current && total > 0) { setCelebrate(true); setTimeout(() => setCelebrate(false), 2600); }
