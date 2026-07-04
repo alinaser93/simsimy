@@ -17,6 +17,7 @@ import HomeContent from "../components/HomeContent.jsx";
 import Listing from "../components/Listing.jsx";
 import CartBar from "../components/CartBar.jsx";
 import BottomNav from "../components/BottomNav.jsx";
+import CategoriesPage from "../components/CategoriesPage.jsx";
 import CartPage from "../components/CartPage.jsx";
 import PaymentPage from "../components/PaymentPage.jsx";
 import AddressPage from "../components/AddressPage.jsx";
@@ -152,6 +153,8 @@ export default function Storefront() {
 
         {listing ? (
           <Listing title={listing} cart={cart} add={add} inc={inc} dec={dec} onBack={() => window.history.back()} />
+        ) : nav === "cats" ? (
+          <CategoriesPage onOpen={(t) => { setNav("home"); openList(t); }} onBack={() => setNav("home")} />
         ) : (
           <>
             {!settings.storeOpen && <div className="bk-closed">{texts.closedMsg}</div>}
@@ -228,8 +231,10 @@ export default function Storefront() {
         {/* الشريط السفلي يظهر فقط على المتجر وصفحة التصنيف — يُخفى داخل الصفحات الكاملة كي لا يغطّي أزرارها */}
         {!page && !productId && (
           <BottomNav nav={nav} onChange={(id) => {
-            setNav(id); setListing(null); setProductId(null);
-            setPage(id === "again" ? "orders" : null);
+            setListing(null); setProductId(null);
+            if (id === "again") { setNav("home"); setPage("orders"); }
+            else if (id === "print") { setNav("home"); setPage("search"); }
+            else { setNav(id); setPage(null); }
           }} />
         )}
 

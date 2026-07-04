@@ -679,3 +679,19 @@ html,body{margin:0;height:100%;}
 .bk-pt-inf small{font-size:11.5px;color:#666;}
 .bk-pt-check{width:24px;height:24px;border-radius:7px;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:13px;flex:0 0 auto;}
 .bk-pt-check.on{background:#0C831F;border-color:#0C831F;}
+
+/* ═══ صفحة الفئات المخصّصة ═══ */
+.bk-cats-page{display:flex;flex-direction:column;height:100%;background:#fff;}
+.bk-cats-head{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:5;}
+.bk-cats-head h2{margin:0;font-size:18px;font-weight:900;color:#1c1c1c;}
+.bk-cats-head .bk-back{cursor:pointer;color:#333;display:flex;}
+.bk-cats-body{flex:1;overflow-y:auto;padding:12px 14px 80px;}
+.bk-cats-sec{margin-bottom:22px;}
+.bk-cats-sec-t{font-size:16px;font-weight:800;color:#1c1c1c;margin-bottom:12px;}
+.bk-cats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px;}
+.bk-cat-tile{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.bk-cat-tile:active{transform:scale(.95);}
+.bk-cat-tile-img{width:100%;aspect-ratio:1;border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.bk-cat-tile-img img{width:100%;height:100%;object-fit:cover;}
+.bk-cat-tile-img .e{font-size:34px;}
+.bk-cat-tile-t{font-size:11px;font-weight:600;color:#333;text-align:center;line-height:1.3;}
