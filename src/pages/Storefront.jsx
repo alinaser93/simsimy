@@ -78,7 +78,7 @@ export default function Storefront() {
       if (!btn) return;
       const card = btn.closest(".bk-pc, .bk-sug, .bk-freq-card, .bk-flash-card, .bk-crow");
       const visual = card && (card.querySelector(".bk-pc-imgwrap, .bk-flash-img, .bk-sug-img, .bk-freq-img, .bk-pc-img") || card.querySelector("img"));
-      const cart = document.querySelector(".bk-cartbar") || document.querySelector(".bk-cart");
+      const cart = document.querySelector("#bk-cart-thumbs") || document.querySelector(".bk-cartbar") || document.querySelector(".bk-cart");
       const phone = phoneRef.current;
       if (!visual || !phone) return;
       const s = visual.getBoundingClientRect();
@@ -90,14 +90,16 @@ export default function Storefront() {
       clone.style.width = s.width + "px";
       clone.style.height = s.height + "px";
       phone.appendChild(clone);
-      // الهدف: شريط السلة إن وُجد، وإلا أسفل الشاشة وسطاً
-      const tRect = cart ? cart.getBoundingClientRect() : { left: pr.left + pr.width / 2 - 20, top: pr.bottom - 90, width: 40 };
+      // الهدف: حاوية الصور المصغّرة (يمين الشريط) تحديداً
+      const tRect = cart ? cart.getBoundingClientRect() : { left: pr.right - 90, top: pr.bottom - 100, width: 44, height: 44 };
       requestAnimationFrame(() => {
         const dx = (tRect.left + tRect.width / 2) - (s.left + s.width / 2);
-        const dy = (tRect.top + 10) - s.top;
-        clone.style.transform = `translate(${dx}px, ${dy}px) scale(.15)`;
-        clone.style.opacity = "0.35";
+        const dy = (tRect.top + tRect.height / 2) - (s.top + s.height / 2);
+        clone.style.transform = `translate(${dx}px, ${dy}px) scale(.12) rotate(8deg)`;
+        clone.style.opacity = "0.25";
       });
+      // نبضة الصورة عند وصول المنتج
+      setTimeout(() => { const th = document.querySelector("#bk-cart-thumbs"); if (th) { th.classList.add("bump"); setTimeout(() => th.classList.remove("bump"), 500); } }, 560);
       setTimeout(() => clone.remove(), 700);
     };
     document.addEventListener("click", onClick, true);
