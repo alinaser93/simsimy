@@ -23,7 +23,8 @@ function useCountdown() {
 
 /* عرض فلاش بعدّاد تنازلي — يخلق إلحاحاً ويشجّع الشراء الفوري */
 export default function FlashDeals({ cart, add, inc, dec, openList }) {
-  const products = useStore((s) => s.products);
+  const products = useStore((st) => st.products);
+  const flash = useStore((st) => st.settings.flashDeals) || {};
   const { h, m, s } = useCountdown();
 
   // أعلى المنتجات خصماً، متوفّرة
@@ -31,16 +32,17 @@ export default function FlashDeals({ cart, add, inc, dec, openList }) {
     () => products
       .filter((p) => p.stock !== false && p.qty !== 0 && p.mrpIQD > p.priceIQD)
       .map((p) => ({ ...p, off: Math.round((1 - p.priceIQD / p.mrpIQD) * 100) }))
+      .filter((p) => p.off >= (flash.minOff || 0))
       .sort((a, b) => b.off - a.off)
-      .slice(0, 10),
-    [products]
+      .slice(0, flash.count || 10),
+    [products, flash.count, flash.minOff]
   );
-  if (deals.length === 0) return null;
+  if (!flash.enabled || deals.length === 0) return null;
 
   return (
     <div className="bk-flash">
       <div className="bk-flash-head">
-        <div className="bk-flash-title">⚡ عروض اليوم <span className="bk-flash-sub">تنتهي بعد</span></div>
+        <div className="bk-flash-title">⚡ {flash.title || "عروض اليوم"} <span className="bk-flash-sub">تنتهي بعد</span></div>
         <div className="bk-flash-timer">
           <span>{h}</span>:<span>{m}</span>:<span>{s}</span>
         </div>

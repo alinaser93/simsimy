@@ -76,7 +76,8 @@ const defaults = () => {
       eta: 12,
       deliveryFee: 1000,
       serviceFee: 250,          // رسوم الخدمة تظهر في الفاتورة
-      freeAbove: 25000,         // توصيل مجاني فوق هذا المبلغ
+      freeAbove: 50000,         // توصيل مجاني فوق هذا المبلغ
+      flashDeals: { enabled: false, title: "عروض اليوم", count: 10, minOff: 5 }, // عروض الفلاش (يتحكّم بها الأدمن)
       tipOptions: [250, 500, 1000], // خيارات بقشيش المندوب
       storeOpen: true,
       rowLayouts: {

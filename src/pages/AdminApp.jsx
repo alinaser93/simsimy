@@ -457,6 +457,26 @@ function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <div className="pt-card">
+        <div className="cap">⚡ عروض الفلاش (الصفحة الرئيسية)</div>
+        <div style={{ padding: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "4px 0 14px" }}>
+            <Switch on={!!(settings.flashDeals && settings.flashDeals.enabled)} onToggle={() => updateSettings({ flashDeals: { ...(settings.flashDeals || {}), enabled: !(settings.flashDeals && settings.flashDeals.enabled) } })} />
+            <div><b style={{ fontSize: 13.5 }}>{settings.flashDeals && settings.flashDeals.enabled ? "🟢 عروض الفلاش مفعّلة" : "🔴 عروض الفلاش معطّلة"}</b>
+              <div style={{ fontSize: 11.5, color: "var(--p-mut)" }}>شريط عروض بعدّاد تنازلي أعلى الرئيسية — يخلق إلحاحاً ويزيد المبيعات</div></div>
+          </div>
+          <div className="pt-field"><label>عنوان القسم</label>
+            <input className="pt-in" value={(settings.flashDeals || {}).title || "عروض اليوم"} onChange={(e) => updateSettings({ flashDeals: { ...(settings.flashDeals || {}), title: e.target.value } })} /></div>
+          <div className="pt-row2">
+            <div className="pt-field"><label>عدد المنتجات المعروضة</label>
+              <input className="pt-in" type="number" value={(settings.flashDeals || {}).count ?? 10} onChange={(e) => updateSettings({ flashDeals: { ...(settings.flashDeals || {}), count: +e.target.value || 1 } })} /></div>
+            <div className="pt-field"><label>أقل نسبة خصم % للعرض</label>
+              <input className="pt-in" type="number" value={(settings.flashDeals || {}).minOff ?? 5} onChange={(e) => updateSettings({ flashDeals: { ...(settings.flashDeals || {}), minOff: +e.target.value || 0 } })} /></div>
+          </div>
+          <div className="pt-note" style={{ margin: 0 }}>💡 العروض تُختار تلقائياً من أعلى المنتجات خصماً. العدّاد يتجدّد يومياً حتى منتصف الليل.</div>
+        </div>
+      </div>
       <div className="pt-card">
         <div className="cap">البيانات التجريبية</div>
         <div style={{ padding: 14 }}>

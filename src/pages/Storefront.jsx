@@ -16,6 +16,7 @@ import Hero from "../components/Hero.jsx";
 import HomeContent from "../components/HomeContent.jsx";
 import Listing from "../components/Listing.jsx";
 import CartBar from "../components/CartBar.jsx";
+import { fmt } from "../utils/currency.js";
 import BottomNav from "../components/BottomNav.jsx";
 import CategoriesPage from "../components/CategoriesPage.jsx";
 import PrintPage from "../components/PrintPage.jsx";
@@ -59,7 +60,49 @@ export default function Storefront() {
       bg: "linear-gradient(135deg,#5a5b60,#3f4045)", text: "#ffffff", subText: "#e2e2e2" },
   }) || THEMES.all;
   const { cart, add, inc, dec, clear, count, total, savings, recentItems } = useCart();
+  const freeAbove = settings.freeAbove || 50000;
+
   const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(theme);
+  const [celebrate, setCelebrate] = useState(false);
+  const wasFree = useRef(false);
+  useEffect(() => {
+    const isFree = total >= freeAbove;
+    if (isFree && !wasFree.current && total > 0) { setCelebrate(true); setTimeout(() => setCelebrate(false), 2600); }
+    wasFree.current = isFree;
+  }, [total, freeAbove]);
+
+  // حركة «انزلاق المنتج إلى السلة» عند الإضافة
+  useEffect(() => {
+    const onClick = (e) => {
+      const btn = e.target.closest(".bk-add:not(.opts), .bk-flash-add, .bk-sug-add, .bk-freq-add");
+      if (!btn) return;
+      const card = btn.closest(".bk-pc, .bk-sug, .bk-freq-card, .bk-flash-card, .bk-crow");
+      const visual = card && (card.querySelector(".bk-pc-imgwrap, .bk-flash-img, .bk-sug-img, .bk-freq-img, .bk-pc-img") || card.querySelector("img"));
+      const cart = document.querySelector(".bk-cartbar") || document.querySelector(".bk-cart");
+      const phone = phoneRef.current;
+      if (!visual || !phone) return;
+      const s = visual.getBoundingClientRect();
+      const pr = phone.getBoundingClientRect();
+      const clone = visual.cloneNode(true);
+      clone.className = "bk-fly";
+      clone.style.left = (s.left - pr.left) + "px";
+      clone.style.top = (s.top - pr.top) + "px";
+      clone.style.width = s.width + "px";
+      clone.style.height = s.height + "px";
+      phone.appendChild(clone);
+      // الهدف: شريط السلة إن وُجد، وإلا أسفل الشاشة وسطاً
+      const tRect = cart ? cart.getBoundingClientRect() : { left: pr.left + pr.width / 2 - 20, top: pr.bottom - 90, width: 40 };
+      requestAnimationFrame(() => {
+        const dx = (tRect.left + tRect.width / 2) - (s.left + s.width / 2);
+        const dy = (tRect.top + 10) - s.top;
+        clone.style.transform = `translate(${dx}px, ${dy}px) scale(.15)`;
+        clone.style.opacity = "0.35";
+      });
+      setTimeout(() => clone.remove(), 700);
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [phoneRef]);
 
   // فتح تفاصيل المنتج من أي بطاقة
   const backRef = { productId, listing, catTab };
@@ -237,6 +280,18 @@ export default function Storefront() {
 
         {toast && <div className="bk-toast">{toast}</div>}
         {/* الشريط السفلي يظهر فقط على المتجر وصفحة التصنيف — يُخفى داخل الصفحات الكاملة كي لا يغطّي أزرارها */}
+        {celebrate && (
+          <div className="bk-celebrate">
+            <div className="bk-celebrate-card">
+              <div className="bk-celebrate-emoji">🎉</div>
+              <div className="bk-celebrate-t">توصيل مجاني!</div>
+              <div className="bk-celebrate-s">وصلت إلى {fmt(freeAbove)} د.ع — طلبك يُوصَّل مجاناً</div>
+            </div>
+            {Array.from({ length: 24 }).map((_, i) => (
+              <span className="bk-confetti" key={i} style={{ left: (i * 4.2) + "%", animationDelay: (i % 8 * 0.12) + "s", background: ["#F8CB46","#0C831F","#E23744","#2A6ED9","#F0851C"][i % 5] }} />
+            ))}
+          </div>
+        )}
         {!page && !productId && (
           <BottomNav nav={nav} onChange={(id) => {
             setListing(null); setProductId(null);
