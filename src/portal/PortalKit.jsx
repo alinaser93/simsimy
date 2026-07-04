@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, ExternalLink, Moon, Sun, Volume2, VolumeX } from "lucide-react";
+import { LogOut, ExternalLink, Moon, Sun, Volume2, VolumeX, Bell, BellOff } from "lucide-react";
+import { requestNotifyPermission, notifyPermission, showNotification, playBeep } from "../utils/notify.js";
 
 /* عدّة البوابات: قشرة موحّدة + بوابة دخول + عناصر صغيرة مشتركة */
 
@@ -8,34 +9,34 @@ import { LogOut, ExternalLink, Moon, Sun, Volume2, VolumeX } from "lucide-react"
 export function usePortalPrefs(ns) {
   const [dark, setDark] = useState(() => localStorage.getItem(`bk-${ns}-dark`) === "1");
   const [sound, setSound] = useState(() => localStorage.getItem(`bk-${ns}-sound`) !== "0");
+  const [notif, setNotif] = useState(() => localStorage.getItem(`bk-${ns}-notif`) === "1" && notifyPermission() === "granted");
   const toggleDark = () => setDark((v) => { localStorage.setItem(`bk-${ns}-dark`, v ? "0" : "1"); return !v; });
   const toggleSound = () => setSound((v) => { localStorage.setItem(`bk-${ns}-sound`, v ? "0" : "1"); return !v; });
-  return { dark, toggleDark, sound, toggleSound };
+  const toggleNotif = async () => {
+    if (notif) { localStorage.setItem(`bk-${ns}-notif`, "0"); setNotif(false); return; }
+    const perm = await requestNotifyPermission();
+    if (perm === "granted") { localStorage.setItem(`bk-${ns}-notif`, "1"); setNotif(true); showNotification("✅ الإشعارات مُفعّلة", "ستصلك تنبيهات الطلبات الجديدة فوراً"); }
+    else if (perm === "denied") alert("الإشعارات محظورة — فعّلها من إعدادات المتصفح لهذا الموقع");
+    else if (perm === "unsupported") alert("متصفحك لا يدعم الإشعارات");
+  };
+  return { dark, toggleDark, sound, toggleSound, notif, toggleNotif };
 }
 
-/* تنبيه صوتي عند ازدياد عدّاد (طلب جديد) — نغمتان قصيرتان */
-export function useOrderAlert(count, enabled) {
+/* تنبيه عند ازدياد عدّاد (طلب جديد): نغمة + إشعار متصفح.
+   opts: { sound, notif, title, body } */
+export function useOrderAlert(count, opts) {
+  // دعم التوقيع القديم: useOrderAlert(count, boolEnabled)
+  const cfg = typeof opts === "boolean" ? { sound: opts, notif: false } : (opts || {});
   const prev = useRef(count);
+  const first = useRef(true);
   useEffect(() => {
-    if (count > prev.current && enabled) {
-      try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new Ctx();
-        const t = ctx.currentTime;
-        const tone = (f, at) => {
-          const o = ctx.createOscillator(), g = ctx.createGain();
-          o.type = "sine"; o.frequency.value = f;
-          o.connect(g); g.connect(ctx.destination);
-          g.gain.setValueAtTime(0.0001, t + at);
-          g.gain.exponentialRampToValueAtTime(0.22, t + at + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.25);
-          o.start(t + at); o.stop(t + at + 0.3);
-        };
-        tone(880, 0); tone(1245, 0.18);
-      } catch { /* المتصفح منع الصوت قبل أول تفاعل */ }
+    if (first.current) { first.current = false; prev.current = count; return; } // لا تنبّه عند أول تحميل
+    if (count > prev.current) {
+      if (cfg.sound) playBeep();
+      if (cfg.notif) showNotification(cfg.title || "🛒 طلب جديد", cfg.body || "لديك طلب جديد", { tag: "new-order", renotify: true });
     }
     prev.current = count;
-  }, [count, enabled]);
+  }, [count, cfg.sound, cfg.notif, cfg.title, cfg.body]);
 }
 
 export function Shell({ role, tabs, tab, setTab, children, onLogout, who, prefs }) {
@@ -47,7 +48,10 @@ export function Shell({ role, tabs, tab, setTab, children, onLogout, who, prefs 
         <span className="sp" />
         {prefs && (
           <>
-            <span className="pt-topbtn" title={prefs.sound ? "كتم تنبيه الطلبات" : "تفعيل تنبيه الطلبات"} onClick={prefs.toggleSound}>
+            <span className="pt-topbtn" title={prefs.notif ? "إيقاف إشعارات المتصفح" : "تفعيل إشعارات المتصفح"} onClick={prefs.toggleNotif} style={prefs.notif ? { color: "#0C831F" } : undefined}>
+              {prefs.notif ? <Bell size={16} /> : <BellOff size={16} />}
+            </span>
+            <span className="pt-topbtn" title={prefs.sound ? "كتم نغمة الطلبات" : "تفعيل نغمة الطلبات"} onClick={prefs.toggleSound}>
               {prefs.sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
             </span>
             <span className="pt-topbtn" title={prefs.dark ? "الوضع الفاتح" : "الوضع الليلي"} onClick={prefs.toggleDark}>

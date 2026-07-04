@@ -64,7 +64,7 @@ function Courier({ cid, onLogout }) {
   const me = couriers.find((c) => c.id === cid) || couriers[0];
   const prefs = usePortalPrefs("courier");
   const readyCount = useStore((s) => s.orders.filter((o) => o.status === "جاهز للتوصيل").length);
-  useOrderAlert(readyCount, prefs.sound && me.active); // 🔔 طلب أصبح جاهزاً للاستلام
+  useOrderAlert(readyCount, { sound: prefs.sound && me.active, notif: prefs.notif && me.active, title: "📦 طلب جاهز للاستلام", body: "طلب جاهز — استلمه وانطلق" }); // 🔔 نغمة + إشعار
   return (
     <Shell role="المندوب" who={me.name} tabs={TABS} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
       <div className="pt-card" style={{ display: "flex", alignItems: "center", gap: 12, padding: 14, marginBottom: 14 }}>

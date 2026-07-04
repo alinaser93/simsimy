@@ -50,7 +50,7 @@ function Admin({ onLogout }) {
   const [tab, setTab] = useState("dash");
   const prefs = usePortalPrefs("admin");
   const ordersCount = useStore((st) => st.orders.length);
-  useOrderAlert(ordersCount, prefs.sound); // 🔔 نغمة عند وصول طلب جديد
+  useOrderAlert(ordersCount, { sound: prefs.sound, notif: prefs.notif, title: "🛒 طلب جديد", body: "وصل طلب جديد — راجع إدارة الطلبات" }); // 🔔 نغمة + إشعار
   return (
     <Shell role="الإدارة" tabs={TABS} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
       {tab === "dash" && <Dash />}

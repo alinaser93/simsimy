@@ -68,7 +68,7 @@ function Merchant({ mid, onLogout }) {
   const tabsWithBadge = TABS.map((t) => (t.id === "products" && outCount > 0 ? { ...t, badge: String(outCount) } : t));
   const prefs = usePortalPrefs("merchant");
   const myCount = mineOrders(useStore((s) => s.orders), mid).length;
-  useOrderAlert(myCount, prefs.sound); // 🔔 طلب جديد لمتجري
+  useOrderAlert(myCount, { sound: prefs.sound, notif: prefs.notif, title: "🛒 طلب جديد لمتجرك", body: "لديك طلب جديد — جهّزه للتوصيل" }); // 🔔 نغمة + إشعار
   return (
     <Shell role="التاجر" who={me.name} tabs={tabsWithBadge} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
       {tab === "dash" && <Dash mid={me.id} />}

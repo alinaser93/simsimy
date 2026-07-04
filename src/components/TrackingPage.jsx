@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronRight, Phone } from "lucide-react";
 import MapView from "./MapView.jsx";
 import { lerp } from "../utils/geo.js";
+import { showNotification, playBeep } from "../utils/notify.js";
 import { useStore, cancelOrder } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import { timeAgo } from "../portal/PortalKit.jsx";
@@ -47,6 +48,25 @@ export default function TrackingPage({ orderId, onBack }) {
     }, 1000);
     return () => clearInterval(iv);
   }, [order.status, done]);
+
+  // إشعار الزبون عند تغيّر حالة الطلب
+  const prevStatus = useRef(order.status);
+  const notifEnabled = useStore((s) => s.user.notifications);
+  useEffect(() => {
+    if (prevStatus.current !== order.status && notifEnabled) {
+      const msgs = {
+        "قيد التجهيز": ["👨‍🍳 يُجهّز طلبك الآن", "المتجر يغلّف منتجاتك بعناية"],
+        "جاهز للتوصيل": ["📦 طلبك جاهز", "بانتظار المندوب لاستلامه"],
+        "في الطريق": ["🛵 المندوب في الطريق إليك", "اقترب من عنوانك — تابعه على الخريطة"],
+        "وصل المندوب": ["🚪 وصل المندوب", "افتح الباب واستلم طلبك"],
+        "تم التوصيل": ["✅ تم توصيل طلبك", "بالعافية! نراك في الطلب القادم"],
+        "ملغي": ["❌ أُلغي طلبك", order.rejectReason || "نأسف على الإزعاج"],
+      };
+      const m = msgs[order.status];
+      if (m) { playBeep(); showNotification(m[0], m[1], { tag: "order-" + order.id, renotify: true }); }
+    }
+    prevStatus.current = order.status;
+  }, [order.status, notifEnabled, order.id, order.rejectReason]);
 
   const courierPos = lerp(store, home, progress);
   const showCourier = order.status === "في الطريق" || order.status === "وصل المندوب";

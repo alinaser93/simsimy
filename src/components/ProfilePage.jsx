@@ -4,6 +4,7 @@ import {
   CreditCard, Gift, Bell, Share2, Info, Shield, Phone, Moon, Sun, LogOut, Pencil, User, Cake,
 } from "lucide-react";
 import { useStore, updateUser } from "../store/appStore.js";
+import { requestNotifyPermission, notifyPermission } from "../utils/notify.js";
 
 /* الصفحة الشخصية — بأسلوب بلينكيت، معرّبة لمتجر عراقي */
 export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, onWallet, onHelp, onLogin }) {
@@ -95,9 +96,16 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
         {/* الإعدادات */}
         <div className="pf-sec">
           <div className="pf-sectitle">الإعدادات</div>
-          <div className="pf-row" onClick={() => updateUser({ notifications: !user.notifications })}>
+          <div className="pf-row" onClick={async () => {
+            if (user.notifications) { updateUser({ notifications: false }); return; }
+            const perm = await requestNotifyPermission();
+            if (perm === "granted") updateUser({ notifications: true });
+            else if (perm === "denied") alert("الإشعارات محظورة — فعّلها من إعدادات المتصفح لهذا الموقع");
+            else if (perm === "unsupported") alert("متصفحك لا يدعم الإشعارات");
+            else updateUser({ notifications: true });
+          }}>
             <span className="ic"><Bell size={19} strokeWidth={2} /></span>
-            <span className="tx"><b>الإشعارات</b><small>تنبيهات الطلبات والعروض</small></span>
+            <span className="tx"><b>إشعارات الطلبات</b><small>تنبيهك بحالة طلبك: التجهيز، الطريق، الوصول</small></span>
             <span className={"pf-switch" + (user.notifications ? " on" : "")}><i /></span>
           </div>
         </div>
