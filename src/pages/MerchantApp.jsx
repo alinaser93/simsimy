@@ -1,7 +1,8 @@
+import React from "react";
 import ProductManager from "../components/ProductManager.jsx";
 import { useState } from "react";
-import { LayoutDashboard, ShoppingCart, PackageSearch, Wallet, Clock3, CheckCircle2, Store, Hourglass } from "lucide-react";
-import { useStore, updateProduct, updateMerchant, setOrderStatus, setMerchantReady, confirmSettlement } from "../store/appStore.js";
+import { LayoutDashboard, ShoppingCart, PackageSearch, Wallet, Clock3, CheckCircle2, Store, Hourglass, Trash2, ChevronDown, XCircle, Plus, Minus } from "lucide-react";
+import { useStore, updateProduct, updateMerchant, setOrderStatus, setMerchantReady, confirmSettlement , removeOrderItem, updateOrderItemQty, rejectOrder } from "../store/appStore.js";
 import { merchantDues, merchantInvoices } from "../store/finance.js";
 import { fmt, CUR } from "../utils/currency.js";
 import { Shell, StatusBadge, Switch, Stat, timeAgo, usePortalPrefs, useOrderAlert } from "../portal/PortalKit.jsx";
@@ -140,6 +141,8 @@ function Dash({ mid }) {
 
 function Orders({ mid }) {
   const orders = mineOrders(useStore((s) => s.orders), mid);
+  const [expanded, setExpanded] = useState(null);
+  const canEdit = (o) => ["جديد", "قيد التجهيز"].includes(o.status); // تعديل قبل انطلاق المندوب
   // بوابة الجاهزية: أؤشّر «جاهز» لحصّتي فقط؛ الطلب ينتقل تلقائياً عندما تكتمل كل المتاجر
   const actionFor = (o) => {
     const meReady = o.readiness ? o.readiness[mid] : false;
@@ -162,9 +165,11 @@ function Orders({ mid }) {
               {orders.map((o) => {
                 const n = actionFor(o);
                 const myShare = (o.items || []).filter((i) => i.merchantId === mid);
+                const isOpen = expanded === o.id;
                 return (
-                  <tr key={o.id}>
-                    <td><b>#{o.id}</b><div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{timeAgo(o.time)}</div></td>
+                  <React.Fragment key={o.id}>
+                  <tr className="mc-ordrow" onClick={() => setExpanded(isOpen ? null : o.id)}>
+                    <td><b>#{o.id}</b> <ChevronDown size={12} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: ".2s", verticalAlign: -1 }} /><div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>{timeAgo(o.time)}</div></td>
                     <td><span className="pt-items-mini">{myShare.map((i, x) => <span key={x}>{i.e}</span>)}</span>
                       <div style={{ color: "var(--p-mut)", fontSize: 10.5 }}>
                         {myShare.length} من عناصري{(o.merchantCount || 1) > 1 ? ` · طلب مشترك مع ${o.merchantCount - 1} متجر` : ""}
@@ -180,6 +185,34 @@ function Orders({ mid }) {
                       {!n && <span style={{ color: "var(--p-mut)", fontSize: 11.5 }}>—</span>}
                     </td>
                   </tr>
+                  {isOpen && (
+                    <tr className="mc-orddetail"><td colSpan="6">
+                      <div className="mc-items">
+                        <div className="mc-items-h">📦 عناصر طلبك {canEdit(o) ? "— احذف الناقص أو عدّل الكمية" : "(لا يمكن التعديل بعد انطلاق المندوب)"}</div>
+                        {myShare.map((i) => (
+                          <div className="mc-item" key={i.id}>
+                            <span className="e">{i.e}</span>
+                            <span className="nm">{i.name}</span>
+                            {canEdit(o) ? (
+                              <span className="qtybox">
+                                <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty - 1)}><Minus size={12} /></button>
+                                <b>{i.qty}</b>
+                                <button onClick={() => updateOrderItemQty(o.id, i.id, i.qty + 1)}><Plus size={12} /></button>
+                              </span>
+                            ) : <span className="qty">×{i.qty}</span>}
+                            <span className="pr">{fmt(i.priceIQD * i.qty)} {CUR}</span>
+                            {canEdit(o) && <button className="rm" title="نفد المنتج — حذف" onClick={() => { if (confirm(`حذف «${i.name}» من الطلب؟ (نفد من المخزون)`)) removeOrderItem(o.id, i.id); }}><Trash2 size={13} /></button>}
+                          </div>
+                        ))}
+                        {canEdit(o) && (
+                          <button className="mc-reject" onClick={() => { if (confirm("رفض الطلب كاملاً؟ سيُلغى ويُخطر الزبون.")) rejectOrder(o.id, "المنتجات غير متوفرة"); }}>
+                            <XCircle size={14} /> رفض الطلب كاملاً
+                          </button>
+                        )}
+                      </div>
+                    </td></tr>
+                  )}
+                  </React.Fragment>
                 );
               })}
               {orders.length === 0 && <tr><td colSpan="6"><div className="pt-empty">لا توجد طلبات بعد</div></td></tr>}

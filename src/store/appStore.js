@@ -358,6 +358,53 @@ export const setOrderStatus = (id, status) =>
 export const assignCourier = (id, courierId) =>
   setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, courierId } : o)) }));
 
+
+// ═══ إدارة الطلب من التاجر ═══
+// إعادة حساب مبالغ الطلب بعد تعديل العناصر
+function recomputeOrder(o, s) {
+  const subtotal = o.items.reduce((a, i) => a + i.priceIQD * i.qty, 0);
+  const fee = subtotal >= s.settings.freeAbove ? 0 : s.settings.deliveryFee;
+  return { ...o, subtotal, fee, total: subtotal + fee + (o.serviceFee || 0) + (o.tip || 0) };
+}
+// حذف عنصر من الطلب (نفاد المنتج) — يعيد حساب المبالغ
+export const removeOrderItem = (orderId, itemId) =>
+  setState((s) => ({
+    orders: s.orders.map((o) => {
+      if (o.id !== orderId) return o;
+      const items = o.items.filter((i) => i.id !== itemId);
+      if (items.length === 0) return { ...o, status: "ملغي", items }; // لا عناصر → إلغاء
+      return recomputeOrder({ ...o, items }, s);
+    }),
+  }));
+// تعديل كمية عنصر في الطلب
+export const updateOrderItemQty = (orderId, itemId, qty) =>
+  setState((s) => ({
+    orders: s.orders.map((o) => {
+      if (o.id !== orderId) return o;
+      if (qty <= 0) { const items = o.items.filter((i) => i.id !== itemId); return items.length ? recomputeOrder({ ...o, items }, s) : { ...o, status: "ملغي", items }; }
+      const items = o.items.map((i) => (i.id === itemId ? { ...i, qty } : i));
+      return recomputeOrder({ ...o, items }, s);
+    }),
+  }));
+// التاجر يرفض الطلب كاملاً
+export const rejectOrder = (orderId, reason) =>
+  setState((s) => ({ orders: s.orders.map((o) => (o.id === orderId ? { ...o, status: "ملغي", rejectReason: reason || "رفضه المتجر" } : o)) }));
+
+// ═══ تعيين المندوب تلقائياً ═══
+// يجد مندوباً متاحاً بلا طلبات نشطة (الأقل حملاً)
+export const findFreeCourier = () => {
+  const s = state;
+  const active = (cid) => s.orders.filter((o) => o.courierId === cid && ["في الطريق", "وصل المندوب"].includes(o.status)).length;
+  const candidates = s.couriers.filter((c) => c.active !== false).map((c) => ({ id: c.id, name: c.name, load: active(c.id) })).sort((a, b) => a.load - b.load);
+  return candidates[0] || null;
+};
+// تعيين تلقائي: يُسند الطلب لأقل مندوب حملاً ويطلقه
+export const autoAssignCourier = (orderId) => {
+  const free = findFreeCourier();
+  if (!free) return null;
+  setState((s) => ({ orders: s.orders.map((o) => (o.id === orderId ? { ...o, courierId: free.id, status: "في الطريق" } : o)) }));
+  return free;
+};
 export const toggleCourier = (id) =>
   setState((s) => ({ couriers: s.couriers.map((c) => (c.id === id ? { ...c, active: !c.active } : c)) }));
 

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import {
   useStore, updateProduct, addProduct, removeProduct, updateSettings,
-  setOrderStatus, assignCourier, toggleCourier, addCourier, addMerchant,
+  setOrderStatus, assignCourier, autoAssignCourier, findFreeCourier, toggleCourier, addCourier, addMerchant,
   updateMerchant, updateAppearance, updateTexts,
   addBanner, updateBanner, removeBanner, updateTrio,
   addBigStore, updateBigStore, removeBigStore,
@@ -150,7 +150,7 @@ function Orders() {
   const mName = (id) => merchants.find((m) => m.id === id)?.name || "—";
   return (
     <>
-      <div className="pt-h1">إدارة الطلبات<small>تغيير الحالات وتعيين المندوبين</small></div>
+      <div className="pt-h1">إدارة الطلبات<small>تغيير الحالات وتعيين المندوبين — يدوياً أو تلقائياً</small></div>
       <div className="pt-card">
         <div className="cap">
           كل الطلبات<span className="sp" />
@@ -197,10 +197,21 @@ function Orders() {
                     </select>
                   </td>
                   <td>
-                    <select className="pt-in" value={o.courierId || ""} onChange={(e) => assignCourier(o.id, e.target.value || null)}>
-                      <option value="">بدون</option>
-                      {couriers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <select className="pt-in" value={o.courierId || ""} onChange={(e) => assignCourier(o.id, e.target.value || null)}>
+                        <option value="">بدون مندوب</option>
+                        {couriers.map((c) => {
+                          const load = orders.filter((x) => x.courierId === c.id && ["في الطريق", "وصل المندوب"].includes(x.status)).length;
+                          return <option key={c.id} value={c.id}>{c.name}{c.active === false ? " (غير متاح)" : load ? ` (${load} طلب)` : " (متاح)"}</option>;
+                        })}
+                      </select>
+                      {!o.courierId && ["جاهز للتوصيل", "قيد التجهيز"].includes(o.status) && (
+                        <button className="pt-btn sm" style={{ fontSize: 10.5, padding: "4px 8px" }}
+                          onClick={() => { const f = autoAssignCourier(o.id); alert(f ? `🛵 عُيّن تلقائياً: ${f.name}` : "لا يوجد مندوب متاح الآن"); }}>
+                          ⚡ تعيين تلقائي
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td>{timeAgo(o.time)}</td>
                 </tr>
