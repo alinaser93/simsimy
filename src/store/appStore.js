@@ -143,7 +143,7 @@ const defaults = () => {
       { id: "a2", label: "العمل", details: "شارع السعدون، بناية 40، ط3", phone: "0770 000 0000" },
     ],
     selectedAddress: "a1",
-    user: { name: "", phone: "+964 780 000 0000", birthday: "", email: "", hideSensitive: false, notifications: true },
+    user: { name: "", phone: "", birthday: "", email: "", notifications: true, loggedIn: false },
     wishlist: [],
     orders: seedOrders(products),
     settlements: [],   // تسويات التجار والمندوبين

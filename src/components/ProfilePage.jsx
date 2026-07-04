@@ -6,7 +6,7 @@ import {
 import { useStore, updateUser } from "../store/appStore.js";
 
 /* الصفحة الشخصية — بأسلوب بلينكيت، معرّبة لمتجر عراقي */
-export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, onWallet, onHelp }) {
+export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, onWallet, onHelp, onLogin }) {
   const user = useStore((s) => s.user);
   const wishlist = useStore((s) => s.wishlist);
   const orders = useStore((s) => s.orders);
@@ -40,23 +40,34 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
 
       <div className="pf-scroll">
         {/* بطاقة المستخدم */}
-        <div className="pf-user">
-          <div className="pf-avatar">{initial}</div>
-          <div className="pf-uinfo">
-            {edit ? (
-              <input className="pf-name-input" value={form.name} placeholder="اكتب اسمك" autoFocus
-                onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            ) : (
-              <div className="pf-name">{user.name || "أضف اسمك"}</div>
-            )}
-            <div className="pf-phone">{user.phone}</div>
+        {!user.loggedIn ? (
+          <div className="pf-loginprompt" onClick={onLogin}>
+            <div className="pf-avatar"><User size={26} /></div>
+            <div className="pf-uinfo">
+              <div className="pf-name">سجّل الدخول</div>
+              <div className="pf-phone" style={{ direction: "rtl", textAlign: "right" }}>للطلب وحفظ عناوينك ومفضّلتك</div>
+            </div>
+            <button className="pf-loginbtn">دخول</button>
           </div>
-          {edit ? (
-            <button className="pf-save" onClick={saveEdit}>حفظ</button>
-          ) : (
-            <button className="pf-editbtn" onClick={() => { setForm(user); setEdit(true); }}><Pencil size={16} /></button>
-          )}
-        </div>
+        ) : (
+          <div className="pf-user">
+            <div className="pf-avatar">{initial}</div>
+            <div className="pf-uinfo">
+              {edit ? (
+                <input className="pf-name-input" value={form.name} placeholder="اكتب اسمك" autoFocus
+                  onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              ) : (
+                <div className="pf-name">{user.name || "أضف اسمك"}</div>
+              )}
+              <div className="pf-phone" dir="ltr">{user.phone}</div>
+            </div>
+            {edit ? (
+              <button className="pf-save" onClick={saveEdit}>حفظ</button>
+            ) : (
+              <button className="pf-editbtn" onClick={() => { setForm(user); setEdit(true); }}><Pencil size={16} /></button>
+            )}
+          </div>
+        )}
 
         {edit && (
           <div className="pf-editfields">
@@ -84,11 +95,6 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
         {/* الإعدادات */}
         <div className="pf-sec">
           <div className="pf-sectitle">الإعدادات</div>
-          <div className="pf-row" onClick={() => updateUser({ hideSensitive: !user.hideSensitive })}>
-            <span className="ic"><Shield size={19} strokeWidth={2} /></span>
-            <span className="tx"><b>إخفاء المنتجات الحساسة</b><small>منتجات التبغ والكحول تُخفى</small></span>
-            <span className={"pf-switch" + (user.hideSensitive ? " on" : "")}><i /></span>
-          </div>
           <div className="pf-row" onClick={() => updateUser({ notifications: !user.notifications })}>
             <span className="ic"><Bell size={19} strokeWidth={2} /></span>
             <span className="tx"><b>الإشعارات</b><small>تنبيهات الطلبات والعروض</small></span>
@@ -114,9 +120,11 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
           <Row Icon={Phone} label="تواصل معنا" sub="خدمة العملاء على مدار الساعة" onClick={onHelp} />
         </div>
 
-        <button className="pf-logout" onClick={() => { if (confirm("تسجيل الخروج من حسابك؟")) { updateUser({ name: "" }); onBack(); } }}>
-          <LogOut size={18} /> تسجيل الخروج
-        </button>
+        {user.loggedIn && (
+          <button className="pf-logout" onClick={() => { if (confirm("تسجيل الخروج من حسابك؟")) { updateUser({ name: "", phone: "", loggedIn: false }); onBack(); } }}>
+            <LogOut size={18} /> تسجيل الخروج
+          </button>
+        )}
 
         <div className="pf-version">بلينكيت • الإصدار 1.0</div>
       </div>
