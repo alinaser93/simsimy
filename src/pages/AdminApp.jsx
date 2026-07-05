@@ -360,6 +360,16 @@ function FiltersBrands() {
     const next = currentTpl.includes(k) ? currentTpl.filter((x) => x !== k) : [...currentTpl, k];
     setFilterTemplate(tplCat, next);
   };
+  // تحريك ترتيب فلتر (يحدد ترتيب تبويبات نافذة الفلاتر للزبون)
+  const moveKey = (k, dir) => {
+    const arr = [...currentTpl];
+    const i = arr.indexOf(k);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    setFilterTemplate(tplCat, arr);
+  };
+  const keyLabel = (k) => (FILTER_KEYS.find(([kk]) => kk === k) || [k, k])[1];
 
   const submitBrand = () => {
     if (!bf.name.trim()) { alert("أدخل اسم الماركة"); return; }
@@ -381,7 +391,7 @@ function FiltersBrands() {
               {cats.map((c) => <option key={c} value={c}>{c}{templates.some((t) => t.cat === c) ? " ✓ (مخصّص)" : ""}</option>)}
             </select>
           </div>
-          <div className="pt-note" style={{ margin: "0 0 10px" }}>اختر الفلاتر التي تظهر للزبون في هذا القسم — كبلينكيت، كل قسم بفلاتره المناسبة:</div>
+          <div className="pt-note" style={{ margin: "0 0 10px" }}>اختر الفلاتر التي تظهر للزبون — تفتح كلها في <b>نافذة سفلية أنيقة (كبلينكيت)</b> بتبويبات جانبية ومربعات اختيار وعدّاد منتجات لكل خيار:</div>
           <div className="fb-keys">
             {FILTER_KEYS.map(([k, label]) => (
               <button key={k} className={"fb-key" + (currentTpl.includes(k) ? " on" : "")} onClick={() => toggleKey(k)}>
@@ -389,6 +399,21 @@ function FiltersBrands() {
               </button>
             ))}
           </div>
+          {currentTpl.filter((k) => k !== "sort").length > 1 && (
+            <>
+              <div className="pt-note" style={{ margin: "14px 0 8px" }}>🔃 ترتيب تبويبات النافذة (الأول يظهر أولاً):</div>
+              <div className="fb-order">
+                {currentTpl.map((k, i) => (
+                  <div className="fb-ord" key={k}>
+                    <span className="fb-ord-n">{i + 1}</span>
+                    <span className="fb-ord-l">{keyLabel(k)}</span>
+                    <button className="fb-ord-b" disabled={i === 0} onClick={() => moveKey(k, -1)}>↑</button>
+                    <button className="fb-ord-b" disabled={i === currentTpl.length - 1} onClick={() => moveKey(k, 1)}>↓</button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           {tplCat !== "*" && templates.some((t) => t.cat === tplCat) && (
             <button className="ad-del" style={{ marginTop: 12 }} onClick={() => removeFilterTemplate(tplCat)}>↩️ إرجاع هذا القسم للقالب العام</button>
           )}

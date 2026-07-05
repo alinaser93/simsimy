@@ -534,3 +534,11 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .fb-brand-inf{flex:1;min-width:0;}
 .fb-brand-inf .pt-in{padding:7px 11px;font-size:13px;margin-bottom:4px;}
 .fb-brand-inf small{font-size:10.5px;color:var(--p-mut);display:block;}
+
+/* ترتيب فلاتر النافذة (الأدمن) */
+.fb-order{display:flex;flex-direction:column;gap:7px;}
+.fb-ord{display:flex;align-items:center;gap:10px;background:var(--p-hover,#f7f7f7);border-radius:10px;padding:9px 12px;}
+.fb-ord-n{width:22px;height:22px;border-radius:50%;background:#0C831F;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.fb-ord-l{flex:1;font-size:13px;font-weight:700;color:var(--p-ink,#222);}
+.fb-ord-b{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--p-border,#ddd);background:var(--p-card,#fff);color:var(--p-ink,#333);font-size:14px;font-weight:900;cursor:pointer;}
+.fb-ord-b:disabled{opacity:.3;cursor:default;}
