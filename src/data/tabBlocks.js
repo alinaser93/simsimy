@@ -9,6 +9,7 @@ export const TAB_BLOCKS = {
   beauty: [
     { id: id(), type: "row", title: "مختارات الجمال الأعلى تقييماً", ids: [87, 88, 89, 8, 7, 6], cat: "جمال وعناية", layout: "grid" },
     { id: id(), type: "builtin", key: "beauty", label: "بلاطات: فئات الجمال" },
+    { id: id(), type: "builtin", key: "concerns", label: "تسوّق حسب الحاجة" },
     { id: id(), type: "row", title: "غذّي وأصلحي شعركِ", sub: "ماسكات وسيرومات للشعر", ids: [6, 8, 7, 90, 91, 92], cat: "جمال وعناية", layout: "grid" },
   ],
   decor: [

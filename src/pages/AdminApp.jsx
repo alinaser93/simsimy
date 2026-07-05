@@ -8,11 +8,11 @@ import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
 import { GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE, ELECTRONICS_TILES, DECOR_TILES, KIDS_TILES, IMPORTED_TILES } from "../data/collections.js";
 import { processImage, dataUrlToFile, PRODUCT_BGS } from "../utils/imageProcessor.js";
-import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate, setTileOverride, resetTileOverride, toggleSectionHidden } from "../store/appStore.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate, setTileOverride, resetTileOverride, toggleSectionHidden, addConcern, updateConcern, removeConcern } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
-  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag, SlidersHorizontal, Compass, LayoutGrid } from "lucide-react";
+  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag, SlidersHorizontal, Compass, LayoutGrid, Sparkles } from "lucide-react";
 import {
   useStore, updateProduct, addProduct, removeProduct, updateSettings,
   setOrderStatus, assignCourier, autoAssignCourier, findFreeCourier, toggleCourier, addCourier, addMerchant,
@@ -39,6 +39,7 @@ const TABS = [
   { id: "coupons", l: "أكواد الخصم", Icon: Tag },
   { group: "🎨 واجهة المتجر" },
   { id: "tiles", l: "بلاطات الرئيسية", Icon: LayoutGrid },
+  { id: "concerns", l: "تسوّق حسب الحاجة", Icon: Sparkles },
   { id: "content", l: "ترتيب الأقسام", Icon: LayoutTemplate },
   { id: "look", l: "الألوان والمظهر", Icon: Palette },
   { group: "👥 الفريق" },
@@ -66,6 +67,7 @@ function Admin({ onLogout }) {
     <Shell role="الإدارة" tabs={TABS} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
       {tab === "guide" && <Guide go={setTab} />}
       {tab === "tiles" && <TilesEditor />}
+      {tab === "concerns" && <ConcernsEditor />}
       {tab === "dash" && <Dash />}
       {tab === "orders" && <Orders />}
       {tab === "products" && <ProductManager scope="admin" />}
@@ -504,6 +506,97 @@ function TilesEditor() {
           })}
         </div>
         <div className="pt-note" style={{ margin: "0 14px 14px" }}>💡 كل بلاطة تفتح قسم المنتجات المطابق لاسمها <b>الأصلي</b> تلقائياً — تغيير الاسم المعروض لا يكسر الربط.</div>
+      </div>
+    </>
+  );
+}
+
+/* ---------------- ✨ تسوّق حسب الحاجة ---------------- */
+const CONCERN_TABS = [["beauty", "الجمال"], ["electronics", "إلكترونيات"], ["decor", "ديكور"], ["kids", "الأطفال"], ["all", "الرئيسية (الكل)"]];
+function ConcernsEditor() {
+  const concerns = useStore((s) => s.concerns) || [];
+  const products = useStore((s) => s.products);
+  const [tab, setTab] = useState("beauty");
+  const [draft, setDraft] = useState({ title: "", sub: "", e: "✨", keywords: "" });
+  const list = concerns.filter((c) => c.tab === tab);
+
+  const kwCount = (kw) => products.filter((p) => (kw || []).some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w) || (p.cat || "").includes(w))).length;
+
+  const submit = () => {
+    if (!draft.title.trim()) { alert("أدخل عنوان البطاقة"); return; }
+    const keywords = draft.keywords.split(/[،,]/).map((x) => x.trim()).filter(Boolean);
+    if (keywords.length === 0) { alert("أدخل كلمة مفتاحية واحدة على الأقل (تحدّد أي منتجات تظهر)"); return; }
+    addConcern({ tab, title: draft.title.trim(), sub: draft.sub.trim(), e: draft.e || "✨", keywords });
+    setDraft({ title: "", sub: "", e: "✨", keywords: "" });
+  };
+  const uploadImg = (id) => {
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
+    inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      try {
+        const { dataUrl } = await processImage(f, { size: 300, bg: "transparent", pad: 0.05, format: "webp", quality: 0.85 });
+        let url = dataUrl; const cfg = getSupabaseCfg();
+        if (cfg && cfg.url && cfg.anonKey) { try { const up = await uploadImage(dataUrlToFile(dataUrl, "cn-" + Date.now() + ".webp")); if (up) url = up; } catch { /* data url */ } }
+        updateConcern(id, { img: url });
+      } catch (e) { alert("تعذّرت المعالجة: " + (e.message || "")); }
+    };
+    inp.click();
+  };
+
+  return (
+    <>
+      <div className="pt-h1">✨ تسوّق حسب الحاجة<small>بطاقات تجمع منتجات لهدف معيّن (تساقط الشعر، حب الشباب…) — كبلينكيت</small></div>
+
+      <div className="pt-card">
+        <div style={{ padding: 14 }}>
+          <div className="pt-field"><label>التبويب الذي تظهر فيه البطاقات</label>
+            <div className="cn-tabs">
+              {CONCERN_TABS.map(([id, l]) => (
+                <span key={id} className={"cn-tab" + (tab === id ? " on" : "")} onClick={() => setTab(id)}>{l}{concerns.filter((c) => c.tab === id).length > 0 && <i>{concerns.filter((c) => c.tab === id).length}</i>}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">➕ إضافة بطاقة حاجة</div>
+        <div style={{ padding: 14 }}>
+          <div className="pt-row2">
+            <div className="pt-field"><label>العنوان</label>
+              <input className="pt-in" placeholder="مثال: تساقط الشعر" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></div>
+            <div className="pt-field"><label>إيموجي</label>
+              <input className="pt-in" style={{ textAlign: "center", fontSize: 18 }} value={draft.e} onChange={(e) => setDraft({ ...draft, e: e.target.value })} /></div>
+          </div>
+          <div className="pt-field"><label>الوصف القصير</label>
+            <input className="pt-in" placeholder="مثال: سيرومات وماسكات لتقوية الجذور" value={draft.sub} onChange={(e) => setDraft({ ...draft, sub: e.target.value })} /></div>
+          <div className="pt-field"><label>الكلمات المفتاحية (تحدّد المنتجات — افصل بفاصلة)</label>
+            <input className="pt-in" placeholder="شعر، سيروم، ماسك، بلسم" value={draft.keywords} onChange={(e) => setDraft({ ...draft, keywords: e.target.value })} /></div>
+          <div className="pt-note" style={{ margin: "0 0 10px" }}>💡 أي منتج يحوي اسمه/قسمه/نوعه إحدى هذه الكلمات سيظهر عند فتح البطاقة.</div>
+          <button className="pt-btn" style={{ width: "100%" }} onClick={submit}>➕ إضافة البطاقة</button>
+        </div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">بطاقات «{CONCERN_TABS.find((t) => t[0] === tab)?.[1]}» ({list.length})</div>
+        <div className="cn-list">
+          {list.map((c) => (
+            <div className="cn-row" key={c.id}>
+              <div className="cn-prev" style={{ background: c.bg || "#F6E9EE" }} onClick={() => uploadImg(c.id)} title="اضغط لرفع صورة">
+                {c.img ? <img src={c.img} alt="" /> : <span>{c.e}</span>}
+                <em>📷</em>
+              </div>
+              <div className="cn-fields">
+                <input className="pt-in" value={c.title} onChange={(e) => updateConcern(c.id, { title: e.target.value })} placeholder="العنوان" />
+                <input className="pt-in" value={c.sub || ""} onChange={(e) => updateConcern(c.id, { sub: e.target.value })} placeholder="الوصف" style={{ fontSize: 12 }} />
+                <input className="pt-in" value={(c.keywords || []).join("، ")} onChange={(e) => updateConcern(c.id, { keywords: e.target.value.split(/[،,]/).map((x) => x.trim()).filter(Boolean) })} placeholder="كلمات مفتاحية" style={{ fontSize: 11.5 }} dir="rtl" />
+                <small className="cn-count">🔗 {kwCount(c.keywords)} منتج مرتبط</small>
+              </div>
+              <button className="pt-btn warn sm" onClick={() => confirm(`حذف «${c.title}»؟`) && removeConcern(c.id)}><Trash2 size={13} /></button>
+            </div>
+          ))}
+          {list.length === 0 && <div className="pt-empty">لا بطاقات في هذا التبويب بعد</div>}
+        </div>
       </div>
     </>
   );

@@ -43,11 +43,14 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
   const [draft, setDraft] = useState({ brands: [], off: 0, price: null, sub: "__all" });
   const brands = useStore((st) => st.brands) || [];
   const filterTemplates = useStore((st) => st.filterTemplates) || [];
+  const concerns = useStore((st) => st.concerns) || [];
 
   // عناوين خاصة من بلاطات منطقة العروض
   const dealMax = title.startsWith("__deals_max_") ? +title.replace("__deals_max_", "") : null;
   const dealOff = title.startsWith("__deals_off_") ? +title.replace("__deals_off_", "") : null;
+  const concern = title.startsWith("__concern_") ? concerns.find((c) => c.id === title.replace("__concern_", "")) : null;
   const inCat = useMemo(() => {
+    if (concern) { const kw = concern.keywords || []; return PRODUCTS.filter((p) => kw.some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w) || (p.cat || "").includes(w))); }
     if (dealMax) return PRODUCTS.filter((p) => p.priceIQD <= dealMax);
     if (dealOff) return PRODUCTS.filter((p) => p.mrpIQD > p.priceIQD && ((p.mrpIQD - p.priceIQD) / p.mrpIQD) * 100 >= dealOff);
     if (match.type === "all") return PRODUCTS;
@@ -55,7 +58,7 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
     if (match.type === "sub") return PRODUCTS.filter((p) => (p.sub || "") === match.value);
     // وضع البحث: منتجات تطابق كلمات العنوان (اسم/تفرّع/قسم) — أفضل بكثير من عرض كل المتجر
     return PRODUCTS.filter((p) => match.tokens.some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w) || (p.cat || "").includes(w)));
-  }, [PRODUCTS, match, dealMax, dealOff]);
+  }, [PRODUCTS, match, dealMax, dealOff, concern]);
 
   const sorter = (l) => {
     const a = [...l];
@@ -141,7 +144,7 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
     <div className="bk-page" style={{ zIndex: 25 }}>
       <div className="bk-phead">
         <div className="bk-back" onClick={onBack}><ChevronRight size={22} strokeWidth={2.5} /></div>
-        <div className="ti">{dealMax ? `عروض بـ ${dealMax.toLocaleString("ar")} د.ع وأقل` : dealOff ? `خصم ${dealOff}٪ فأكثر` : cat === "الكل" ? title : cat}<small>التوصيل خلال 8 دقائق · {total} منتج</small></div>
+        <div className="ti">{concern ? concern.title : dealMax ? `عروض بـ ${dealMax.toLocaleString("ar")} د.ع وأقل` : dealOff ? `خصم ${dealOff}٪ فأكثر` : cat === "الكل" ? title : cat}<small>التوصيل خلال 8 دقائق · {total} منتج</small></div>
         <Search size={19} color="#4a4a4a" />
         <div className="bk-profile" style={{ background: "rgba(0,0,0,.06)", borderColor: "rgba(0,0,0,.08)" }}>
           <User size={18} strokeWidth={2} color="#3a3a3a" />

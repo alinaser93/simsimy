@@ -4,6 +4,7 @@ import Bestsellers from "./Bestsellers.jsx";
 import TrioPromos from "./TrioPromos.jsx";
 import BannerCarousel from "./BannerCarousel.jsx";
 import BigStores from "./BigStores.jsx";
+import ConcernRow from "./ConcernRow.jsx";
 import { removeBlock, useStore, applyTileOverrides } from "../store/appStore.js";
 import {
   GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE,
@@ -38,6 +39,7 @@ export default function BlocksRenderer({ blocks, tabId = "home", cart, add, inc,
         return <div key={b.id}>{TITLE(t)}<TileGrid items={shown} onOpen={(name) => openList(shown.find((x) => x.t === name)?.orig || name)} /></div>;
       }
       switch (b.key) {
+        case "concerns": return <ConcernRow key={b.id} tab={tabId} onOpen={openList} />;
         case "bestsellers": return <Bestsellers key={b.id} onOpen={openList} />;
         case "trio": return <TrioPromos key={b.id} onOpen={openList} />;
         case "banners": return <BannerCarousel key={b.id} onOpen={openList} />;

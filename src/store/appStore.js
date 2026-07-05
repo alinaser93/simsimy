@@ -135,6 +135,13 @@ const defaults = () => {
       { id: "m3", name: "تك ستور", cat: "إلكترونيات", phone: "0790 300 3000", password: "3333", commission: 10, open: true },
       { id: "m4", name: "مطبعة بلينكيت", cat: "طباعة وتصوير", phone: "0770 400 4000", password: "4444", commission: 15, open: true, isPrintShop: true, desc: "طباعة مستندات وصور — توصيل سريع" },
     ],
+    // ═══ «تسوّق حسب الحاجة» (Shop by concern) — بطاقات لكل تبويب، يديرها الأدمن ═══
+    concerns: [
+      { id: "c_hair", tab: "beauty", title: "تساقط الشعر", sub: "سيرومات وماسكات لتقوية الجذور", e: "💆‍♀️", keywords: ["شعر", "سيروم", "ماسك", "بلسم"] },
+      { id: "c_acne", tab: "beauty", title: "حب الشباب", sub: "عناية بالبشرة الدهنية والبثور", e: "🧴", keywords: ["بشرة", "وجه", "غسول", "كريم", "سيروم"] },
+      { id: "c_makeup", tab: "beauty", title: "مكياج كامل", sub: "كل ما تحتاجينه لإطلالة مثالية", e: "💄", keywords: ["مكياج", "أحمر شفاه", "كحل", "ماسكارا", "بودرة"] },
+      { id: "c_perfume", tab: "beauty", title: "عطور فاخرة", sub: "روائح تدوم طويلاً", e: "🌸", keywords: ["عطر", "برفان", "بخاخ"] },
+    ],
     // ═══ تخصيصات بلاطات الرئيسية (يديرها الأدمن): تعديل اسم/صورة/إيموجي/إخفاء + إخفاء أقسام كاملة ═══
     homeTiles: { hiddenSections: [], overrides: {} }, // overrides["القسم|اسم البلاطة الأصلي"] = { name, e, img, bg, hidden }
     // ═══ الماركات (يديرها الأدمن) — للفلاتر و«تسوّق حسب الماركة» ═══
@@ -381,6 +388,11 @@ export const redeemPoints = (points) => {
     };
   });
 };
+
+// ═══ «تسوّق حسب الحاجة» (concerns) ═══
+export const addConcern = (c) => setState((s) => ({ concerns: [...(s.concerns || []), { id: "cn" + Date.now(), keywords: [], ...c }] }));
+export const updateConcern = (id, patch) => setState((s) => ({ concerns: (s.concerns || []).map((x) => (x.id === id ? { ...x, ...patch } : x)) }));
+export const removeConcern = (id) => setState((s) => ({ concerns: (s.concerns || []).filter((x) => x.id !== id) }));
 
 // ═══ تخصيصات بلاطات الرئيسية ═══
 export const setTileOverride = (section, tile, patch) =>
