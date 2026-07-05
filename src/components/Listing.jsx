@@ -11,11 +11,25 @@ const fmtN = (n) => n >= 1000 ? (n / 1000) + " ألف" : String(n);
 export default function Listing({ title, cart, add, inc, dec, onBack }) {
   const PRODUCTS = useStore((s) => s.products);
   const cats = useMemo(() => [...new Set(PRODUCTS.map((p) => p.cat || "بقالة أساسية"))], [PRODUCTS]);
-  const cat = useMemo(() => {
-    if (cats.includes(title)) return title;                 // تطابق تام أولاً (يمنع التقاط قسم أقصر)
-    const exactWord = cats.find((c) => title.split(/\s+/).includes(c));
-    return exactWord || cats.find((c) => title.includes(c) || c.includes(title)) || "الكل";
-  }, [cats, title]);
+  const subsAll = useMemo(() => [...new Set(PRODUCTS.map((p) => p.sub).filter(Boolean))], [PRODUCTS]);
+  // محلّل ذكي: قسم تام → تفرّع تام → أقرب قسم بالتشابه → بحث بالكلمات.
+  // لا يسقط أبداً على «الكل» (كان يعرض كل المتجر تحت عنوان خاطئ!)
+  const match = useMemo(() => {
+    if (title === "الكل") return { type: "all" };
+    if (cats.includes(title)) return { type: "cat", value: title };
+    if (subsAll.includes(title)) return { type: "sub", value: title };
+    const norm = (w) => (w.startsWith("و") && w.length > 2 ? w.slice(1) : w);
+    const toks = (str) => new Set(str.split(/\s+/).map(norm).filter((w) => w.length > 1));
+    const tt = toks(title);
+    let best = null, bestScore = 0;
+    cats.forEach((c) => {
+      const sc = [...toks(c)].filter((w) => tt.has(w)).length;
+      if (sc > bestScore) { best = c; bestScore = sc; }
+    });
+    if (bestScore >= 1) return { type: "cat", value: best };
+    return { type: "search", tokens: [...tt] };
+  }, [title, cats, subsAll]);
+  const cat = match.type === "cat" ? match.value : match.type === "all" ? "الكل" : title;
 
   const [sort, setSort] = useState(SORTS[0]);
   const [sortOpen, setSortOpen] = useState(false);      // صف الفرز الأفقي
@@ -36,8 +50,12 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
   const inCat = useMemo(() => {
     if (dealMax) return PRODUCTS.filter((p) => p.priceIQD <= dealMax);
     if (dealOff) return PRODUCTS.filter((p) => p.mrpIQD > p.priceIQD && ((p.mrpIQD - p.priceIQD) / p.mrpIQD) * 100 >= dealOff);
-    return cat === "الكل" ? PRODUCTS : PRODUCTS.filter((p) => (p.cat || "") === cat);
-  }, [PRODUCTS, cat, dealMax, dealOff]);
+    if (match.type === "all") return PRODUCTS;
+    if (match.type === "cat") return PRODUCTS.filter((p) => (p.cat || "") === match.value);
+    if (match.type === "sub") return PRODUCTS.filter((p) => (p.sub || "") === match.value);
+    // وضع البحث: منتجات تطابق كلمات العنوان (اسم/تفرّع/قسم) — أفضل بكثير من عرض كل المتجر
+    return PRODUCTS.filter((p) => match.tokens.some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w) || (p.cat || "").includes(w)));
+  }, [PRODUCTS, match, dealMax, dealOff]);
 
   const sorter = (l) => {
     const a = [...l];

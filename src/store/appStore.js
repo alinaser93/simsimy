@@ -69,7 +69,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 3, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 4, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -192,6 +192,8 @@ const mergeSaved = (d, saved) => {
     saved = { ...saved, homeBlocks: undefined, tabBlocks: undefined, banners: undefined, trio: undefined, bigStores: undefined, layoutVersion: d.layoutVersion, settings: freshSettings };
   }
   const out = { ...d, ...saved };
+  // ترحيل بيانات: دمج قسم «مشروبات» المكرر في «مشروبات وعصائر» (آمن التكرار)
+  if (Array.isArray(out.products)) out.products = out.products.map((p) => (p.cat === "مشروبات" ? { ...p, cat: "مشروبات وعصائر" } : p));
   ["settings", "appearance", "texts"].forEach((k) => { out[k] = { ...d[k], ...(saved[k] || {}) }; });
   ["banners", "trio", "bigStores", "addresses", "homeBlocks", "customTabs"].forEach((k) => { if (!Array.isArray(saved[k])) out[k] = d[k]; });
   out.tabBlocks = { ...d.tabBlocks, ...(saved.tabBlocks || {}) };
