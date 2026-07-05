@@ -84,9 +84,9 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
             {!(groups.length === 1 && subName === "منتجات أخرى") && (
               <div className="bk-sec"><div className="bk-sec-h"><div className="bk-sec-t" style={{ fontSize: 17 }}>{subName}</div></div></div>
             )}
-            <div className="bk-hs hide-sb">
+            <div className="bk-listing-grid">
               {items.map((p) => (
-                <ProductCard key={p.id} p={p} qty={cart[p.id] || 0} onAdd={add} onInc={inc} onDec={dec} />
+                <ProductCard key={p.id} p={p} qty={cart[p.id] || 0} onAdd={add} onInc={inc} onDec={dec} grid />
               ))}
             </div>
           </div>
