@@ -1,3 +1,4 @@
+import { useStore, applyTileOverrides } from "../store/appStore.js";
 import { ChevronRight } from "lucide-react";
 import {
   GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE,
@@ -20,6 +21,7 @@ const SECTIONS = [
 
 /* صفحة الفئات — كل الفئات في عرض واحد قابل للتمرير (كبلينكيت) */
 export default function CategoriesPage({ onOpen, onBack }) {
+  const homeTiles = useStore((st) => st.homeTiles);
   return (
     <div className="bk-cats-page">
       <div className="bk-cats-head">
@@ -27,12 +29,14 @@ export default function CategoriesPage({ onOpen, onBack }) {
         <h2>كل الفئات</h2>
       </div>
       <div className="bk-cats-body">
-        {SECTIONS.map(([title, items], si) => (
+        {SECTIONS.filter(([title]) => !(homeTiles?.hiddenSections || []).includes(title)).map(([title, items0], si) => {
+          const items = applyTileOverrides(title, items0, homeTiles);
+          return (
           <div className="bk-cats-sec" key={si}>
             <div className="bk-cats-sec-t">{title}</div>
             <div className="bk-cats-grid">
               {items.map((c, i) => (
-                <div className="bk-cat-tile" key={i} onClick={() => onOpen && onOpen(c.t)}>
+                <div className="bk-cat-tile" key={i} onClick={() => onOpen && onOpen(c.orig || c.t)}>
                   <div className="bk-cat-tile-img" style={{ background: c.bg || "#f3f3f3" }}>
                     {(c.img) ? <img src={c.img} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="e">{c.e}</span>}
                   </div>
@@ -41,7 +45,7 @@ export default function CategoriesPage({ onOpen, onBack }) {
               ))}
             </div>
           </div>
-        ))}
+        ); })}
         <div style={{ height: 20 }} />
       </div>
     </div>

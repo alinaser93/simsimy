@@ -4,7 +4,7 @@ import Bestsellers from "./Bestsellers.jsx";
 import TrioPromos from "./TrioPromos.jsx";
 import BannerCarousel from "./BannerCarousel.jsx";
 import BigStores from "./BigStores.jsx";
-import { removeBlock } from "../store/appStore.js";
+import { removeBlock, useStore, applyTileOverrides } from "../store/appStore.js";
 import {
   GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE,
   ELECTRONICS_TILES, DECOR_TILES, KIDS_TILES, IMPORTED_TILES,
@@ -27,9 +27,16 @@ const msg = (data) => { try { window.parent.postMessage({ bk: true, ...data }, "
 const shortName = (b) => b.type === "builtin" ? (b.label || b.key) : b.type === "row" ? b.title : "إعلان: " + b.t;
 
 export default function BlocksRenderer({ blocks, tabId = "home", cart, add, inc, dec, openList }) {
+  const homeTiles = useStore((st) => st.homeTiles);
   const render = (b) => {
     if (b.type === "builtin") {
-      if (TILES[b.key]) { const [t, items] = TILES[b.key]; return <div key={b.id}>{TITLE(t)}<TileGrid items={items} onOpen={openList} /></div>; }
+      if (TILES[b.key]) {
+        const [t, items] = TILES[b.key];
+        if ((homeTiles?.hiddenSections || []).includes(t)) return null; // القسم مخفي من الأدمن
+        const shown = applyTileOverrides(t, items, homeTiles);
+        if (shown.length === 0) return null;
+        return <div key={b.id}>{TITLE(t)}<TileGrid items={shown} onOpen={(name) => openList(shown.find((x) => x.t === name)?.orig || name)} /></div>;
+      }
       switch (b.key) {
         case "bestsellers": return <Bestsellers key={b.id} onOpen={openList} />;
         case "trio": return <TrioPromos key={b.id} onOpen={openList} />;

@@ -64,7 +64,9 @@ export function Shell({ role, tabs, tab, setTab, children, onLogout, who, prefs 
       </div>
       <div className="pt-shell">
         <div className="pt-side">
-          {tabs.map((t) => (
+          {tabs.map((t, i) => t.group ? (
+            <div key={"g" + i} className="pt-tabgroup">{t.group}</div>
+          ) : (
             <div key={t.id} className={"it" + (tab === t.id ? " on" : "")} onClick={() => setTab(t.id)}>
               <t.Icon size={17} strokeWidth={2.2} />{t.l}{t.badge && <span className="pt-tab-badge">{t.badge}</span>}
             </div>
@@ -73,7 +75,7 @@ export function Shell({ role, tabs, tab, setTab, children, onLogout, who, prefs 
         <div className="pt-main">{children}</div>
       </div>
       <div className="pt-tabs">
-        {tabs.map((t) => (
+        {tabs.filter((t) => !t.group).map((t) => (
           <div key={t.id} className={"it" + (tab === t.id ? " on" : "")} onClick={() => setTab(t.id)} style={{ position: "relative" }}>
             <t.Icon size={19} strokeWidth={2.2} />{t.l}{t.badge && <span className="pt-tab-badge">{t.badge}</span>}
           </div>

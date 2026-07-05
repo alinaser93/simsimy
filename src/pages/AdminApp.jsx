@@ -6,11 +6,12 @@ import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from 
 import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
-import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate } from "../store/appStore.js";
+import { GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE, ELECTRONICS_TILES, DECOR_TILES, KIDS_TILES, IMPORTED_TILES } from "../data/collections.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate, setTileOverride, resetTileOverride, toggleSectionHidden } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
-  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag, SlidersHorizontal } from "lucide-react";
+  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag, SlidersHorizontal, Compass, LayoutGrid } from "lucide-react";
 import {
   useStore, updateProduct, addProduct, removeProduct, updateSettings,
   setOrderStatus, assignCourier, autoAssignCourier, findFreeCourier, toggleCourier, addCourier, addMerchant,
@@ -26,16 +27,23 @@ import { fmt, CUR } from "../utils/currency.js";
 import { Shell, Gate, StatusBadge, Switch, Stat, timeAgo, usePortalPrefs, useOrderAlert } from "../portal/PortalKit.jsx";
 
 const TABS = [
+  { id: "guide", l: "الدليل — ابدأ هنا", Icon: Compass },
+  { group: "📦 التشغيل اليومي" },
   { id: "dash", l: "اللوحة", Icon: LayoutDashboard },
   { id: "orders", l: "الطلبات", Icon: ShoppingCart },
-  { id: "products", l: "المنتجات", Icon: PackageSearch },
   { id: "finance", l: "المالية", Icon: Coins },
-  { id: "content", l: "المحتوى", Icon: LayoutTemplate },
-  { id: "look", l: "المظهر", Icon: Palette },
+  { group: "🛍️ الكتالوج" },
+  { id: "products", l: "المنتجات", Icon: PackageSearch },
+  { id: "filters", l: "الفلاتر والماركات", Icon: SlidersHorizontal },
+  { id: "coupons", l: "أكواد الخصم", Icon: Tag },
+  { group: "🎨 واجهة المتجر" },
+  { id: "tiles", l: "بلاطات الرئيسية", Icon: LayoutGrid },
+  { id: "content", l: "ترتيب الأقسام", Icon: LayoutTemplate },
+  { id: "look", l: "الألوان والمظهر", Icon: Palette },
+  { group: "👥 الفريق" },
   { id: "merchants", l: "التجار", Icon: Store },
   { id: "couriers", l: "المندوبون", Icon: Bike },
-  { id: "coupons", l: "أكواد الخصم", Icon: Tag },
-  { id: "filters", l: "الفلاتر والماركات", Icon: SlidersHorizontal },
+  { group: "⚙️" },
   { id: "settings", l: "الإعدادات", Icon: Settings2 },
 ];
 
@@ -49,12 +57,14 @@ export default function AdminApp() {
 }
 
 function Admin({ onLogout }) {
-  const [tab, setTab] = useState("dash");
+  const [tab, setTab] = useState("guide");
   const prefs = usePortalPrefs("admin");
   const ordersCount = useStore((st) => st.orders.length);
   useOrderAlert(ordersCount, { sound: prefs.sound, notif: prefs.notif, title: "🛒 طلب جديد", body: "وصل طلب جديد — راجع إدارة الطلبات" }); // 🔔 نغمة + إشعار
   return (
     <Shell role="الإدارة" tabs={TABS} tab={tab} setTab={setTab} onLogout={onLogout} prefs={prefs}>
+      {tab === "guide" && <Guide go={setTab} />}
+      {tab === "tiles" && <TilesEditor />}
       {tab === "dash" && <Dash />}
       {tab === "orders" && <Orders />}
       {tab === "products" && <ProductManager scope="admin" />}
@@ -339,6 +349,142 @@ function Couriers() {
             </div>
           ))}
         </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------------- 🧭 الدليل — ابدأ هنا ---------------- */
+const JOURNEY = [
+  { e: "1️⃣", t: "التاجر يضيف المنتج", d: "من لوحة التاجر ← منتجاتي ← إضافة. أهم حقل: «القسم» — هو الذي يقرر أين يظهر المنتج في كل مكان." },
+  { e: "2️⃣", t: "يظهر تلقائياً في 5 أماكن", d: "قائمة قسمه (عند فتح أي بلاطة) · صف الرئيسية المطابق (تلقائياً!) · التبويب العلوي · البحث · الفلاتر و«تسوّق بالماركة»." },
+  { e: "3️⃣", t: "الزبون يطلب", d: "يضيف للسلة ← يدفع (خصم كود/نقاط إن وجدت) ← يُنشأ الطلب." },
+  { e: "4️⃣", t: "التاجر يجهّز ← المندوب يوصّل", d: "الطلب يظهر فوراً للتاجر (يقبل ويجهّز) ثم يُسند لمندوب. الزبون يتتبّع مباشرة." },
+  { e: "5️⃣", t: "التسليم والمكافآت", d: "تم التوصيل ← الزبون يقيّم ← يكسب نقاطاً ← الأرباح تظهر في «المالية»." },
+];
+const CONTROL_MAP = [
+  { q: "أغيّر صورة/اسم بلاطة أو أخفيها؟", a: "🎨 بلاطات الرئيسية", tab: "tiles" },
+  { q: "أخفي قسماً كاملاً (وجبات خفيفة، متاجر مميّزة…)؟", a: "🎨 بلاطات الرئيسية ← زر إخفاء القسم", tab: "tiles" },
+  { q: "أغيّر ترتيب أقسام الرئيسية أو أضيف صفاً؟", a: "🎨 ترتيب الأقسام (أو زر «تخصيص الرئيسية» أعلى المتجر)", tab: "content" },
+  { q: "أضيف/أعدّل منتجاً أو صورته أو سعره؟", a: "🛍️ المنتجات", tab: "products" },
+  { q: "أتحكم بفلاتر الزبون والماركات؟", a: "🛍️ الفلاتر والماركات", tab: "filters" },
+  { q: "أنشئ كود خصم؟", a: "🛍️ أكواد الخصم", tab: "coupons" },
+  { q: "أغيّر الألوان/الشعار/البانرات؟", a: "🎨 الألوان والمظهر", tab: "look" },
+  { q: "رسوم التوصيل/التوصيل المجاني/عروض الفلاش؟", a: "⚙️ الإعدادات", tab: "settings" },
+  { q: "أتابع الطلبات الحية أو الأرباح؟", a: "📦 الطلبات / المالية", tab: "orders" },
+];
+function Guide({ go }) {
+  return (
+    <>
+      <div className="pt-h1">🧭 دليلك السريع<small>كل ما تحتاجه لفهم متجرك والتحكم به — بلا تشتّت</small></div>
+
+      <div className="pt-card">
+        <div className="cap">🚀 يومك في 3 خطوات فقط</div>
+        <div className="gd-daily">
+          <div className="gd-step" onClick={() => go("orders")}><span>📦</span><b>الطلبات</b><small>تابع الجديد وأسنِد المندوبين</small></div>
+          <div className="gd-step" onClick={() => go("products")}><span>🏷️</span><b>المنتجات</b><small>أضف أو عدّل الأسعار والمخزون</small></div>
+          <div className="gd-step" onClick={() => go("finance")}><span>💰</span><b>المالية</b><small>راجع الأرباح والتسويات</small></div>
+        </div>
+        <div className="pt-note" style={{ margin: "0 14px 14px" }}>💡 كل ما عدا ذلك «إعداد لمرة واحدة» — لا تحتاجه يومياً.</div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">🛤️ رحلة المنتج من الإضافة حتى التسليم</div>
+        <div className="gd-journey">
+          {JOURNEY.map((j, i) => (
+            <div className="gd-jstep" key={i}>
+              <span className="gd-je">{j.e}</span>
+              <div><b>{j.t}</b><small>{j.d}</small></div>
+            </div>
+          ))}
+        </div>
+        <div className="pt-note" style={{ margin: "0 14px 14px" }}>⭐ الخلاصة: <b>حقل «القسم» في المنتج هو المايسترو</b> — اضبطه صح ويتوزّع المنتج تلقائياً في كل مكان. لا تحتاج وضعه يدوياً في أي بلاطة.</div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">🗺️ أريد أن… ← أذهب إلى…</div>
+        <div className="gd-map">
+          {CONTROL_MAP.map((m, i) => (
+            <div className="gd-row" key={i} onClick={() => go(m.tab)}>
+              <span className="gd-q">{m.q}</span>
+              <span className="gd-a">{m.a} ←</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">🧩 ما هي أقسام الرئيسية الستة؟</div>
+        <div style={{ padding: "4px 14px 14px", fontSize: 13, lineHeight: 2, color: "var(--p-mut2)" }}>
+          <b>وجبات خفيفة ومشروبات · الجمال والعناية · مستلزمات المنزل</b>: شبكات بلاطات — كل بلاطة تفتح قسم منتجات (تتحكم بها من «بلاطات الرئيسية»).<br />
+          <b>متاجر مميّزة · مختارات لأسلوب حياتك</b>: بلاطات تسويقية حرّة — عدّل صورها وأسماءها أو أخفِ ما لا يناسب العراق.<br />
+          <b>منتجات رائجة قربك</b>: صف منتجات <b>يتعبأ تلقائياً</b> من الكتالوج — لا يحتاج تدخلاً.
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------------- 🧩 بلاطات الرئيسية ---------------- */
+const TILE_SECTIONS = [
+  ["البقالة والمطبخ", GROCERY], ["وجبات خفيفة ومشروبات", SNACKS],
+  ["الجمال والعناية الشخصية", BEAUTY], ["مستلزمات المنزل", HOUSEHOLD],
+  ["متاجر مميّزة", STORES_SPOTLIGHT], ["مختارات لأسلوب حياتك", PICKS_LIFESTYLE],
+  ["إلكترونيات (بلاطات)", ELECTRONICS_TILES], ["ديكور (بلاطات)", DECOR_TILES],
+  ["أطفال (بلاطات)", KIDS_TILES], ["مستورد (بلاطات)", IMPORTED_TILES],
+];
+function TilesEditor() {
+  const homeTiles = useStore((s) => s.homeTiles) || { hiddenSections: [], overrides: {} };
+  const [secIdx, setSecIdx] = useState(0);
+  const [sec, items] = TILE_SECTIONS[secIdx];
+  const hidden = homeTiles.hiddenSections.includes(sec);
+  const ov = (t) => homeTiles.overrides[sec + "|" + t] || {};
+
+  return (
+    <>
+      <div className="pt-h1">🧩 بلاطات الرئيسية<small>غيّر الصور والأسماء، أخفِ بلاطة أو قسماً كاملاً — يظهر فوراً للزبائن</small></div>
+
+      <div className="pt-card">
+        <div style={{ padding: 14 }}>
+          <div className="pt-field"><label>اختر القسم</label>
+            <select className="pt-in" value={secIdx} onChange={(e) => setSecIdx(+e.target.value)}>
+              {TILE_SECTIONS.map(([t, arr], i) => <option key={t} value={i}>{t} ({arr.length} بلاطة){homeTiles.hiddenSections.includes(t) ? " — 🙈 مخفي" : ""}</option>)}
+            </select>
+          </div>
+          <button className={"pt-btn" + (hidden ? "" : " warn")} style={{ width: "100%" }} onClick={() => toggleSectionHidden(sec)}>
+            {hidden ? "👁️ إظهار هذا القسم في الرئيسية" : "🙈 إخفاء هذا القسم كاملاً من الرئيسية"}
+          </button>
+        </div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">بلاطات «{sec}»</div>
+        <div className="tl-list">
+          {items.map((it) => {
+            const o = ov(it.t);
+            const isHid = !!o.hidden;
+            const changed = o.name || o.e || o.img || o.bg || o.hidden;
+            return (
+              <div className={"tl-row" + (isHid ? " off" : "")} key={it.t}>
+                <div className="tl-prev" style={{ background: o.bg || it.bg || "#f3f3f3" }}>
+                  {(o.img || it.img) ? <img src={o.img || it.img} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span>{o.e || it.e}</span>}
+                </div>
+                <div className="tl-fields">
+                  <div className="tl-frow">
+                    <input className="pt-in" placeholder={it.t} value={o.name || ""} onChange={(e) => setTileOverride(sec, it.t, { name: e.target.value })} title="الاسم (اتركه فارغاً للأصلي)" />
+                    <input className="pt-in tl-emoji" placeholder={it.e || "🛒"} value={o.e || ""} onChange={(e) => setTileOverride(sec, it.t, { e: e.target.value })} title="إيموجي" />
+                  </div>
+                  <input className="pt-in" placeholder="رابط صورة (اختياري) https://…" value={o.img || ""} onChange={(e) => setTileOverride(sec, it.t, { img: e.target.value })} dir="ltr" style={{ textAlign: "left", fontSize: 11 }} />
+                </div>
+                <div className="tl-acts">
+                  <button className={"tl-eye" + (isHid ? " on" : "")} title={isHid ? "إظهار" : "إخفاء"} onClick={() => setTileOverride(sec, it.t, { hidden: !isHid })}>{isHid ? "🙈" : "👁️"}</button>
+                  {changed && <button className="tl-reset" title="استرجاع الأصلي" onClick={() => resetTileOverride(sec, it.t)}>↩️</button>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="pt-note" style={{ margin: "0 14px 14px" }}>💡 كل بلاطة تفتح قسم المنتجات المطابق لاسمها <b>الأصلي</b> تلقائياً — تغيير الاسم المعروض لا يكسر الربط.</div>
       </div>
     </>
   );

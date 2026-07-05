@@ -135,6 +135,8 @@ const defaults = () => {
       { id: "m3", name: "تك ستور", cat: "إلكترونيات", phone: "0790 300 3000", password: "3333", commission: 10, open: true },
       { id: "m4", name: "مطبعة بلينكيت", cat: "طباعة وتصوير", phone: "0770 400 4000", password: "4444", commission: 15, open: true, isPrintShop: true, desc: "طباعة مستندات وصور — توصيل سريع" },
     ],
+    // ═══ تخصيصات بلاطات الرئيسية (يديرها الأدمن): تعديل اسم/صورة/إيموجي/إخفاء + إخفاء أقسام كاملة ═══
+    homeTiles: { hiddenSections: [], overrides: {} }, // overrides["القسم|اسم البلاطة الأصلي"] = { name, e, img, bg, hidden }
     // ═══ الماركات (يديرها الأدمن) — للفلاتر و«تسوّق حسب الماركة» ═══
     brands: [
       { id: "b1", name: "أمول", e: "🥛", cats: ["ألبان وخبز وبيض"] },
@@ -378,6 +380,39 @@ export const redeemPoints = (points) => {
       },
     };
   });
+};
+
+// ═══ تخصيصات بلاطات الرئيسية ═══
+export const setTileOverride = (section, tile, patch) =>
+  setState((s) => {
+    const ht = s.homeTiles || { hiddenSections: [], overrides: {} };
+    const key = section + "|" + tile;
+    const cur = ht.overrides[key] || {};
+    return { homeTiles: { ...ht, overrides: { ...ht.overrides, [key]: { ...cur, ...patch } } } };
+  });
+export const resetTileOverride = (section, tile) =>
+  setState((s) => {
+    const ht = s.homeTiles || { hiddenSections: [], overrides: {} };
+    const o = { ...ht.overrides }; delete o[section + "|" + tile];
+    return { homeTiles: { ...ht, overrides: o } };
+  });
+export const toggleSectionHidden = (section) =>
+  setState((s) => {
+    const ht = s.homeTiles || { hiddenSections: [], overrides: {} };
+    const h = ht.hiddenSections.includes(section)
+      ? ht.hiddenSections.filter((x) => x !== section)
+      : [...ht.hiddenSections, section];
+    return { homeTiles: { ...ht, hiddenSections: h } };
+  });
+// تطبيق التخصيصات على بلاطات قسم (تُستخدم في الواجهة)
+export const applyTileOverrides = (section, items, homeTiles) => {
+  const ht = homeTiles || { hiddenSections: [], overrides: {} };
+  return items
+    .map((it) => {
+      const ov = ht.overrides[section + "|" + it.t] || {};
+      return { ...it, orig: it.t, t: ov.name || it.t, e: ov.e || it.e, img: ov.img || it.img, bg: ov.bg || it.bg, hidden: !!ov.hidden };
+    })
+    .filter((it) => !it.hidden);
 };
 
 // ═══ الماركات وقوالب الفلاتر (إدارة الأدمن) ═══
