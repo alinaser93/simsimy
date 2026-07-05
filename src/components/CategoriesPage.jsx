@@ -9,7 +9,7 @@ import {
 const SECTIONS = [
   ["البقالة والمطبخ", GROCERY],
   ["وجبات خفيفة ومشروبات", SNACKS],
-  ["الجمال والعناية الشخصية", BEAUTY],
+  ["الجمال والعناية", BEAUTY],
   ["مستلزمات المنزل", HOUSEHOLD],
   ["إلكترونيات وأجهزة", ELECTRONICS_TILES],
   ["ديكور وأثاث المنزل", DECOR_TILES],

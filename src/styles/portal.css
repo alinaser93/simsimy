@@ -602,3 +602,7 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .cn-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
 .cn-fields .pt-in{padding:8px 10px;}
 .cn-count{font-size:10.5px;color:#0C831F;font-weight:700;}
+
+/* صورتان في محرّر الحاجة */
+.cn-prevs{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
+.cn-prev.sm{width:46px;height:46px;font-size:20px;align-self:center;}

@@ -69,7 +69,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 5, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 6, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -137,13 +137,13 @@ const defaults = () => {
     ],
     // ═══ «تسوّق حسب الحاجة» (Shop by concern) — بطاقات لكل تبويب، يديرها الأدمن ═══
     concerns: [
-      { id: "c_hairfall", tab: "beauty", title: "تساقط الشعر", sub: "سيرومات وزيوت لتقوية الجذور", e: "💆‍♀️", keywords: ["تساقط", "جذور", "أملا", "إكليل الجبل"] },
-      { id: "c_acne", tab: "beauty", title: "حب الشباب", sub: "غسولات وسيرومات للبشرة الدهنية", e: "🧼", keywords: ["حب الشباب", "بثور", "نياسيناميد", "صبار", "دهنية"] },
-      { id: "c_sun", tab: "beauty", title: "الحماية من الشمس", sub: "واقيات شمسية بمعامل حماية عالٍ", e: "☀️", keywords: ["واقي شمس", "SPF", "شمسي"] },
-      { id: "c_pigment", tab: "beauty", title: "التصبّغات والتفتيح", sub: "منتجات فيتامين C لبشرة موحّدة", e: "🍊", keywords: ["تصبّغ", "تفتيح", "فيتامين C", "تان", "اسمرار"] },
-      { id: "c_frizzy", tab: "beauty", title: "الشعر المتطاير", sub: "شامبو وسيروم للنعومة والترطيب", e: "💧", keywords: ["متطاير", "كيراتين", "هيالورونيك", "تنعيم", "شامبو"] },
-      { id: "c_makeup", tab: "beauty", title: "مكياج كامل", sub: "كل ما تحتاجينه لإطلالة مثالية", e: "💄", keywords: ["أحمر شفاه", "كحل", "مكياج", "ماسكارا"] },
-      { id: "c_perfume", tab: "beauty", title: "عطور فاخرة", sub: "روائح تدوم طويلاً", e: "🌸", keywords: ["عطر", "برفان"] },
+      { id: "c_hairfall", tab: "beauty", title: "تساقط الشعر", sub: "سيرومات وزيوت لتقوية الجذور", e: "💆‍♀️", e2: "🧴", bg: "#F6E9EE", bg2: "#EFE9F6", keywords: ["تساقط", "جذور", "أملا", "إكليل الجبل"] },
+      { id: "c_acne", tab: "beauty", title: "حب الشباب", sub: "غسولات وسيرومات للبشرة الدهنية", e: "🧼", e2: "🧪", bg: "#FBEAEA", bg2: "#E9F2EC", keywords: ["حب الشباب", "بثور", "نياسيناميد", "صبار", "دهنية"] },
+      { id: "c_sun", tab: "beauty", title: "الحماية من الشمس", sub: "واقيات شمسية بمعامل حماية عالٍ", e: "☀️", e2: "🧴", bg: "#FBF6E0", bg2: "#EAF1F8", keywords: ["واقي شمس", "SPF", "شمسي"] },
+      { id: "c_pigment", tab: "beauty", title: "التصبّغات والتفتيح", sub: "منتجات فيتامين C لبشرة موحّدة", e: "🍊", e2: "🍋", bg: "#FBF6E0", bg2: "#F0EAF7", keywords: ["تصبّغ", "تفتيح", "فيتامين C", "تان", "اسمرار"] },
+      { id: "c_frizzy", tab: "beauty", title: "الشعر المتطاير", sub: "شامبو وسيروم للنعومة والترطيب", e: "💧", e2: "💇‍♀️", bg: "#E6F4EE", bg2: "#EAF1F8", keywords: ["متطاير", "كيراتين", "هيالورونيك", "تنعيم", "شامبو"] },
+      { id: "c_makeup", tab: "beauty", title: "مكياج كامل", sub: "كل ما تحتاجينه لإطلالة مثالية", e: "💄", e2: "✏️", bg: "#FBEAEA", bg2: "#F6E7EC", keywords: ["أحمر شفاه", "كحل", "مكياج", "ماسكارا"] },
+      { id: "c_perfume", tab: "beauty", title: "عطور فاخرة", sub: "روائح تدوم طويلاً", e: "🌸", e2: "🌷", bg: "#F0EAF7", bg2: "#F6E7EC", keywords: ["عطر", "برفان"] },
     ],
     // ═══ تخصيصات بلاطات الرئيسية (يديرها الأدمن): تعديل اسم/صورة/إيموجي/إخفاء + إخفاء أقسام كاملة ═══
     homeTiles: { hiddenSections: [], overrides: {} }, // overrides["القسم|اسم البلاطة الأصلي"] = { name, e, img, bg, hidden }
@@ -201,21 +201,18 @@ const mergeSaved = (d, saved) => {
   if (staleLayout) {
     // حدّث التخطيط + إعدادات التوصيل المجاني والفلاش للقيم الجديدة
     const freshSettings = { ...(saved.settings || {}), freeAbove: d.settings.freeAbove, flashDeals: (saved.settings && saved.settings.flashDeals) || d.settings.flashDeals };
-    // أضِف المنتجات الجديدة (بالمعرّف) دون حذف ما أضافه التاجر
-    let mergedProducts = saved.products;
+    const patch = { homeBlocks: undefined, tabBlocks: undefined, banners: undefined, trio: undefined, bigStores: undefined, layoutVersion: d.layoutVersion, settings: freshSettings };
+    // أضِف المنتجات الجديدة (بالمعرّف) دون حذف ما أضافه التاجر — فقط إن كانت محفوظة كمصفوفة
     if (Array.isArray(saved.products)) {
       const have = new Set(saved.products.map((p) => p.id));
-      const fresh = (d.products || []).filter((p) => !have.has(p.id));
-      mergedProducts = [...saved.products, ...fresh];
+      patch.products = [...saved.products, ...(d.products || []).filter((p) => !have.has(p.id))];
     }
     // أضِف بطاقات «الحاجة» الجديدة (بالمعرّف) دون حذف ما أضافه الأدمن
-    let mergedConcerns = saved.concerns;
     if (Array.isArray(saved.concerns)) {
       const haveC = new Set(saved.concerns.map((c) => c.id));
-      const freshC = (d.concerns || []).filter((c) => !haveC.has(c.id));
-      mergedConcerns = [...saved.concerns, ...freshC];
+      patch.concerns = [...saved.concerns, ...(d.concerns || []).filter((c) => !haveC.has(c.id))];
     }
-    saved = { ...saved, homeBlocks: undefined, tabBlocks: undefined, banners: undefined, trio: undefined, bigStores: undefined, layoutVersion: d.layoutVersion, settings: freshSettings, products: mergedProducts, concerns: mergedConcerns };
+    saved = { ...saved, ...patch };
   }
   const out = { ...d, ...saved };
   // ترحيل بيانات: دمج قسم «مشروبات» المكرر في «مشروبات وعصائر» (آمن التكرار)

@@ -19,7 +19,7 @@ const TITLE = (t) => (
 );
 const TILES = {
   grocery: ["البقالة والمطبخ", GROCERY], snacks: ["وجبات خفيفة ومشروبات", SNACKS],
-  beauty: ["الجمال والعناية الشخصية", BEAUTY], household: ["مستلزمات المنزل", HOUSEHOLD],
+  beauty: ["تسوّق حسب الفئة", BEAUTY], household: ["مستلزمات المنزل", HOUSEHOLD],
   stores: ["متاجر مميّزة", STORES_SPOTLIGHT], lifestyle: ["مختارات لأسلوب حياتك", PICKS_LIFESTYLE],
   tiles_electronics: ["تسوّق حسب الفئة", ELECTRONICS_TILES], tiles_decor: ["تسوّق حسب الفئة", DECOR_TILES],
   tiles_kids: ["تسوّق حسب الفئة", KIDS_TILES], tiles_imported: ["تسوّق حسب الفئة", IMPORTED_TILES],

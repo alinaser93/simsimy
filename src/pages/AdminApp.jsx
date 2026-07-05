@@ -431,7 +431,7 @@ function Guide({ go }) {
 /* ---------------- 🧩 بلاطات الرئيسية ---------------- */
 const TILE_SECTIONS = [
   ["البقالة والمطبخ", GROCERY], ["وجبات خفيفة ومشروبات", SNACKS],
-  ["الجمال والعناية الشخصية", BEAUTY], ["مستلزمات المنزل", HOUSEHOLD],
+  ["تسوّق حسب الفئة", BEAUTY], ["مستلزمات المنزل", HOUSEHOLD],
   ["متاجر مميّزة", STORES_SPOTLIGHT], ["مختارات لأسلوب حياتك", PICKS_LIFESTYLE],
   ["إلكترونيات (بلاطات)", ELECTRONICS_TILES], ["ديكور (بلاطات)", DECOR_TILES],
   ["أطفال (بلاطات)", KIDS_TILES], ["مستورد (بلاطات)", IMPORTED_TILES],
@@ -529,7 +529,7 @@ function ConcernsEditor() {
     addConcern({ tab, title: draft.title.trim(), sub: draft.sub.trim(), e: draft.e || "✨", keywords });
     setDraft({ title: "", sub: "", e: "✨", keywords: "" });
   };
-  const uploadImg = (id) => {
+  const uploadImg = (id, field = "img") => {
     const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
     inp.onchange = async () => {
       const f = inp.files[0]; if (!f) return;
@@ -537,7 +537,7 @@ function ConcernsEditor() {
         const { dataUrl } = await processImage(f, { size: 300, bg: "transparent", pad: 0.05, format: "webp", quality: 0.85 });
         let url = dataUrl; const cfg = getSupabaseCfg();
         if (cfg && cfg.url && cfg.anonKey) { try { const up = await uploadImage(dataUrlToFile(dataUrl, "cn-" + Date.now() + ".webp")); if (up) url = up; } catch { /* data url */ } }
-        updateConcern(id, { img: url });
+        updateConcern(id, { [field]: url });
       } catch (e) { alert("تعذّرت المعالجة: " + (e.message || "")); }
     };
     inp.click();
@@ -582,9 +582,13 @@ function ConcernsEditor() {
         <div className="cn-list">
           {list.map((c) => (
             <div className="cn-row" key={c.id}>
-              <div className="cn-prev" style={{ background: c.bg || "#F6E9EE" }} onClick={() => uploadImg(c.id)} title="اضغط لرفع صورة">
-                {c.img ? <img src={c.img} alt="" /> : <span>{c.e}</span>}
-                <em>📷</em>
+              <div className="cn-prevs">
+                <div className="cn-prev" style={{ background: c.bg || "#F6E9EE" }} onClick={() => uploadImg(c.id, "img")} title="الصورة اليمنى">
+                  {c.img ? <img src={c.img} alt="" /> : <span>{c.e}</span>}<em>📷</em>
+                </div>
+                <div className="cn-prev sm" style={{ background: c.bg2 || "#EFE9F6" }} onClick={() => uploadImg(c.id, "img2")} title="الصورة اليسرى">
+                  {c.img2 ? <img src={c.img2} alt="" /> : <span>{c.e2 || c.e}</span>}<em>📷</em>
+                </div>
               </div>
               <div className="cn-fields">
                 <input className="pt-in" value={c.title} onChange={(e) => updateConcern(c.id, { title: e.target.value })} placeholder="العنوان" />
