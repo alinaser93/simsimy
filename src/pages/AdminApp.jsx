@@ -7,7 +7,7 @@ import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
 import { GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE, ELECTRONICS_TILES, DECOR_TILES, KIDS_TILES, IMPORTED_TILES } from "../data/collections.js";
-import { processImage, PRODUCT_BGS } from "../utils/imageProcessor.js";
+import { processImage, dataUrlToFile, PRODUCT_BGS } from "../utils/imageProcessor.js";
 import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate, setTileOverride, resetTileOverride, toggleSectionHidden } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
@@ -445,8 +445,16 @@ function TilesEditor() {
     inp.type = "file"; inp.accept = "image/*";
     inp.onchange = async () => {
       const f = inp.files[0]; if (!f) return;
-      try { const { dataUrl } = await processImage(f, { size: 400, bg: "transparent", pad: 0.06, format: "webp", quality: 0.8 }); setTileOverride(section, tile, { img: dataUrl }); }
-      catch (e) { alert("تعذّرت المعالجة: " + (e.message || "")); }
+      try {
+        const { dataUrl } = await processImage(f, { size: 400, bg: "transparent", pad: 0.06, format: "webp", quality: 0.85 });
+        let url = dataUrl;
+        const cfg = getSupabaseCfg();
+        if (cfg && cfg.url && cfg.anonKey) {
+          try { const up = await uploadImage(dataUrlToFile(dataUrl, "tile-" + Date.now() + ".webp")); if (up) url = up; }
+          catch { /* يبقى data URL */ }
+        }
+        setTileOverride(section, tile, { img: url });
+      } catch (e) { alert("تعذّرت المعالجة: " + (e.message || "")); }
     };
     inp.click();
   };
