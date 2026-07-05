@@ -18,6 +18,7 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
 
   const [sort, setSort] = useState(SORTS[0]);
   const [sortOpen, setSortOpen] = useState(false);
+  const [activeSub, setActiveSub] = useState("__all");
 
   // عناوين خاصة من بلاطات منطقة العروض
   const dealMax = title.startsWith("__deals_max_") ? +title.replace("__deals_max_", "") : null;
@@ -36,18 +37,23 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
     return a;
   };
 
-  // تجميع المنتجات في صفوف حسب التفرّع (sub)؛ ما بلا تفرّع يذهب لصف «المزيد»
-  const groups = useMemo(() => {
-    const map = new Map();
-    sorter(inCat).forEach((p) => {
-      const key = p.sub || "منتجات أخرى";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(p);
-    });
-    return [...map.entries()];
-  }, [inCat, sort]);
-
   const total = inCat.length;
+
+  // شريط التفرّعات الجانبي (كبلينكيت): «الكل» + كل تفرّع بأيقونته
+  const subs = useMemo(() => {
+    const seen = new Map();
+    inCat.forEach((p) => {
+      const key = p.sub || "أخرى";
+      if (!seen.has(key)) seen.set(key, { name: key, e: p.e, img: p.img || (p.images && p.images[0]) });
+    });
+    return [...seen.values()];
+  }, [inCat]);
+
+  // المنتجات المعروضة حسب التفرّع المختار
+  const shown = useMemo(() => {
+    const list = activeSub === "__all" ? inCat : inCat.filter((p) => (p.sub || "أخرى") === activeSub);
+    return sorter(list);
+  }, [inCat, activeSub, sort]);
 
   return (
     <div className="bk-page" style={{ zIndex: 25 }}>
@@ -77,21 +83,30 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
         </div>
       )}
 
-      {/* صفوف أفقية ثابتة لكل تفرّع */}
-      <div style={{ paddingBottom: 90 }}>
-        {groups.map(([subName, items]) => (
-          <div key={subName}>
-            {!(groups.length === 1 && subName === "منتجات أخرى") && (
-              <div className="bk-sec"><div className="bk-sec-h"><div className="bk-sec-t" style={{ fontSize: 17 }}>{subName}</div></div></div>
-            )}
-            <div className="bk-listing-grid">
-              {items.map((p) => (
-                <ProductCard key={p.id} p={p} qty={cart[p.id] || 0} onAdd={add} onInc={inc} onDec={dec} grid />
-              ))}
+      {/* تخطيط بلينكيت: شريط تفرّعات جانبي + شبكة منتجات */}
+      <div className="bk-listing-layout">
+        {subs.length > 1 && (
+          <div className="bk-siderail hide-sb">
+            <div className={"bk-rail-item" + (activeSub === "__all" ? " on" : "")} onClick={() => setActiveSub("__all")}>
+              <div className="bk-rail-img all">✨</div>
+              <span>الكل</span>
             </div>
+            {subs.map((sb) => (
+              <div className={"bk-rail-item" + (activeSub === sb.name ? " on" : "")} key={sb.name} onClick={() => setActiveSub(sb.name)}>
+                <div className="bk-rail-img">{sb.img ? <img src={sb.img} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : sb.e}</div>
+                <span>{sb.name}</span>
+              </div>
+            ))}
           </div>
-        ))}
-        {groups.length === 0 && <div style={{ textAlign: "center", color: "#9a9a9a", padding: 40, fontWeight: 600 }}>لا توجد منتجات في هذا القسم بعد</div>}
+        )}
+        <div className="bk-listing-main hide-sb">
+          <div className="bk-listing-grid2">
+            {shown.map((p) => (
+              <ProductCard key={p.id} p={p} qty={cart[p.id] || 0} onAdd={add} onInc={inc} onDec={dec} grid />
+            ))}
+          </div>
+          {shown.length === 0 && <div style={{ textAlign: "center", color: "#9a9a9a", padding: 40, fontWeight: 600 }}>لا توجد منتجات في هذا القسم بعد</div>}
+        </div>
       </div>
     </div>
   );

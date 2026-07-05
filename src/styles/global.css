@@ -874,3 +874,24 @@ html,body{margin:0;height:100%;}
 .bk-listing-grid .bk-pc-img{font-size:64px;}
 .bk-listing-grid .bk-price{font-size:15px;}
 .bk-listing-grid .bk-pn{font-size:13px;}
+
+/* ═══ تخطيط القائمة كبلينكيت: شريط جانبي + شبكة ═══ */
+.bk-listing-layout{display:flex;align-items:stretch;padding-bottom:90px;min-height:60vh;}
+/* الشريط الجانبي (يمين في RTL) */
+.bk-siderail{flex:0 0 74px;width:74px;background:#fafafa;border-left:1px solid #f0f0f0;padding:8px 4px 90px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;position:sticky;top:0;max-height:calc(100vh - 120px);}
+.bk-rail-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 3px;border-radius:12px;cursor:pointer;position:relative;transition:background .15s;}
+.bk-rail-item span{font-size:9.8px;font-weight:600;color:#555;text-align:center;line-height:1.25;}
+.bk-rail-img{width:48px;height:48px;border-radius:12px;background:#f0f2ee;display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;transition:transform .2s;}
+.bk-rail-img img{width:100%;height:100%;object-fit:cover;}
+.bk-rail-img.all{background:linear-gradient(135deg,#fdf3d8,#f6e7bd);}
+/* المختار: خلفية خضراء فاتحة + شريط أخضر يمين + نص غامق */
+.bk-rail-item.on{background:#eef7f0;}
+.bk-rail-item.on:after{content:"";position:absolute;right:-4px;top:14px;bottom:14px;width:4px;background:#0C831F;border-radius:4px 0 0 4px;}
+.bk-rail-item.on span{color:#0C831F;font-weight:800;}
+.bk-rail-item.on .bk-rail-img{transform:scale(1.05);box-shadow:0 2px 8px rgba(12,131,31,.18);}
+/* منطقة المنتجات */
+.bk-listing-main{flex:1;min-width:0;overflow-y:auto;}
+.bk-listing-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 10px 20px;align-items:start;}
+.bk-listing-grid2 .bk-pc{width:100%;padding:7px;}
+.bk-listing-grid2 .bk-pc-imgwrap{height:118px;border-radius:11px;}
+.bk-listing-grid2 .bk-pc-img{font-size:52px;}
