@@ -959,19 +959,18 @@ html,body{margin:0;height:100%;}
 .bk-sortpill:active{transform:scale(.96);}
 
 
-/* ═══ تسوّق حسب الحاجة — نسخة بلينكيت ═══ */
+
+/* ═══ تسوّق حسب الحاجة — تصميم بلينكيت ═══ */
 .bk-concerns{margin:10px 0 6px;}
 .bk-concern-list{display:flex;flex-direction:column;gap:12px;padding:2px 14px 6px;}
-.bk-concern{display:flex;align-items:center;gap:0;border-radius:18px;padding:10px 12px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06);border:1px solid #f2eef0;transition:transform .16s,box-shadow .16s;min-height:96px;}
-.bk-concern:active{transform:scale(.985);box-shadow:0 4px 16px rgba(0,0,0,.1);}
-/* صورتان جانبيتان */
-.bk-concern-imgR,.bk-concern-imgL{width:78px;height:78px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:38px;overflow:hidden;flex:0 0 auto;}
-.bk-concern-imgR img,.bk-concern-imgL img{width:100%;height:100%;object-fit:cover;}
-.bk-concern-imgL{opacity:.92;}
-/* النص + الزرّ في الوسط */
-.bk-concern-mid{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;}
-.bk-concern-tx{min-width:0;}
-.bk-concern-tx b{font-size:16px;font-weight:900;color:#1a1a1a;display:block;line-height:1.25;}
-.bk-concern-tx span{font-size:11.5px;color:#7a7a7a;font-weight:500;line-height:1.45;display:block;margin-top:4px;}
-/* زرّ السهم الذهبي الدائري (توقيع بلينكيت) */
-.bk-concern-go{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFD24D,#F5A623);color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;box-shadow:0 3px 8px rgba(245,166,35,.4);}
+.bk-concern{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #efeef0;border-radius:18px;padding:12px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:transform .16s,box-shadow .16s;}
+.bk-concern:active{transform:scale(.985);box-shadow:0 5px 16px rgba(0,0,0,.1);}
+/* صورة كبيرة (يمين في RTL) — نسبة بلينكيت ~28% */
+.bk-concern-img{width:92px;height:92px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:46px;overflow:hidden;flex:0 0 auto;}
+.bk-concern-img img{width:100%;height:100%;object-fit:cover;}
+/* النص */
+.bk-concern-tx{flex:1;min-width:0;}
+.bk-concern-tx b{font-size:16.5px;font-weight:900;color:#171717;display:block;line-height:1.3;}
+.bk-concern-tx span{font-size:12px;color:#7c7c7c;font-weight:500;line-height:1.5;display:block;margin-top:5px;}
+/* زرّ السهم الدائري (يسار في RTL) */
+.bk-concern-go{width:32px;height:32px;border-radius:50%;background:#f4b81f;color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;box-shadow:0 2px 7px rgba(244,184,31,.42);}

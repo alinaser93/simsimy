@@ -582,13 +582,8 @@ function ConcernsEditor() {
         <div className="cn-list">
           {list.map((c) => (
             <div className="cn-row" key={c.id}>
-              <div className="cn-prevs">
-                <div className="cn-prev" style={{ background: c.bg || "#F6E9EE" }} onClick={() => uploadImg(c.id, "img")} title="الصورة اليمنى">
-                  {c.img ? <img src={c.img} alt="" /> : <span>{c.e}</span>}<em>📷</em>
-                </div>
-                <div className="cn-prev sm" style={{ background: c.bg2 || "#EFE9F6" }} onClick={() => uploadImg(c.id, "img2")} title="الصورة اليسرى">
-                  {c.img2 ? <img src={c.img2} alt="" /> : <span>{c.e2 || c.e}</span>}<em>📷</em>
-                </div>
+              <div className="cn-prev" style={{ background: c.bg || "#F6E9EE" }} onClick={() => uploadImg(c.id, "img")} title="اضغط لرفع صورة">
+                {c.img ? <img src={c.img} alt="" /> : <span>{c.e}</span>}<em>📷</em>
               </div>
               <div className="cn-fields">
                 <input className="pt-in" value={c.title} onChange={(e) => updateConcern(c.id, { title: e.target.value })} placeholder="العنوان" />
