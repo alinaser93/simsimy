@@ -963,18 +963,33 @@ html,body{margin:0;height:100%;}
 
 
 
-/* ═══ تسوّق حسب الحاجة — 3 صفوف تنزلق أفقياً (بلينكيت) ═══ */
-.bk-concerns{margin:10px 0 6px;}
-/* شبكة: 3 صفوف، الأعمدة تتدفّق أفقياً، كل عمود ~86% ليطلّ التالي + انجذاب */
-.bk-concern-list{display:grid;grid-template-rows:repeat(3,auto);grid-auto-flow:column;grid-auto-columns:86%;gap:12px 12px;padding:2px 14px 10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
-.bk-concern{scroll-snap-align:start;display:flex;align-items:stretch;background:#fff;border:1px solid #eeecee;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.05);min-height:104px;transition:transform .15s;}
-.bk-concern:active{transform:scale(.985);}
-/* صورة يمين (RTL) بارتفاع البطاقة كامل */
-.bk-concern-img{width:100px;min-width:100px;display:flex;align-items:center;justify-content:center;font-size:48px;overflow:hidden;flex:0 0 auto;}
-.bk-concern-img img{width:100%;height:100%;object-fit:cover;}
+
+/* ═══ تسوّق حسب الحاجة — عمودان × 4 صفوف، ذهبي ووردي فاخر ═══ */
+.bk-concerns{margin:12px 0 6px;}
+.bk-concerns .bk-sec-t{background:linear-gradient(90deg,#B76E79,#D4AF37);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;}
+/* شبكة ثابتة: عمودان × 4 صفوف */
+.bk-concern-list{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:4px 14px 8px;}
+.bk-concern{display:flex;flex-direction:column;align-items:center;text-align:center;
+  background:linear-gradient(160deg,#FFF6F8 0%,#FDEEF3 55%,#FBE7D6 100%);
+  border:1.5px solid #F3D9C9;border-radius:18px;padding:14px 10px 12px;cursor:pointer;position:relative;
+  box-shadow:0 3px 12px rgba(183,110,121,.12), inset 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .16s,box-shadow .16s;overflow:hidden;}
+.bk-concern:active{transform:scale(.97);box-shadow:0 6px 18px rgba(183,110,121,.22);}
+/* لمعة ذهبية علوية */
+.bk-concern:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#D4AF37,#F5D57E,#B76E79);}
+/* الصورة: دائرة بإطار ذهبي */
+.bk-concern-img{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:38px;overflow:hidden;flex:0 0 auto;
+  background:linear-gradient(160deg,#FDECF2,#F7DCC9);
+  border:2.5px solid transparent;background-origin:border-box;
+  box-shadow:0 0 0 2px #fff, 0 3px 10px rgba(212,175,55,.28);
+  margin-bottom:10px;}
+.bk-concern-img img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
 /* النص */
-.bk-concern-tx{flex:1;min-width:0;padding:11px 11px;display:flex;flex-direction:column;justify-content:center;}
-.bk-concern-tx b{font-size:15px;font-weight:900;color:#171717;line-height:1.3;}
-.bk-concern-tx span{font-size:11px;color:#7c7c7c;font-weight:500;line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-/* سهم برتقالي دائري — يسار في RTL */
-.bk-concern-go{width:26px;height:26px;border-radius:50%;background:#F5A623;color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;align-self:center;margin-left:10px;box-shadow:0 2px 6px rgba(245,166,35,.4);}
+.bk-concern-tx{min-width:0;width:100%;}
+.bk-concern-tx b{font-size:14px;font-weight:900;color:#7a3b47;display:block;line-height:1.3;}
+.bk-concern-tx span{font-size:10.5px;color:#b48a94;font-weight:500;line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+/* زرّ السهم الذهبي الدائري (أسفل) */
+.bk-concern-go{width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,#E9C46A,#D4AF37,#B8860B);color:#fff;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:10px;
+  box-shadow:0 3px 9px rgba(212,175,55,.45);}

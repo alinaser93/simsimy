@@ -69,7 +69,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 6, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 7, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -143,7 +143,8 @@ const defaults = () => {
       { id: "c_pigment", tab: "beauty", title: "التصبّغات والتفتيح", sub: "منتجات فيتامين C لبشرة موحّدة", e: "🍊", e2: "🍋", bg: "#FBF6E0", bg2: "#F0EAF7", keywords: ["تصبّغ", "تفتيح", "فيتامين C", "تان", "اسمرار"] },
       { id: "c_frizzy", tab: "beauty", title: "الشعر المتطاير", sub: "شامبو وسيروم للنعومة والترطيب", e: "💧", e2: "💇‍♀️", bg: "#E6F4EE", bg2: "#EAF1F8", keywords: ["متطاير", "كيراتين", "هيالورونيك", "تنعيم", "شامبو"] },
       { id: "c_makeup", tab: "beauty", title: "مكياج كامل", sub: "كل ما تحتاجينه لإطلالة مثالية", e: "💄", e2: "✏️", bg: "#FBEAEA", bg2: "#F6E7EC", keywords: ["أحمر شفاه", "كحل", "مكياج", "ماسكارا"] },
-      { id: "c_perfume", tab: "beauty", title: "عطور فاخرة", sub: "روائح تدوم طويلاً", e: "🌸", e2: "🌷", bg: "#F0EAF7", bg2: "#F6E7EC", keywords: ["عطر", "برفان"] },
+      { id: "c_perfume", tab: "beauty", title: "عطور فاخرة", sub: "روائح تدوم طويلاً", e: "🌸", bg: "#FBEAF2", keywords: ["عطر", "برفان"] },
+      { id: "c_glow", tab: "beauty", title: "نضارة وترطيب", sub: "كريمات ولوشن لبشرة مشرقة", e: "✨", bg: "#F6E9EE", keywords: ["ترطيب", "مرطّب", "نضارة", "لوشن", "كريم"] },
     ],
     // ═══ تخصيصات بلاطات الرئيسية (يديرها الأدمن): تعديل اسم/صورة/إيموجي/إخفاء + إخفاء أقسام كاملة ═══
     homeTiles: { hiddenSections: [], overrides: {} }, // overrides["القسم|اسم البلاطة الأصلي"] = { name, e, img, bg, hidden }
