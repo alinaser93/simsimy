@@ -106,6 +106,32 @@ export const PRODUCTS = [
   { id: 93, name: "سماعات هامر إيربودز TWS", cat: "إلكترونيات", sub: "صوتيات", e: "🎧", bg: "#EAF0F4", weight: "قطعة", price: 579, mrp: 1499, off: 61, rating: 4.2, reviews: "5.9 ألف", eta: "13 دقيقة", merchantId: "m3", deal: true },
   { id: 94, name: "سماعات بوت روكرز نيك باند", cat: "إلكترونيات", sub: "صوتيات", e: "🎧", bg: "#ECEEF1", weight: "قطعة", price: 699, mrp: 2490, off: 71, rating: 4.3, reviews: "3.4 ألف", eta: "13 دقيقة", merchantId: "m3", deal: true },
   { id: 95, name: "مكبّر صوت يوبون بلوتوث", cat: "إلكترونيات", sub: "صوتيات", e: "🔊", bg: "#EDEFF2", weight: "قطعة", price: 499, mrp: 999, off: 50, rating: 4.1, reviews: "3.6 ألف", eta: "13 دقيقة", merchantId: "m3", deal: true },
+
+  // ═══ منتجات الجمال حسب الحاجة (Shop by concern) ═══
+  // تساقط الشعر (Hairfall)
+  { id: 120, name: "سيروم إكليل الجبل ضد تساقط الشعر", cat: "جمال وعناية", sub: "عناية بالشعر", e: "💆‍♀️", bg: "#F6E9EE", weight: "100 مل", price: 269, mrp: 320, off: 16, rating: 4.4, reviews: "3.1 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  { id: 121, name: "زيت الأملا لتقوية جذور الشعر", cat: "جمال وعناية", sub: "عناية بالشعر", e: "🧴", bg: "#FBF6D9", weight: "200 مل", price: 191, mrp: 379, off: 50, rating: 4.5, reviews: "8.2 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  { id: 122, name: "ماسك الكيراتين المغذّي للشعر", cat: "جمال وعناية", sub: "عناية بالشعر", e: "💇‍♀️", bg: "#EAF1F8", weight: "300 مل", price: 350, mrp: 450, off: 22, rating: 4.6, reviews: "5.4 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  // حب الشباب (Acne)
+  { id: 123, name: "غسول الوجه المضاد لحب الشباب", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🧼", bg: "#E9F2EC", weight: "100 مل", price: 224, mrp: 249, off: 10, rating: 4.3, reviews: "6.1 ألف", eta: "14 دقيقة", merchantId: "m2", deal: true },
+  { id: 124, name: "سيروم النياسيناميد 10% للبشرة الدهنية", cat: "جمال وعناية", sub: "سيرومات للوجه", e: "🧪", bg: "#FBEAEA", weight: "30 مل", price: 321, mrp: 449, off: 28, rating: 4.5, reviews: "9.8 ألف", eta: "14 دقيقة", merchantId: "m2", deal: true },
+  { id: 125, name: "جل الصبار المهدّئ للبثور", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🌿", bg: "#E6F4EE", weight: "150 مل", price: 150, mrp: 220, off: 32, rating: 4.4, reviews: "4.2 ألف", eta: "14 دقيقة", merchantId: "m2", deal: true },
+  // الحماية من الشمس (Sun Protection)
+  { id: 126, name: "واقي شمس SPF 50 بالنياسيناميد", cat: "جمال وعناية", sub: "واقيات شمس", e: "☀️", bg: "#FBF6E0", weight: "50 مل", price: 360, mrp: 749, off: 52, rating: 4.6, reviews: "12 ألف", eta: "14 دقيقة", merchantId: "m2", deal: true },
+  { id: 127, name: "بخاخ واقي شمسي خفيف SPF 60", cat: "جمال وعناية", sub: "واقيات شمس", e: "🧴", bg: "#EAF1F8", weight: "100 مل", price: 264, mrp: 299, off: 11, rating: 4.5, reviews: "7.3 ألف", eta: "14 دقيقة", merchantId: "m2", deal: true },
+  { id: 128, name: "واقي شمس فيتامين C + E مشرق", cat: "جمال وعناية", sub: "واقيات شمس", e: "🌞", bg: "#FBEEE6", weight: "50 مل", price: 299, mrp: 399, off: 25, rating: 4.4, reviews: "3.8 ألف", eta: "14 دقيقة", merchantId: "m2", deal: true },
+  // التصبّغات (Pigmentation)
+  { id: 129, name: "غسول فيتامين C للتصبّغات والتفتيح", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🍊", bg: "#FBF6E0", weight: "100 مل", price: 119, mrp: 165, off: 28, rating: 4.3, reviews: "5.5 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  { id: 130, name: "ماسك إزالة التان بفيتامين C", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🎭", bg: "#F6E9EE", weight: "قطعة", price: 155, mrp: 299, off: 48, rating: 4.5, reviews: "6.7 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  { id: 131, name: "كريم تفتيح التصبّغات الليلي", cat: "جمال وعناية", sub: "عناية بالبشرة", e: "🌙", bg: "#F0EAF7", weight: "50 مل", price: 240, mrp: 299, off: 20, rating: 4.4, reviews: "4.1 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  // الشعر المتطاير (Frizzy Hair)
+  { id: 132, name: "شامبو الكيراتين للشعر المتطاير", cat: "جمال وعناية", sub: "عناية بالشعر", e: "🧴", bg: "#EAF1F8", weight: "340 مل", price: 180, mrp: 219, off: 18, rating: 4.5, reviews: "19 ألف", eta: "21 دقيقة", merchantId: "m2", deal: true },
+  { id: 133, name: "شامبو الهيالورونيك للترطيب العميق", cat: "جمال وعناية", sub: "عناية بالشعر", e: "💧", bg: "#E6F4EE", weight: "340 مل", price: 198, mrp: 229, off: 14, rating: 4.6, reviews: "8.9 ألف", eta: "21 دقيقة", merchantId: "m2", deal: true },
+  { id: 134, name: "سيروم تنعيم الشعر المتطاير", cat: "جمال وعناية", sub: "عناية بالشعر", e: "✨", bg: "#F6E9EE", weight: "100 مل", price: 200, mrp: 260, off: 23, rating: 4.4, reviews: "6.2 ألف", eta: "21 دقيقة", merchantId: "m2", deal: true },
+  // مكياج وعطور (للبطاقات الموجودة)
+  { id: 135, name: "أحمر شفاه مطفي طويل الثبات", cat: "جمال وعناية", sub: "تجميل ومكياج", e: "💄", bg: "#FBEAEA", weight: "قطعة", price: 175, mrp: 250, off: 30, rating: 4.5, reviews: "4.5 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  { id: 136, name: "كحل عيون أسود مقاوم للماء", cat: "جمال وعناية", sub: "تجميل ومكياج", e: "✏️", bg: "#EDEFF2", weight: "قطعة", price: 90, mrp: 140, off: 36, rating: 4.4, reviews: "6 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
+  { id: 137, name: "عطر نسائي فاخر يدوم طويلاً", cat: "جمال وعناية", sub: "عطور", e: "🌸", bg: "#F0EAF7", weight: "50 مل", price: 450, mrp: 650, off: 31, rating: 4.6, reviews: "3.2 ألف", eta: "17 دقيقة", merchantId: "m2", deal: true },
 ];
 export const byId = (id) => PRODUCTS.find((p) => p.id === id);
 
