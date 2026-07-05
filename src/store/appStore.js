@@ -135,6 +135,22 @@ const defaults = () => {
       { id: "m3", name: "تك ستور", cat: "إلكترونيات", phone: "0790 300 3000", password: "3333", commission: 10, open: true },
       { id: "m4", name: "مطبعة بلينكيت", cat: "طباعة وتصوير", phone: "0770 400 4000", password: "4444", commission: 15, open: true, isPrintShop: true, desc: "طباعة مستندات وصور — توصيل سريع" },
     ],
+    // ═══ الماركات (يديرها الأدمن) — للفلاتر و«تسوّق حسب الماركة» ═══
+    brands: [
+      { id: "b1", name: "أمول", e: "🥛", cats: ["ألبان وخبز وبيض"] },
+      { id: "b2", name: "كوكا كولا", e: "🥤", cats: ["مشروبات وعصائر"] },
+      { id: "b3", name: "بيبسي", e: "🥤", cats: ["مشروبات وعصائر"] },
+      { id: "b4", name: "نستله", e: "🍫", cats: ["حلويات وشوكولاتة", "ألبان وخبز وبيض"] },
+      { id: "b5", name: "المراعي", e: "🐄", cats: ["ألبان وخبز وبيض"] },
+      { id: "b6", name: "زين العراق", e: "🌾", cats: ["طحين وأرز وبقوليات"] },
+    ],
+    // ═══ قوالب الفلاتر لكل قسم (يديرها الأدمن) ═══
+    filterTemplates: [
+      { cat: "*", filters: ["sort", "brand", "off", "price"] },
+      { cat: "مشروبات وعصائر", filters: ["sort", "brand", "sub", "off"] },
+      { cat: "إلكترونيات", filters: ["sort", "price", "off", "brand"] },
+      { cat: "جمال وعناية", filters: ["sort", "brand", "off", "sub"] },
+    ],
     couriers: [
       { id: "c1", name: "أحمد كريم", phone: "0770 111 0001", active: true, password: "1111" },
       { id: "c2", name: "حسن علي", phone: "0781 222 0002", active: true, password: "2222" },
@@ -361,6 +377,19 @@ export const redeemPoints = (points) => {
     };
   });
 };
+
+// ═══ الماركات وقوالب الفلاتر (إدارة الأدمن) ═══
+export const addBrand = (b) => setState((s) => ({ brands: [...(s.brands || []), { ...b, id: "b" + Date.now() }] }));
+export const updateBrand = (id, patch) => setState((s) => ({ brands: (s.brands || []).map((x) => (x.id === id ? { ...x, ...patch } : x)) }));
+export const removeBrand = (id) => setState((s) => ({ brands: (s.brands || []).filter((x) => x.id !== id) }));
+export const setFilterTemplate = (cat, filters) =>
+  setState((s) => {
+    const t = [...(s.filterTemplates || [])];
+    const i = t.findIndex((x) => x.cat === cat);
+    if (i >= 0) t[i] = { cat, filters }; else t.push({ cat, filters });
+    return { filterTemplates: t };
+  });
+export const removeFilterTemplate = (cat) => setState((s) => ({ filterTemplates: (s.filterTemplates || []).filter((x) => x.cat !== cat) }));
 
 // ═══ أكواد الخصم ═══
 export const addCoupon = (coupon) =>

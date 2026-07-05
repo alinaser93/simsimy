@@ -521,3 +521,16 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .pj-file-doc span{font-size:10px;font-weight:800;color:#2A6ED9;}
 .pj-file-nm{display:block;font-size:9.5px;color:#666;padding:4px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;text-align:center;}
 .pj-hint{font-size:11px;color:#2A6ED9;background:#fff;padding:7px 10px;border-radius:8px;font-weight:600;}
+
+/* لوحة الفلاتر والماركات (الأدمن) */
+.fb-keys{display:flex;flex-wrap:wrap;gap:9px;}
+.fb-key{border:1.5px solid var(--p-border,#ddd);background:var(--p-card,#fff);color:var(--p-mut2,#555);font-size:13px;font-weight:700;padding:10px 16px;border-radius:11px;cursor:pointer;transition:all .15s;}
+.fb-key.on{background:#eaf5ec;border-color:#0C831F;color:#0C831F;font-weight:800;}
+.fb-cats{display:flex;flex-wrap:wrap;gap:7px;}
+.fb-cat{font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:16px;background:var(--p-hover,#f2f2f2);color:var(--p-mut2,#555);cursor:pointer;border:1px solid transparent;}
+.fb-cat.on{background:#eaf5ec;color:#0C831F;border-color:#0C831F;font-weight:800;}
+.fb-brand{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--p-hover,#f7f7f7);border-radius:11px;}
+.fb-brand-e{font-size:26px;flex:0 0 auto;}
+.fb-brand-inf{flex:1;min-width:0;}
+.fb-brand-inf .pt-in{padding:7px 11px;font-size:13px;margin-bottom:4px;}
+.fb-brand-inf small{font-size:10.5px;color:var(--p-mut);display:block;}

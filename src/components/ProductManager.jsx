@@ -27,10 +27,11 @@ async function addImage(upd, data) {
   }
 }
 
-const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", deal: false, desc: "", highlights: [], images: [], variants: [], badge: "", autoPlace: true, qty: 50, lowAt: 10 };
+const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", brand: "", deal: false, desc: "", highlights: [], images: [], variants: [], badge: "", autoPlace: true, qty: 50, lowAt: 10 };
 const emptyFor = (mid) => ({ ...EMPTY, merchantId: mid || "m1" });
 function ProductManager({ scope = "admin", mid = null }) {
   const allProducts = useStore((s) => s.products);
+  const brands = useStore((s) => s.brands) || [];
   const merchants = useStore((s) => s.merchants);
   const isMerchant = scope === "merchant";
   const products = isMerchant ? allProducts.filter((p) => p.merchantId === mid) : allProducts;
@@ -313,6 +314,12 @@ function ProductManager({ scope = "admin", mid = null }) {
               <div className="pt-field"><label>التفرّع</label>
                 <input className="pt-in" list="bk-subs" placeholder="نودلز ومعكرونة" value={modal.data.sub || ""} onChange={(e) => upd({ sub: e.target.value, autoPlace: false })} />
                 <datalist id="bk-subs">{subOptions.map((sc) => <option key={sc} value={sc} />)}</datalist></div>
+            <div className="pt-field"><label>الماركة (اختياري — تظهر في الفلاتر)</label>
+              <select className="pt-in" value={modal.data.brand || ""} onChange={(e) => upd({ brand: e.target.value })}>
+                <option value="">— بلا ماركة —</option>
+                {brands.map((b) => <option key={b.id} value={b.name}>{b.e} {b.name}</option>)}
+              </select>
+            </div>
             </div>
             <label className="pt-check sm" onClick={() => upd({ autoPlace: !modal.data.autoPlace })}>
               <span className={"pt-box" + (modal.data.autoPlace ? " on" : "")}>{modal.data.autoPlace ? "✓" : ""}</span>

@@ -6,11 +6,11 @@ import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from 
 import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
-import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon } from "../store/appStore.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
-  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag } from "lucide-react";
+  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag, SlidersHorizontal } from "lucide-react";
 import {
   useStore, updateProduct, addProduct, removeProduct, updateSettings,
   setOrderStatus, assignCourier, autoAssignCourier, findFreeCourier, toggleCourier, addCourier, addMerchant,
@@ -35,6 +35,7 @@ const TABS = [
   { id: "merchants", l: "التجار", Icon: Store },
   { id: "couriers", l: "المندوبون", Icon: Bike },
   { id: "coupons", l: "أكواد الخصم", Icon: Tag },
+  { id: "filters", l: "الفلاتر والماركات", Icon: SlidersHorizontal },
   { id: "settings", l: "الإعدادات", Icon: Settings2 },
 ];
 
@@ -63,6 +64,7 @@ function Admin({ onLogout }) {
       {tab === "merchants" && <Merchants />}
       {tab === "couriers" && <Couriers />}
       {tab === "coupons" && <Coupons />}
+      {tab === "filters" && <FiltersBrands />}
       {tab === "settings" && <SettingsPage />}
     </Shell>
   );
@@ -336,6 +338,100 @@ function Couriers() {
               <button className="ad-del" onClick={() => confirm(`حذف «${c.name}»؟`) && removeCourier(c.id)}><Trash2 size={13} /> حذف المندوب</button>
             </div>
           ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------------- الفلاتر والماركات ---------------- */
+const FILTER_KEYS = [["sort", "🔀 الفرز"], ["brand", "🏷️ الماركة"], ["off", "％ الخصومات"], ["price", "💰 السعر"], ["sub", "📂 الأنواع"]];
+function FiltersBrands() {
+  const brands = useStore((s) => s.brands) || [];
+  const templates = useStore((s) => s.filterTemplates) || [];
+  const products = useStore((s) => s.products);
+  const cats = [...new Set(products.map((p) => p.cat).filter(Boolean))];
+  const [bf, setBf] = useState({ name: "", e: "🏷️", cats: [] });
+  const [tplCat, setTplCat] = useState("*");
+
+  const currentTpl = templates.find((t) => t.cat === tplCat)?.filters
+    || templates.find((t) => t.cat === "*")?.filters || ["sort", "brand", "off", "price"];
+  const toggleKey = (k) => {
+    const next = currentTpl.includes(k) ? currentTpl.filter((x) => x !== k) : [...currentTpl, k];
+    setFilterTemplate(tplCat, next);
+  };
+
+  const submitBrand = () => {
+    if (!bf.name.trim()) { alert("أدخل اسم الماركة"); return; }
+    addBrand({ name: bf.name.trim(), e: bf.e || "🏷️", cats: bf.cats });
+    setBf({ name: "", e: "🏷️", cats: [] });
+  };
+
+  return (
+    <>
+      <div className="pt-h1">الفلاتر والماركات<small>تحكّم بقوالب الفلاتر لكل قسم وأسماء الشركات والمحلات</small></div>
+
+      {/* قوالب الفلاتر */}
+      <div className="pt-card">
+        <div className="cap">🎛️ قوالب الفلاتر (لكل قسم)</div>
+        <div style={{ padding: 14 }}>
+          <div className="pt-field"><label>اختر القسم</label>
+            <select className="pt-in" value={tplCat} onChange={(e) => setTplCat(e.target.value)}>
+              <option value="*">⭐ القالب العام (كل الأقسام)</option>
+              {cats.map((c) => <option key={c} value={c}>{c}{templates.some((t) => t.cat === c) ? " ✓ (مخصّص)" : ""}</option>)}
+            </select>
+          </div>
+          <div className="pt-note" style={{ margin: "0 0 10px" }}>اختر الفلاتر التي تظهر للزبون في هذا القسم — كبلينكيت، كل قسم بفلاتره المناسبة:</div>
+          <div className="fb-keys">
+            {FILTER_KEYS.map(([k, label]) => (
+              <button key={k} className={"fb-key" + (currentTpl.includes(k) ? " on" : "")} onClick={() => toggleKey(k)}>
+                {currentTpl.includes(k) ? "✓ " : ""}{label}
+              </button>
+            ))}
+          </div>
+          {tplCat !== "*" && templates.some((t) => t.cat === tplCat) && (
+            <button className="ad-del" style={{ marginTop: 12 }} onClick={() => removeFilterTemplate(tplCat)}>↩️ إرجاع هذا القسم للقالب العام</button>
+          )}
+        </div>
+      </div>
+
+      {/* إضافة ماركة */}
+      <div className="pt-card">
+        <div className="cap">➕ إضافة ماركة / شركة / محل</div>
+        <div style={{ padding: 14 }}>
+          <div className="pt-row2">
+            <div className="pt-field"><label>الاسم</label>
+              <input className="pt-in" placeholder="مثال: المراعي، زين، أبو أحمد…" value={bf.name} onChange={(e) => setBf({ ...bf, name: e.target.value })} /></div>
+            <div className="pt-field"><label>الأيقونة (إيموجي)</label>
+              <input className="pt-in" style={{ textAlign: "center", fontSize: 18 }} value={bf.e} onChange={(e) => setBf({ ...bf, e: e.target.value })} /></div>
+          </div>
+          <div className="pt-field"><label>تظهر في أقسام (اتركها فارغة = كل الأقسام)</label>
+            <div className="fb-cats">
+              {cats.map((c) => (
+                <span key={c} className={"fb-cat" + (bf.cats.includes(c) ? " on" : "")}
+                  onClick={() => setBf({ ...bf, cats: bf.cats.includes(c) ? bf.cats.filter((x) => x !== c) : [...bf.cats, c] })}>{c}</span>
+              ))}
+            </div>
+          </div>
+          <button className="pt-btn" style={{ width: "100%" }} onClick={submitBrand}>➕ إضافة الماركة</button>
+        </div>
+      </div>
+
+      {/* الماركات الحالية */}
+      <div className="pt-card">
+        <div className="cap">الماركات الحالية ({brands.length})</div>
+        <div className="ad-list">
+          {brands.map((b) => (
+            <div className="fb-brand" key={b.id}>
+              <span className="fb-brand-e">{b.e}</span>
+              <div className="fb-brand-inf">
+                <input className="pt-in" value={b.name} onChange={(e) => updateBrand(b.id, { name: e.target.value })} />
+                <small>{(b.cats || []).length ? b.cats.join(" · ") : "كل الأقسام"} · {products.filter((p) => p.brand === b.name).length} منتج</small>
+              </div>
+              <button className="pt-btn warn sm" onClick={() => confirm(`حذف «${b.name}»؟`) && removeBrand(b.id)}><Trash2 size={13} /></button>
+            </div>
+          ))}
+          {brands.length === 0 && <div className="pt-empty">لا ماركات بعد</div>}
         </div>
       </div>
     </>
