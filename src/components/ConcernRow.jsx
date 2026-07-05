@@ -19,7 +19,7 @@ export default function ConcernRow({ tab, onOpen }) {
               <b>{c.title}</b>
               <span>{c.sub}</span>
             </div>
-            <div className="bk-concern-go"><ChevronLeft size={18} strokeWidth={3} /></div>
+            <div className="bk-concern-go"><ChevronLeft size={15} strokeWidth={3} /></div>
           </div>
         ))}
       </div>

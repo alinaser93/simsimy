@@ -960,17 +960,19 @@ html,body{margin:0;height:100%;}
 
 
 
-/* ═══ تسوّق حسب الحاجة — تصميم بلينكيت ═══ */
+
+/* ═══ تسوّق حسب الحاجة — كاروسيل بلينكيت الأفقي ═══ */
 .bk-concerns{margin:10px 0 6px;}
-.bk-concern-list{display:flex;flex-direction:column;gap:12px;padding:2px 14px 6px;}
-.bk-concern{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #efeef0;border-radius:18px;padding:12px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:transform .16s,box-shadow .16s;}
-.bk-concern:active{transform:scale(.985);box-shadow:0 5px 16px rgba(0,0,0,.1);}
-/* صورة كبيرة (يمين في RTL) — نسبة بلينكيت ~28% */
-.bk-concern-img{width:92px;height:92px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:46px;overflow:hidden;flex:0 0 auto;}
+/* شريط أفقي منزلق مع انجذاب (snap) وظهور طرف البطاقة التالية */
+.bk-concern-list{display:flex;gap:12px;overflow-x:auto;padding:2px 14px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+.bk-concern{flex:0 0 82%;scroll-snap-align:start;display:flex;align-items:stretch;gap:0;background:#fff;border:1px solid #efeef0;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.05);min-height:112px;transition:transform .15s;}
+.bk-concern:active{transform:scale(.985);}
+/* الصورة: بارتفاع البطاقة كاملاً (~40% من العرض) — يمين في RTL */
+.bk-concern-img{width:40%;min-width:118px;display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;flex:0 0 auto;}
 .bk-concern-img img{width:100%;height:100%;object-fit:cover;}
 /* النص */
-.bk-concern-tx{flex:1;min-width:0;}
-.bk-concern-tx b{font-size:16.5px;font-weight:900;color:#171717;display:block;line-height:1.3;}
-.bk-concern-tx span{font-size:12px;color:#7c7c7c;font-weight:500;line-height:1.5;display:block;margin-top:5px;}
-/* زرّ السهم الدائري (يسار في RTL) */
-.bk-concern-go{width:32px;height:32px;border-radius:50%;background:#f4b81f;color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;box-shadow:0 2px 7px rgba(244,184,31,.42);}
+.bk-concern-tx{flex:1;min-width:0;padding:13px 12px;display:flex;flex-direction:column;justify-content:center;}
+.bk-concern-tx b{font-size:16px;font-weight:900;color:#171717;line-height:1.3;}
+.bk-concern-tx span{font-size:11.5px;color:#7c7c7c;font-weight:500;line-height:1.55;margin-top:5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+/* سهم برتقالي صغير — يسار في RTL، منتصف عمودي */
+.bk-concern-go{width:26px;height:26px;border-radius:50%;background:#F5A623;color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;align-self:center;margin-left:12px;box-shadow:0 2px 6px rgba(245,166,35,.4);}
