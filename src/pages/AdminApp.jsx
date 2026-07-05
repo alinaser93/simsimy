@@ -7,6 +7,7 @@ import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
 import { GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE, ELECTRONICS_TILES, DECOR_TILES, KIDS_TILES, IMPORTED_TILES } from "../data/collections.js";
+import { processImage, PRODUCT_BGS } from "../utils/imageProcessor.js";
 import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate, setTileOverride, resetTileOverride, toggleSectionHidden } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
@@ -439,6 +440,16 @@ function TilesEditor() {
   const [sec, items] = TILE_SECTIONS[secIdx];
   const hidden = homeTiles.hiddenSections.includes(sec);
   const ov = (t) => homeTiles.overrides[sec + "|" + t] || {};
+  const uploadTileImg = (section, tile) => {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "image/*";
+    inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      try { const { dataUrl } = await processImage(f, { size: 400, bg: "transparent", pad: 0.06, format: "webp", quality: 0.8 }); setTileOverride(section, tile, { img: dataUrl }); }
+      catch (e) { alert("تعذّرت المعالجة: " + (e.message || "")); }
+    };
+    inp.click();
+  };
 
   return (
     <>
@@ -474,7 +485,7 @@ function TilesEditor() {
                     <input className="pt-in" placeholder={it.t} value={o.name || ""} onChange={(e) => setTileOverride(sec, it.t, { name: e.target.value })} title="الاسم (اتركه فارغاً للأصلي)" />
                     <input className="pt-in tl-emoji" placeholder={it.e || "🛒"} value={o.e || ""} onChange={(e) => setTileOverride(sec, it.t, { e: e.target.value })} title="إيموجي" />
                   </div>
-                  <input className="pt-in" placeholder="رابط صورة (اختياري) https://…" value={o.img || ""} onChange={(e) => setTileOverride(sec, it.t, { img: e.target.value })} dir="ltr" style={{ textAlign: "left", fontSize: 11 }} />
+                  <button className="tl-upload" onClick={() => uploadTileImg(sec, it.t)}>📷 {o.img ? "تغيير الصورة" : "رفع صورة للبلاطة"}</button>
                 </div>
                 <div className="tl-acts">
                   <button className={"tl-eye" + (isHid ? " on" : "")} title={isHid ? "إظهار" : "إخفاء"} onClick={() => setTileOverride(sec, it.t, { hidden: !isHid })}>{isHid ? "🙈" : "👁️"}</button>

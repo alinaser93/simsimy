@@ -579,3 +579,12 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 .tl-acts{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .tl-eye,.tl-reset{width:34px;height:34px;border-radius:9px;border:1px solid var(--p-border,#ddd);background:var(--p-card,#fff);font-size:15px;cursor:pointer;}
 .tl-eye.on{background:#fdeaea;border-color:#e8b4b8;}
+
+/* منتقي ألوان خلفية المنتج */
+.pt-bgpalette{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;padding:10px;background:var(--p-hover,#f7f7f7);border-radius:11px;}
+.pt-bgpalette .bgp{width:38px;height:38px;border-radius:10px;border:2px solid rgba(0,0,0,.08);cursor:pointer;font-size:14px;color:#0C831F;font-weight:900;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
+.pt-bgpalette .bgp.on{border-color:#0C831F;transform:scale(1.08);box-shadow:0 2px 8px rgba(12,131,31,.25);}
+.pt-bgpalette .bgp:active{transform:scale(.94);}
+/* زر رفع صورة البلاطة */
+.tl-upload{width:100%;background:#eef4fc;color:#2A6ED9;border:1px dashed #a9c8ef;font-size:11.5px;font-weight:700;padding:8px;border-radius:8px;cursor:pointer;font-family:inherit;}
+.tl-upload:active{transform:scale(.98);}

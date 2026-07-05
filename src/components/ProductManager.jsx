@@ -6,25 +6,34 @@ import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from 
 import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import { genProductImage, suggestBackgrounds, pollinationsUrl, arToEnPrompt, normalizeImage } from "../utils/imageGen.js";
+import { processImage, dataUrlToFile, bgForCat, PRODUCT_BGS } from "../utils/imageProcessor.js";
 import { fmt, CUR } from "../utils/currency.js";
 
 const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","طعام سريع ومجمّد","حلويات وشوكولاتة","آيس كريم ومثلجات","خضار وفواكه","طحين وأرز وبقوليات","ألبان وخبز وبيض","منظفات وعناية منزلية","جمال وعناية","إلكترونيات","منزل وديكور","أطفال وألعاب","بقالة أساسية","تسالي وحلويات","مشروبات"];
 
-async function addImage(upd, data) {
-  const cfg = getSupabaseCfg();
-  if (cfg && cfg.url && cfg.anonKey) {
-    const inp = document.createElement("input");
-    inp.type = "file"; inp.accept = "image/*";
-    inp.onchange = async () => {
-      const f = inp.files[0]; if (!f) return;
-      try { const url = await uploadImage(f); upd({ images: [...(data.images || []), url] }); }
-      catch (e) { alert(e.message); }
-    };
-    inp.click();
-  } else {
-    const u = prompt("رابط الصورة (أو اضبط Supabase من الإعدادات للرفع المباشر):");
-    if (u) upd({ images: [...(data.images || []), u] });
-  }
+// رفع حيّ ذكي: يفتح الكاميرا/المعرض ← يعالج الصورة (مربّعة + خلفية + ضغط WebP) ← يخزّنها
+async function addImage(upd, data, onBusy) {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*"; // على الجوال يتيح الكاميرا والمعرض
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return;
+    if (onBusy) onBusy(true);
+    try {
+      // عالج الصورة محلياً: مربّعة 800px + خلفية القسم + WebP مضغوط (~40-80كB)
+      const bg = bgForCat(data.cat);
+      const { dataUrl, blob } = await processImage(f, { size: 800, bg, pad: 0.08, format: "webp", quality: 0.82 });
+      let finalUrl = dataUrl; // افتراضياً: تخزين مضغوط داخل المتجر (يعمل دائماً بلا خادم)
+      // إن كان Supabase مضبوطاً: ارفع النسخة المضغوطة لرابط دائم أخف
+      const cfg = getSupabaseCfg();
+      if (cfg && cfg.url && cfg.anonKey) {
+        try { const up = await uploadImage(dataUrlToFile(dataUrl, "p-" + Date.now() + ".webp")); if (up) finalUrl = up; }
+        catch { /* يبقى المضغوط المحلي */ }
+      }
+      upd({ images: [...(data.images || []), finalUrl] });
+    } catch (e) { alert("تعذّرت معالجة الصورة: " + (e.message || "")); }
+    if (onBusy) onBusy(false);
+  };
+  inp.click();
 }
 
 const EMPTY = { name: "", e: "🛒", weight: "", priceIQD: 1000, mrpIQD: 1500, merchantId: "m1", cat: CATS[0], sub: "", brand: "", deal: false, desc: "", highlights: [], images: [], variants: [], badge: "", autoPlace: true, qty: 50, lowAt: 10 };
@@ -175,6 +184,7 @@ function ProductManager({ scope = "admin", mid = null }) {
     setAiBusy("");
   };
   const [bgSuggest, setBgSuggest] = useState(null);
+  const [imgBusy, setImgBusy] = useState(false);
   const showBgSuggest = () => setBgSuggest(suggestBackgrounds(modal.data.e || "🛒", modal.data.cat));
   const aiClassify = () => runAI("classify");
   const aiDesc = () => runAI("desc");
@@ -273,24 +283,26 @@ function ProductManager({ scope = "admin", mid = null }) {
                     <button className="rm" onClick={() => upd({ images: modal.data.images.filter((_, j) => j !== i) })}>✕</button>
                   </div>
                 ))}
-                <button className="pt-img-add" onClick={() => addImage(upd, modal.data)}>＋<small>صورة</small></button>
+                <button className="pt-img-add" onClick={() => addImage(upd, modal.data, setImgBusy)} disabled={imgBusy}>{imgBusy ? "⏳" : "📷"}<small>{imgBusy ? "يعالج…" : "ارفع صورة"}</small></button>
               </div>
               <div className="pt-imgbtns">
                 <button className="ai-chip" style={{ background: "#0C831F" }} onClick={analyzeFromImage} disabled={aiBusy==="analyze"}>{aiBusy==="analyze" ? "⏳ يقرأ الصورة…" : "📷 استخرج التفاصيل من الصورة"}</button>
                 <button className="ai-chip" style={{ background: "#2A6ED9" }} onClick={normalizeAll} disabled={normBusy}>{normBusy ? "⏳ يوحّد…" : "◻️ وحّد الصور (خلفية بيضاء)"}</button>
                 <button className="ai-chip" style={{ background: "#7c3aed" }} onClick={genRealImage} disabled={aiBusy==="realimg"}>{aiBusy==="realimg" ? "⏳ يولّد…" : "🤖 ولّد صورة بالذكاء"}</button>
-                <button className="ai-chip" style={{ background: "#5b6470" }} onClick={showBgSuggest}>🎨 خلفية ملوّنة</button>
+                <button className="ai-chip" style={{ background: "#5b6470" }} onClick={() => setBgSuggest(bgSuggest === "palette" ? null : "palette")}>🎨 لون خلفية البطاقة</button>
               </div>
-              <div className="pt-tip" style={{ marginTop: 6 }}>📷 <b>الأفضل:</b> ارفع صورة حقيقية للمنتج ← «استخرج التفاصيل» (يقرأها الذكاء ويملأ الاسم والوصف) ← «وحّد الصور» (خلفية بيضاء نظيفة كبلينكيت).</div>
-              {bgSuggest && (
-                <div className="pt-bgsuggest">
-                  {bgSuggest.map((b, i) => (
-                    <div key={i} className="bgs" onClick={() => { upd({ images: [...(modal.data.images || []), b.url] }); setBgSuggest(null); }}>
-                      <img src={b.url} alt="" /><span>{b.cat.split(" ")[0]}</span>
-                    </div>
+              {bgSuggest === "palette" && (
+                <div className="pt-bgpalette">
+                  {PRODUCT_BGS.map((b) => (
+                    <button key={b.bg} className={"bgp" + (modal.data.bg === b.bg ? " on" : "")} title={b.name}
+                      style={{ background: b.bg }} onClick={() => { upd({ bg: b.bg }); }}>
+                      {modal.data.bg === b.bg && "✓"}
+                    </button>
                   ))}
                 </div>
               )}
+              <div className="pt-tip" style={{ marginTop: 6 }}>📷 اضغط <b>«ارفع صورة»</b> → تفتح الكاميرا أو المعرض → تُعالَج تلقائياً (مربّعة + خلفية متناسقة + ضغط) وتصبح جاهزة كبلينكيت. ثم «استخرج التفاصيل» ليملأ الذكاء الاسم والوصف.</div>
+
               <div className="pt-tip">💡 المنتجات بأكثر من صورة تُباع <b>أضعافاً</b>. لا صورة حقيقية؟ ولّد صورة متناسقة بألوان القسم بنقرة — تبدو نظيفة كبلينكيت.</div>
               <input className="pt-in" style={{ marginTop: 6 }} value={modal.data.e} onChange={(e) => upd({ e: e.target.value })} placeholder="الإيموجي (يظهر إن لم توجد صورة)" />
             </div>
