@@ -86,7 +86,7 @@ export function arToEnPrompt(name) {
 // توليد صورة حقيقية بالذكاء عبر Pollinations (مجاني، بلا مفتاح)
 // seed اختياري: مرّر قيمة ثابتة (مثل رقم المنتج) لتكون الصورة **نفسها على كل الأجهزة**.
 export function pollinationsUrl(prompt, seed) {
-  const p = encodeURIComponent((prompt || "product") + ", professional product photo, plain white background, centered, high quality, no text");
+  const p = encodeURIComponent((prompt || "product") + ", professional product photography, isolated on pure solid white background, soft even studio lighting, centered, full product, sharp focus, high detail, no shadow, no text, no watermark");
   const s = (seed == null ? Math.floor(Math.random() * 100000) : Math.abs(seed) % 1000000);
   return `https://image.pollinations.ai/prompt/${p}?width=600&height=600&nologo=true&seed=${s}`;
 }

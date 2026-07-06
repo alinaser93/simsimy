@@ -73,7 +73,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 9, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 10, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -213,11 +213,15 @@ const mergeSaved = (d, saved) => {
     if (Array.isArray(saved.products)) {
       const defById = Object.fromEntries((d.products || []).map((p) => [p.id, p]));
       const have = new Set(saved.products.map((p) => p.id));
-      // للمنتجات القديمة بلا صورة: أضِف الصورة الواقعية من البذرة (دون لمس صور التاجر المرفوعة)
+      const isPoll = (u) => typeof u === "string" && u.includes("image.pollinations.ai");
       const withImgs = saved.products.map((p) => {
-        const hasImg = (p.images && p.images.length) || p.img;
         const def = defById[p.id];
-        return (!hasImg && def && def.img) ? { ...p, img: def.img } : p;
+        if (!def) return p;
+        // صورة التاجر المرفوعة (ليست من الذكاء) → اتركها كما هي
+        const uploaded = p.images && p.images.length && !isPoll(p.images[0]);
+        if (uploaded) return p;
+        // بلا صورة، أو صورة ذكاء قديمة → استخدم صورة البذرة الجديدة (خلفية بيضاء نظيفة)
+        return { ...p, img: def.img, images: undefined };
       });
       patch.products = [...withImgs, ...(d.products || []).filter((p) => !have.has(p.id))];
     }

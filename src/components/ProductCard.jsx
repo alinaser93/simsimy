@@ -3,8 +3,8 @@ import { Star, Plus, Minus, ChevronLeft } from "lucide-react";
 import { fmt, CUR } from "../utils/currency.js";
 import SmartImg from "./SmartImg.jsx";
 
-// خلفية موحّدة لكل بطاقات المنتجات — رمادي فاتح جداً محايد يتناسق مع خلفيات الصور البيضاء (أسلوب بلينكيت)
-export const PROD_BG = "#F4F5F7";
+// خلفية موحّدة لكل بطاقات المنتجات — أبيض نقي ليذوب مع خلفيات الصور البيضاء (المنتج يطفو بلا مربّع)
+export const PROD_BG = "#FFFFFF";
 
 /* بطاقة منتج بأسلوب بلينكيت:
    - إطار صورة موحّد + شارة خصم + زرّ «أضف» فوق الصورة (أسفل) + الوزن
