@@ -1,4 +1,5 @@
 import { ChevronRight, RotateCcw } from "lucide-react";
+import SmartImg from "./SmartImg.jsx";
 import { useStore } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import { timeAgo } from "../portal/PortalKit.jsx";
@@ -38,7 +39,7 @@ export default function OrdersPage({ onBack, onOpen, onReorder, add, cart, inc, 
                 return (
                   <div className="bk-freq-card" key={p.id}>
                     <div className="bk-freq-img" style={{ background: p.bg || "#f5f5f5" }}>
-                      {(p.img || (p.images && p.images[0])) ? <img src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="e">{p.e}</span>}
+                      <SmartImg src={p.img || (p.images && p.images[0])} emoji={p.e} className="" emojiClass="e" />
                     </div>
                     <div className="bk-freq-nm">{p.name}</div>
                     <div className="bk-freq-pr">{fmt(p.priceIQD)} {CUR}</div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import SmartImg from "./SmartImg.jsx";
 import { ChevronRight, Phone, Star } from "lucide-react";
 import MapView from "./MapView.jsx";
 import { lerp } from "../utils/geo.js";
@@ -187,7 +188,7 @@ export default function TrackingPage({ orderId, onBack }) {
           <div className="cap">ملخص الطلب</div>
           {order.items.map((i, x) => (
             <div className="bk-crow" key={x}>
-              <div className="im">{i.img ? <img src={i.img} alt="" /> : i.e}</div>
+              <div className="im"><SmartImg src={i.img} emoji={i.e} className="" emojiClass="" /></div>
               <div className="inf"><div className="nm">{i.name}</div><div className="wt">الكمية: {i.qty}</div></div>
               <div className="pr">{fmt(i.priceIQD * i.qty)}</div>
             </div>

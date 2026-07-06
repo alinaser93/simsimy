@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import SmartImg from "./SmartImg.jsx";
 import { useStore } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 
@@ -54,7 +55,7 @@ export default function FlashDeals({ cart, add, inc, dec, openList }) {
             <div className="bk-flash-card" key={p.id} onClick={() => openList && openList(p.cat)}>
               <div className="bk-flash-off">−{p.off}%</div>
               <div className="bk-flash-img" style={{ background: p.bg || "#fff" }}>
-                {(p.img || (p.images && p.images[0])) ? <img src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="e">{p.e}</span>}
+                <SmartImg src={p.img || (p.images && p.images[0])} emoji={p.e} className="" emojiClass="e" />
               </div>
               <div className="bk-flash-nm">{p.name}</div>
               <div className="bk-flash-prices"><b>{fmt(p.priceIQD)} {CUR}</b><s>{fmt(p.mrpIQD)}</s></div>

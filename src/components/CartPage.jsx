@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SmartImg from "./SmartImg.jsx";
 import { ChevronRight, ChevronLeft, Share2, Minus, Plus } from "lucide-react";
 import { useStore } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
@@ -65,7 +66,7 @@ export default function CartPage({ cart, add, inc, dec, onBack, onChangeAddress,
         <div className="bk-cardbox">
           {items.map((i) => (
             <div className="bk-crow" key={i.id}>
-              <div className="im">{i.img ? <img src={i.img} alt="" /> : i.e}</div>
+              <div className="im"><SmartImg src={i.img} emoji={i.e} className="" emojiClass="" /></div>
               <div className="inf">
                 <div className="nm">{i.name}</div>
                 <div className="wt">{i.weight}</div>
@@ -124,7 +125,7 @@ export default function CartPage({ cart, add, inc, dec, onBack, onChangeAddress,
               {suggestions.map((p) => (
                 <div className="bk-sug" key={p.id}>
                   <div className="bk-sug-img" style={{ background: p.bg || "#f5f5f5" }}>
-                    {(p.img || (p.images && p.images[0])) ? <img src={p.img || p.images[0]} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="e">{p.e}</span>}
+                    <SmartImg src={p.img || (p.images && p.images[0])} emoji={p.e} className="" emojiClass="e" />
                   </div>
                   <div className="bk-sug-nm">{p.name}</div>
                   <div className="bk-sug-pr">{fmt(p.priceIQD)} {CUR}</div>

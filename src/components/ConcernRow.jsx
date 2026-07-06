@@ -1,4 +1,5 @@
 import { useStore } from "../store/appStore.js";
+import SmartImg from "./SmartImg.jsx";
 import { ChevronLeft } from "lucide-react";
 
 // «تسوّق حسب الحاجة» — تصميم بلينكيت: صورة كبيرة + نص + زرّ سهم دائري
@@ -13,7 +14,7 @@ export default function ConcernRow({ tab, onOpen }) {
         {concerns.map((c) => (
           <div className="bk-concern" key={c.id} onClick={() => onOpen && onOpen("__concern_" + c.id)}>
             <div className="bk-concern-img" style={{ background: c.bg || "#F6E9EE" }}>
-              {c.img ? <img src={c.img} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span>{c.e}</span>}
+              <SmartImg src={c.img} emoji={c.e} className="" emojiClass="" />
             </div>
             <div className="bk-concern-tx">
               <b>{c.title}</b>

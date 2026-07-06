@@ -1,14 +1,10 @@
-import { useState } from "react";
 import { useStore } from "../store/appStore.js";
 import { BESTSELLERS } from "../data/collections.js";
+import SmartImg from "./SmartImg.jsx";
 
-// خلية صورة منتج حقيقية: تعيد المحاولة عند الفشل ثم ترجع للإيموجي
+// خلية صورة منتج: الإيموجي يظهر حتى تنجح الصورة (بلا أيقونة مكسورة)
 function Thumb({ p }) {
-  const [failed, setFailed] = useState(false);
-  const [retry, setRetry] = useState(0);
-  const src = (p.images && p.images[0]) || p.img;
-  if (!src || failed) return <span>{p.e}</span>;
-  return <img key={retry} src={src} alt="" onError={() => { if (retry < 3) setTimeout(() => setRetry((n) => n + 1), 1000 * (retry + 1)); else setFailed(true); }} />;
+  return <SmartImg src={(p.images && p.images[0]) || p.img} emoji={p.e} className="" emojiClass="" />;
 }
 
 // مطابقة مرنة بين عنوان البلاطة وأقسام المنتجات

@@ -1,4 +1,5 @@
 import { ChevronLeft } from "lucide-react";
+import SmartImg from "./SmartImg.jsx";
 import { useStore } from "../store/appStore.js";
 
 // شريط السلة المضغوط المتوسّط (كبلينكيت) — بعرض المحتوى فقط
@@ -18,7 +19,7 @@ export default function CartBar({ count, total, savings, items = [] }) {
         <div className="bk-cart-thumbs" id="bk-cart-thumbs">
           {thumbs.map((p, i) => (
             <div className="th" key={p.id} style={{ zIndex: 5 - i, marginLeft: i ? -10 : 0 }}>
-              {p.img ? <img src={p.img} alt="" /> : <span>{p.e}</span>}
+              <SmartImg src={p.img} emoji={p.e} className="" emojiClass="" />
             </div>
           ))}
           {count > 3 && <div className="th more" style={{ marginLeft: -10, zIndex: 1 }}>+{count - 3}</div>}

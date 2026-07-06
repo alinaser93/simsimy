@@ -4,6 +4,7 @@ import { useStore, toggleWishlist } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
 import { PROD_BG } from "./ProductCard.jsx";
+import SmartImg from "./SmartImg.jsx";
 
 /* صفحة تفاصيل المنتج — كما في التطبيق الأصلي:
    صورة كبيرة، شريط علوي لاصق عند التمرير، لماذا بلينكيت، المواصفات،
@@ -18,9 +19,6 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const p = products.find((x) => x.id === id);
   const [bar, setBar] = useState(false);
   const bodyRef = useRef(null);
-  // شبكة أمان: أي صورة رابطها مكسور تُعاد محاولتها ثم تُستبدل بالإيموجي
-  const [failed, setFailed] = useState({});
-  const [retry, setRetry] = useState({});
   if (!p) return null;
 
   const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : []));
@@ -49,7 +47,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
     <div className="bk-page" style={{ zIndex: 45 }}>
       <div className={"bk-pd-sticky" + (bar ? " on" : "")}>
         <div className="bk-back" style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f3f3", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}><ChevronRight size={20} strokeWidth={2.5} /></div>
-        <span className="e">{p.img && !failed.head ? <img src={p.img} alt="" style={{ width: 30, height: 30, objectFit: "contain" }} onError={() => setFailed((f) => ({ ...f, head: true }))} /> : p.e}</span>
+        <span className="e"><SmartImg src={p.img} emoji={p.e} className="" emojiClass="" imgStyle={{ width: 30, height: 30, objectFit: "contain" }} /></span>
         <span className="n">{p.name}</span>
         <Adder />
       </div>
@@ -84,14 +82,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
             <div className="bk-pd-track" style={{ transform: `translateX(${ii * 100}%)` }}>
               {(imgs.length ? imgs : [null]).map((u, i) => (
                 <div className="bk-pd-slide" key={i} style={{ background: PROD_BG }}>
-                  {u && !failed[i]
-                    ? <img key={retry[i] || 0} src={u} alt={p.name} draggable="false"
-                        onError={() => {
-                          const n = retry[i] || 0;
-                          if (n < 3) setTimeout(() => setRetry((r) => ({ ...r, [i]: n + 1 })), 1000 * (n + 1));
-                          else setFailed((f) => ({ ...f, [i]: true }));
-                        }} />
-                    : <span className="emoji">{p.e}</span>}
+                  <SmartImg src={u} emoji={p.e} alt={p.name} className="" emojiClass="emoji" />
                 </div>
               ))}
             </div>
@@ -105,7 +96,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
           {imgs.length > 1 && <div className="bk-pd-dots">{imgs.map((_, i) => <i key={i} className={i === ii ? "on" : ""} onClick={() => setIi(i)} />)}</div>}
           {imgs.length > 1 && (
             <div className="bk-pd-thumbs">
-              {imgs.map((u, i) => <div key={i} className={"th" + (i === ii ? " on" : "")} onClick={() => setIi(i)}><img src={u} alt="" /></div>)}
+              {imgs.map((u, i) => <div key={i} className={"th" + (i === ii ? " on" : "")} onClick={() => setIi(i)}><SmartImg src={u} emoji={p.e} className="" emojiClass="" /></div>)}
             </div>
           )}
         </div>
