@@ -17,6 +17,8 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const p = products.find((x) => x.id === id);
   const [bar, setBar] = useState(false);
   const bodyRef = useRef(null);
+  // شبكة أمان: أي صورة رابطها مكسور تُستبدل بالإيموجي بدل أيقونة مكسورة
+  const [failed, setFailed] = useState({});
   if (!p) return null;
 
   const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : []));
@@ -45,7 +47,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
     <div className="bk-page" style={{ zIndex: 45 }}>
       <div className={"bk-pd-sticky" + (bar ? " on" : "")}>
         <div className="bk-back" style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f3f3", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}><ChevronRight size={20} strokeWidth={2.5} /></div>
-        <span className="e">{p.img ? <img src={p.img} alt="" style={{ width: 30, height: 30, objectFit: "contain" }} /> : p.e}</span>
+        <span className="e">{p.img && !failed.head ? <img src={p.img} alt="" style={{ width: 30, height: 30, objectFit: "contain" }} onError={() => setFailed((f) => ({ ...f, head: true }))} /> : p.e}</span>
         <span className="n">{p.name}</span>
         <Adder />
       </div>
@@ -80,7 +82,9 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
             <div className="bk-pd-track" style={{ transform: `translateX(${ii * 100}%)` }}>
               {(imgs.length ? imgs : [null]).map((u, i) => (
                 <div className="bk-pd-slide" key={i} style={{ background: p.bg }}>
-                  {u ? <img src={u} alt={p.name} draggable="false" /> : <span className="emoji">{p.e}</span>}
+                  {u && !failed[i]
+                    ? <img src={u} alt={p.name} draggable="false" onError={() => setFailed((f) => ({ ...f, [i]: true }))} />
+                    : <span className="emoji">{p.e}</span>}
                 </div>
               ))}
             </div>

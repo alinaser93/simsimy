@@ -147,7 +147,9 @@ const defaults = () => {
       { id: "c_glow", tab: "beauty", title: "نضارة وترطيب", sub: "كريمات ولوشن لبشرة مشرقة", e: "✨", bg: "#F6E9EE", keywords: ["ترطيب", "مرطّب", "نضارة", "لوشن", "كريم"] },
     ],
     // ═══ تخصيصات بلاطات الرئيسية (يديرها الأدمن): تعديل اسم/صورة/إيموجي/إخفاء + إخفاء أقسام كاملة ═══
-    homeTiles: { hiddenSections: [], overrides: {} }, // overrides["القسم|اسم البلاطة الأصلي"] = { name, e, img, bg, hidden }
+    homeTiles: { hiddenSections: [], overrides: {} },
+    // إعداد القائمة الجانبية لكل قسم: { [cat]: { order:[أسماء التفرّعات], hidden:[...], rename:{"الأصلي":"الجديد"} } }
+    subConfig: {}, // overrides["القسم|اسم البلاطة الأصلي"] = { name, e, img, bg, hidden }
     // ═══ الماركات (يديرها الأدمن) — للفلاتر و«تسوّق حسب الماركة» ═══
     brands: [
       { id: "b1", name: "أمول", e: "🥛", cats: ["ألبان وخبز وبيض"] },
@@ -410,6 +412,23 @@ export const redeemPoints = (points) => {
     };
   });
 };
+
+// ═══ القائمة الجانبية (تفرّعات كل قسم) ═══
+export const setSubOrder = (cat, order) =>
+  setState((s) => ({ subConfig: { ...(s.subConfig || {}), [cat]: { ...((s.subConfig || {})[cat] || {}), order } } }));
+export const toggleSubHidden = (cat, sub) =>
+  setState((s) => {
+    const cfg = (s.subConfig || {})[cat] || {};
+    const hidden = (cfg.hidden || []).includes(sub) ? (cfg.hidden || []).filter((x) => x !== sub) : [...(cfg.hidden || []), sub];
+    return { subConfig: { ...(s.subConfig || {}), [cat]: { ...cfg, hidden } } };
+  });
+export const renameSub = (cat, sub, name) =>
+  setState((s) => {
+    const cfg = (s.subConfig || {})[cat] || {};
+    const rename = { ...(cfg.rename || {}) };
+    if (name && name.trim()) rename[sub] = name.trim(); else delete rename[sub];
+    return { subConfig: { ...(s.subConfig || {}), [cat]: { ...cfg, rename } } };
+  });
 
 // ═══ «تسوّق حسب الحاجة» (concerns) ═══
 export const addConcern = (c) => setState((s) => ({ concerns: [...(s.concerns || []), { id: "cn" + Date.now(), keywords: [], ...c }] }));

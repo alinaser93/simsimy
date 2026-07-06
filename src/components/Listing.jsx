@@ -51,6 +51,7 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
   const brands = useStore((st) => st.brands) || [];
   const filterTemplates = useStore((st) => st.filterTemplates) || [];
   const concerns = useStore((st) => st.concerns) || [];
+  const subConfig = useStore((st) => st.subConfig) || {};
 
   // عناوين خاصة من بلاطات منطقة العروض
   const dealMax = title.startsWith("__deals_max_") ? +title.replace("__deals_max_", "") : null;
@@ -114,8 +115,18 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
       const key = p.sub || "أخرى";
       if (!seen.has(key)) seen.set(key, { name: key, e: p.e, img: p.img || (p.images && p.images[0]) });
     });
-    return [...seen.values()];
-  }, [inCat]);
+    let arr = [...seen.values()];
+    const cfg = subConfig[cat];
+    if (cfg) {
+      if (cfg.hidden && cfg.hidden.length) arr = arr.filter((sb) => !cfg.hidden.includes(sb.name));
+      if (cfg.order && cfg.order.length) arr.sort((a, b) => {
+        const ia = cfg.order.indexOf(a.name), ib = cfg.order.indexOf(b.name);
+        return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+      });
+      if (cfg.rename) arr = arr.map((sb) => ({ ...sb, label: cfg.rename[sb.name] || sb.name }));
+    }
+    return arr;
+  }, [inCat, subConfig, cat]);
 
   // المنتجات المعروضة: تفرّع + ماركة + خصم + سعر ثم فرز
   const shown = useMemo(() => {
@@ -215,7 +226,7 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
             {subs.map((sb) => (
               <div className={"bk-rail-item" + (activeSub === sb.name ? " on" : "")} key={sb.name} onClick={() => setActiveSub(sb.name)}>
                 <div className="bk-rail-img">{sb.img ? <img src={sb.img} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : sb.e}</div>
-                <span>{sb.name}</span>
+                <span>{sb.label || sb.name}</span>
               </div>
             ))}
           </div>

@@ -17,6 +17,9 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
   const nOpts = (p.variants || []).length;
   const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [])).slice(0, 5);
   const [ci, setCi] = useState(0);
+  // شبكة أمان: أي صورة يفشل تحميلها (رابط مكسور) تُستبدل بالإيموجي بدل أيقونة مكسورة
+  const [failed, setFailed] = useState({});
+  const allFailed = imgs.length > 0 && imgs.every((_, i) => failed[i]);
   const drag = useRef({ x: 0, dx: 0, moved: false });
   const openProduct = () => window.dispatchEvent(new CustomEvent("bk:openProduct", { detail: p.id }));
   const startDrag = (x) => { drag.current = { x, dx: 0, moved: false }; };
@@ -41,9 +44,16 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
         onMouseMove={(e) => { if (e.buttons === 1) moveDrag(e.clientX); }}
         onMouseUp={endDrag}>
         <div className="bk-pc-slider">
-          {imgs.length > 0 ? (
+          {imgs.length > 0 && !allFailed ? (
             <div className="bk-pc-track" style={{ transform: `translateX(${ci * 100}%)` }}>
-              {imgs.map((u, i) => <div className="bk-pc-slide" key={i}><img className="ph-img" src={u} alt={p.name} loading="lazy" draggable="false" /></div>)}
+              {imgs.map((u, i) => (
+                <div className="bk-pc-slide" key={i}>
+                  {failed[i]
+                    ? <div className="bk-pc-img">{p.e}</div>
+                    : <img className="ph-img" src={u} alt={p.name} loading="lazy" draggable="false"
+                        onError={() => setFailed((f) => ({ ...f, [i]: true }))} />}
+                </div>
+              ))}
             </div>
           ) : <div className="bk-pc-img">{p.e}</div>}
         </div>
@@ -51,7 +61,7 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
         {oos && <div className="bk-oos-badge">غير متوفر حالياً</div>}
         {p.badge && <div className="bk-pbadge">{p.badge}</div>}
         <div className="bk-veg"><i /></div>
-        {imgs.length > 1 && <div className="bk-imgdots">{imgs.map((_, i) => <i key={i} className={i === ci ? "on" : ""} onClick={(e) => { e.stopPropagation(); setCi(i); }} />)}</div>}
+        {imgs.length > 1 && !allFailed && <div className="bk-imgdots">{imgs.map((_, i) => <i key={i} className={i === ci ? "on" : ""} onClick={(e) => { e.stopPropagation(); setCi(i); }} />)}</div>}
         <div className="bk-addwrap" onClick={(e) => e.stopPropagation()}>
           {qty > 0 ? (
             <div className="bk-step">

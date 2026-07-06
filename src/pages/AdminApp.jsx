@@ -3,16 +3,16 @@ import { getCurrentLocation, reverseGeocode } from "../utils/geo.js";
 import { useState, useRef, useEffect } from "react";
 import { DEALS_ROWS } from "../data/rowSections.js";
 import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from "../utils/smartProduct.js";
-import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig } from "../utils/supabase.js";
+import { uploadImage, getSupabaseCfg, setSupabaseCfg, hasBakedConfig, diagnoseSupabase } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import ProductManager from "../components/ProductManager.jsx";
 import { GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE, ELECTRONICS_TILES, DECOR_TILES, KIDS_TILES, IMPORTED_TILES } from "../data/collections.js";
 import { processImage, dataUrlToFile, PRODUCT_BGS } from "../utils/imageProcessor.js";
-import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate, setTileOverride, resetTileOverride, toggleSectionHidden, addConcern, updateConcern, removeConcern } from "../store/appStore.js";
+import { addBlock, updateBlock, removeBlock, moveBlock, addCustomTab, removeCustomTab, undoLayout, redoLayout, resetTabLayout, histState , setStoreLocation , addCoupon, updateCoupon, removeCoupon , addBrand, updateBrand, removeBrand, setFilterTemplate, removeFilterTemplate, setTileOverride, resetTileOverride, toggleSectionHidden, addConcern, updateConcern, removeConcern, setSubOrder, toggleSubHidden, renameSub } from "../store/appStore.js";
 import {
   LayoutDashboard, PackageSearch, ShoppingCart, Store, Bike, Settings2,
   Wallet, Clock3, Plus, Trash2, Pencil, RotateCcw, Palette, LayoutTemplate, KeyRound,
-  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag, SlidersHorizontal, Compass, LayoutGrid, Sparkles } from "lucide-react";
+  Coins, Phone, MessageCircle, MapPin, CheckCircle2, ChevronDown, Tag, SlidersHorizontal, Compass, LayoutGrid, Sparkles, PanelRight } from "lucide-react";
 import {
   useStore, updateProduct, addProduct, removeProduct, updateSettings,
   setOrderStatus, assignCourier, autoAssignCourier, findFreeCourier, toggleCourier, addCourier, addMerchant,
@@ -40,6 +40,7 @@ const TABS = [
   { group: "🎨 واجهة المتجر" },
   { id: "tiles", l: "بلاطات الرئيسية", Icon: LayoutGrid },
   { id: "concerns", l: "تسوّق حسب الحاجة", Icon: Sparkles },
+  { id: "siderail", l: "القائمة الجانبية", Icon: PanelRight },
   { id: "content", l: "ترتيب الأقسام", Icon: LayoutTemplate },
   { id: "look", l: "الألوان والمظهر", Icon: Palette },
   { group: "👥 الفريق" },
@@ -68,6 +69,7 @@ function Admin({ onLogout }) {
       {tab === "guide" && <Guide go={setTab} />}
       {tab === "tiles" && <TilesEditor />}
       {tab === "concerns" && <ConcernsEditor />}
+      {tab === "siderail" && <SideRailEditor />}
       {tab === "dash" && <Dash />}
       {tab === "orders" && <Orders />}
       {tab === "products" && <ProductManager scope="admin" />}
@@ -370,6 +372,7 @@ const CONTROL_MAP = [
   { q: "أخفي قسماً كاملاً (وجبات خفيفة، متاجر مميّزة…)؟", a: "🎨 بلاطات الرئيسية ← زر إخفاء القسم", tab: "tiles" },
   { q: "أغيّر ترتيب أقسام الرئيسية أو أضيف صفاً؟", a: "🎨 ترتيب الأقسام (أو زر «تخصيص الرئيسية» أعلى المتجر)", tab: "content" },
   { q: "أضيف/أعدّل منتجاً أو صورته أو سعره؟", a: "🛍️ المنتجات", tab: "products" },
+  { q: "أتحكّم بالقائمة الجانبية داخل صفحة القسم؟", a: "🛍️ المنتجات ← حقل «التفرّع» (تلقائية)", tab: "products" },
   { q: "أتحكم بفلاتر الزبون والماركات؟", a: "🛍️ الفلاتر والماركات", tab: "filters" },
   { q: "أنشئ كود خصم؟", a: "🛍️ أكواد الخصم", tab: "coupons" },
   { q: "أغيّر الألوان/الشعار/البانرات؟", a: "🎨 الألوان والمظهر", tab: "look" },
@@ -422,6 +425,20 @@ function Guide({ go }) {
           <b>وجبات خفيفة ومشروبات · الجمال والعناية · مستلزمات المنزل</b>: شبكات بلاطات — كل بلاطة تفتح قسم منتجات (تتحكم بها من «بلاطات الرئيسية»).<br />
           <b>متاجر مميّزة · مختارات لأسلوب حياتك</b>: بلاطات تسويقية حرّة — عدّل صورها وأسماءها أو أخفِ ما لا يناسب العراق.<br />
           <b>منتجات رائجة قربك</b>: صف منتجات <b>يتعبأ تلقائياً</b> من الكتالوج — لا يحتاج تدخلاً.
+        </div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">📑 القائمة الجانبية داخل صفحة القسم (تلقائية)</div>
+        <div style={{ padding: "4px 14px 14px", fontSize: 13, lineHeight: 1.9, color: "var(--p-mut2)" }}>
+          عند فتح الزبون لأي قسم (مثل «مشروبات وعصائر»)، يظهر <b>شريط جانبي</b> فيه أنواع فرعية (غازية، عصائر، طاقة…). هذا الشريط <b>يُبنى تلقائياً</b> من حقل <b>«التفرّع»</b> في منتجاتك — لا تديره يدوياً.
+          <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--p-hover,#f6f6f6)", borderRadius: 10 }}>
+            <b>🔑 القاعدة:</b> التفرّع الذي تكتبه في المنتج = أيقونة في الشريط الجانبي.<br />
+            <b>مثال:</b> 3 منتجات بتفرّع «عصائر» → يظهر «عصائر» مرة واحدة في الشريط، والضغط عليه يعرض تلك المنتجات الثلاثة.
+          </div>
+          <div style={{ marginTop: 8 }}>
+            💡 <b>لتنظيم الشريط:</b> وحّد أسماء التفرّعات (اكتب «عصائر» لكل العصائر، لا «عصير» و«عصائر» و«جوس»)، واترك التفرّع فارغاً إن لم تحتجه (تُجمع تحت «أخرى»).
+          </div>
         </div>
       </div>
     </>
@@ -609,6 +626,71 @@ function ConcernsEditor() {
           ))}
           {list.length === 0 && <div className="pt-empty">لا بطاقات في هذا التبويب بعد</div>}
         </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------------- 📑 القائمة الجانبية ---------------- */
+function SideRailEditor() {
+  const products = useStore((s) => s.products);
+  const subConfig = useStore((s) => s.subConfig) || {};
+  const cats = [...new Set(products.map((p) => p.cat).filter(Boolean))];
+  const [cat, setCat] = useState(cats[0] || "");
+
+  // تفرّعات القسم الفعلية + عددها
+  const subsRaw = [...new Set(products.filter((p) => p.cat === cat).map((p) => p.sub || "أخرى"))];
+  const cfg = subConfig[cat] || {};
+  // رتّب حسب الإعداد المحفوظ
+  const subs = [...subsRaw].sort((a, b) => {
+    const ia = (cfg.order || []).indexOf(a), ib = (cfg.order || []).indexOf(b);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+  });
+  const count = (sub) => products.filter((p) => p.cat === cat && (p.sub || "أخرى") === sub).length;
+  const move = (sub, dir) => {
+    const arr = [...subs]; const i = arr.indexOf(sub); const j = i + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    setSubOrder(cat, arr);
+  };
+
+  return (
+    <>
+      <div className="pt-h1">📑 القائمة الجانبية<small>رتّب أو أخفِ أو أعِد تسمية التفرّعات التي تظهر داخل صفحة كل قسم</small></div>
+
+      <div className="pt-card">
+        <div style={{ padding: 14 }}>
+          <div className="pt-field"><label>اختر القسم</label>
+            <select className="pt-in" value={cat} onChange={(e) => setCat(e.target.value)}>
+              {cats.map((c) => <option key={c} value={c}>{c} ({products.filter((p) => p.cat === c).length} منتج)</option>)}
+            </select>
+          </div>
+          <div className="pt-note" style={{ margin: 0 }}>💡 هذه التفرّعات تُبنى تلقائياً من حقل «التفرّع» في منتجاتك. هنا ترتّبها أو تخفيها فقط.</div>
+        </div>
+      </div>
+
+      <div className="pt-card">
+        <div className="cap">تفرّعات «{cat}» ({subs.length})</div>
+        <div className="sr-list">
+          {subs.map((sub, i) => {
+            const hidden = (cfg.hidden || []).includes(sub);
+            return (
+              <div className={"sr-row" + (hidden ? " off" : "")} key={sub}>
+                <div className="sr-ord">
+                  <button disabled={i === 0} onClick={() => move(sub, -1)}>↑</button>
+                  <button disabled={i === subs.length - 1} onClick={() => move(sub, 1)}>↓</button>
+                </div>
+                <div className="sr-inf">
+                  <input className="pt-in" defaultValue={cfg.rename?.[sub] || ""} placeholder={sub} onBlur={(e) => renameSub(cat, sub, e.target.value)} title="اسم معروض (اتركه فارغاً للأصلي)" />
+                  <small>{sub} · {count(sub)} منتج</small>
+                </div>
+                <button className={"sr-eye" + (hidden ? " on" : "")} onClick={() => toggleSubHidden(cat, sub)} title={hidden ? "إظهار" : "إخفاء"}>{hidden ? "🙈" : "👁️"}</button>
+              </div>
+            );
+          })}
+          {subs.length === 0 && <div className="pt-empty">لا تفرّعات في هذا القسم</div>}
+        </div>
+        <div className="pt-note" style={{ margin: "0 14px 14px" }}>🔑 لدمج تفرّعات متشابهة، وحّد كتابتها في المنتجات (اكتب «عصائر» لكلها). التسمية هنا تغيّر <b>العرض</b> فقط لا الربط.</div>
       </div>
     </>
   );
@@ -1188,19 +1270,19 @@ function StoreLocationCard() {
 function SupabaseCard() {
   const [cfg, setCfg] = useState(() => getSupabaseCfg() || { url: "", anonKey: "", bucket: "products" });
   const [saved, setSaved] = useState(false);
-  const [test, setTest] = useState("");
+  const [test, setTest] = useState(null); // { state:'busy'|'ok'|'warn'|'err', msg, hint }
+  const [busy, setBusy] = useState(false);
   const save = () => { setSupabaseCfg(cfg); setSaved(true); setTimeout(() => setSaved(false), 1500); };
   const baked = hasBakedConfig();
   const runTest = async () => {
-    setSupabaseCfg(cfg); setTest("جارٍ الاختبار…");
+    setSupabaseCfg(cfg); setBusy(true); setTest({ state: "busy", msg: "جارٍ الفحص… (رفع + قراءة)" });
     try {
-      // صورة PNG صغيرة 1×1 كاختبار رفع
-      const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const file = new File([bytes], "test.png", { type: "image/png" });
-      const url = await uploadImage(file);
-      setTest("✅ نجح! الصور تُرفع بشكل صحيح. " + (url ? "" : ""));
-    } catch (e) { setTest("❌ " + e.message); }
+      const r = await diagnoseSupabase();
+      if (r.ok) setTest({ state: "ok", msg: "✅ سليم تماماً — الصور تُرفع وتُقرأ وتظهر على كل الأجهزة.", hint: "" });
+      else if (r.upload && !r.read) setTest({ state: "warn", msg: "⚠️ الرفع يعمل، لكن قراءة الصور محجوبة — لهذا لا تظهر.", hint: r.hint });
+      else setTest({ state: "err", msg: "❌ " + (r.error || "فشل الاتصال"), hint: r.hint });
+    } catch (e) { setTest({ state: "err", msg: "❌ " + (e.message || "خطأ غير متوقّع"), hint: "" }); }
+    setBusy(false);
   };
   return (
     <div>
@@ -1212,9 +1294,14 @@ function SupabaseCard() {
         <input className="pt-in" dir="ltr" placeholder="products" value={cfg.bucket} onChange={(e) => setCfg({ ...cfg, bucket: e.target.value })} /></div>
       <div style={{ display: "flex", gap: 8 }}>
         <button className="pt-btn sm" onClick={save}>{saved ? "✓ حُفظ" : "حفظ الإعداد"}</button>
-        <button className="pt-btn sm ghost" onClick={runTest} disabled={!cfg.url || !cfg.anonKey}>🧪 اختبار الاتصال</button>
+        <button className="pt-btn sm ghost" onClick={runTest} disabled={busy || !cfg.url || !cfg.anonKey}>{busy ? "⏳ يفحص…" : "🧪 افحص الصور (رفع + قراءة)"}</button>
       </div>
-      {test && <div className={"pt-testres " + (test.startsWith("✅") ? "ok" : test.startsWith("❌") ? "err" : "")}>{test}</div>}
+      {test && (
+        <div className={"pt-testres " + (test.state === "ok" ? "ok" : test.state === "err" || test.state === "warn" ? "err" : "")}>
+          <div>{test.msg}</div>
+          {test.hint && <div style={{ marginTop: 6, fontWeight: 400, lineHeight: 1.7, opacity: 0.92 }}>💡 {test.hint}</div>}
+        </div>
+      )}
       <div className="pt-tip" style={{ marginTop: 8 }}>{baked ? <>✅ الإعداد الدائم مرفوع مع الموقع — <b>يعمل تلقائياً على كل الأجهزة</b> بلا إعادة إدخال. الحقول أعلاه لتجاوز مؤقت على هذا الجهاز فقط.</> : <>ℹ️ للمزامنة على كل الأجهزة: ضع القيم في <b>src/config.js</b> وارفعها على GitHub. أو أدخلها هنا لهذا الجهاز فقط.</>}</div>
     </div>
   );
