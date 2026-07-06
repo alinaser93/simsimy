@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { useStore, addProduct, updateProduct, removeProduct } from "../store/appStore.js";
 import { Switch } from "../portal/PortalKit.jsx";
@@ -52,6 +52,29 @@ function ProductManager({ scope = "admin", mid = null }) {
   const [collapsed, setCollapsed] = useState({});
   const subOptions = [...new Set(products.map((p) => p.sub).filter(Boolean))];
   const [modal, setModal] = useState(null); // null | {mode:'add'|'edit', data}
+  // أداة توليد الصور الواقعية لكل المنتجات دفعة واحدة
+  const [bulk, setBulk] = useState(null); // null | { done, total, running }
+  const bulkStop = useRef(false);
+  const genAllImages = async () => {
+    const targets = products.filter((p) => !((p.images && p.images.length) || p.img));
+    if (!targets.length) { alert("كل المنتجات عندها صور بالفعل 👍"); return; }
+    if (!window.confirm(`راح يولّد صور واقعية بالذكاء لـ ${targets.length} منتج (مجاناً).\nتقدر توقفه بأي لحظة. نكمل؟`)) return;
+    bulkStop.current = false;
+    setBulk({ done: 0, total: targets.length, running: true });
+    let done = 0;
+    for (const p of targets) {
+      if (bulkStop.current) break;
+      try {
+        const genUrl = pollinationsUrl(arToEnPrompt(p.name)); // وصف إنجليزي موثوق ← صورة واقعية بخلفية بيضاء
+        updateProduct(p.id, { images: [genUrl], img: genUrl });
+        done++;
+      } catch { /* تخطَّ هذا المنتج وواصل */ }
+      setBulk({ done, total: targets.length, running: true });
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    setBulk({ done, total: targets.length, running: false });
+    setTimeout(() => setBulk((b) => (b && !b.running ? null : b)), 6000);
+  };
   const list = products.filter((p) => p.name.includes(q) && (catFilter === "الكل" || p.cat === catFilter) && (merchantFilter === "الكل" || p.merchantId === merchantFilter) && (!dealsOnly || p.deal));
   const mName = (id) => merchants.find((m) => m.id === id)?.name || "—";
   // بناء المجموعات المرتّبة
@@ -204,6 +227,28 @@ function ProductManager({ scope = "admin", mid = null }) {
   return (
     <>
       <div className="pt-h1">{isMerchant ? "منتجاتي" : "إدارة المنتجات"}<small>{isMerchant ? "سعرك وتوفّرك وصورك — تظهر فوراً للزبائن" : "التعديلات تنعكس فوراً على واجهة المتجر"}</small></div>
+      <div className="pt-card" style={{ background: "linear-gradient(135deg,#F0FBF3,#E3F5EA)", borderColor: "#BFE6CB" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 30, lineHeight: 1 }}>🎨</div>
+          <div style={{ flex: 1, minWidth: 170 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: "#0C6B2A" }}>صور واقعية بالذكاء</div>
+            <div style={{ fontSize: 12.5, color: "#3a5a44", lineHeight: 1.6 }}>حوّل الإيموجي إلى صور منتجات واقعية بأسلوب بلينكيت — مجاناً وبضغطة وحدة.</div>
+          </div>
+          {!bulk?.running && <button className="pt-btn sm" style={{ background: "#0C831F" }} onClick={genAllImages}>🎨 ولّد صور المنتجات</button>}
+        </div>
+        {bulk && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 5, fontWeight: 700, color: "#0C6B2A" }}>
+              <span>{bulk.running ? `⏳ يولّد… ${bulk.done} / ${bulk.total}` : `✓ تم توليد ${bulk.done} صورة`}</span>
+              {bulk.running && <button className="pt-btn sm ghost" onClick={() => { bulkStop.current = true; }}>إيقاف</button>}
+            </div>
+            <div style={{ height: 8, background: "#D6EEDD", borderRadius: 20, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.round((bulk.done / bulk.total) * 100)}%`, background: "#0C831F", transition: "width .2s" }} />
+            </div>
+            {!bulk.running && <div style={{ fontSize: 11.5, color: "#3a5a44", marginTop: 7, lineHeight: 1.6 }}>الصور تظهر بالمتجر الآن. أي صورة ما عجبتك؟ افتح المنتج وبدّلها أو ولّد غيرها.</div>}
+          </div>
+        )}
+      </div>
       <div className="pt-card">
         <div className="cap" style={{ flexWrap: "wrap", gap: 8 }}>
           <b>{list.length}</b> منتج<span className="sp" />
