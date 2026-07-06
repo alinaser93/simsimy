@@ -4,6 +4,7 @@ import { TAB_BLOCKS } from "../data/tabBlocks.js";
 import { PRODUCTS } from "../data/products.js";
 import { toIQD } from "../utils/currency.js";
 import { WIDE_BANNERS, TRIO_PROMOS, BIG_STORES } from "../data/collections.js";
+import { pollinationsUrl, arToEnPrompt } from "../utils/imageGen.js";
 
 /* ============================================================
    المخزن المركزي — مصدر الحقيقة الوحيد للمتجر والبوابات.
@@ -19,6 +20,9 @@ const merchantFor = (id) => (id >= 6 && id <= 8 ? "m2" : id >= 9 && id <= 11 ? "
 const seedProducts = () =>
   PRODUCTS.map((p) => ({
     ...p,
+    // صورة واقعية بالذكاء لكل منتج — محسوبة من الاسم + رقم ثابت، فتظهر **نفسها على كل الأجهزة**.
+    // إن رفع التاجر صورته الخاصة (images) فهي تتقدّم على هذه.
+    img: p.img || pollinationsUrl(arToEnPrompt(p.name), p.id),
     priceIQD: toIQD(p.price),
     mrpIQD: toIQD(p.mrp),
     stock: true,
@@ -69,7 +73,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 8, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 9, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -207,8 +211,15 @@ const mergeSaved = (d, saved) => {
     const patch = { homeBlocks: undefined, tabBlocks: undefined, banners: undefined, trio: undefined, bigStores: undefined, layoutVersion: d.layoutVersion, settings: freshSettings };
     // أضِف المنتجات الجديدة (بالمعرّف) دون حذف ما أضافه التاجر — فقط إن كانت محفوظة كمصفوفة
     if (Array.isArray(saved.products)) {
+      const defById = Object.fromEntries((d.products || []).map((p) => [p.id, p]));
       const have = new Set(saved.products.map((p) => p.id));
-      patch.products = [...saved.products, ...(d.products || []).filter((p) => !have.has(p.id))];
+      // للمنتجات القديمة بلا صورة: أضِف الصورة الواقعية من البذرة (دون لمس صور التاجر المرفوعة)
+      const withImgs = saved.products.map((p) => {
+        const hasImg = (p.images && p.images.length) || p.img;
+        const def = defById[p.id];
+        return (!hasImg && def && def.img) ? { ...p, img: def.img } : p;
+      });
+      patch.products = [...withImgs, ...(d.products || []).filter((p) => !have.has(p.id))];
     }
     // بطاقات «الحاجة»: حدّث الكلمات المفتاحية للبطاقات البذرية (c_*) للقيم الدقيقة الجديدة،
     // مع الحفاظ على صور/عناوين الأدمن والبطاقات المخصّصة كما هي

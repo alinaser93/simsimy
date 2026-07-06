@@ -994,3 +994,5 @@ html,body{margin:0;height:100%;}
   background:linear-gradient(135deg,#E9C46A,#D4AF37,#B8860B);color:#fff;
   display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:10px;
   box-shadow:0 3px 9px rgba(212,175,55,.45);}
+
+.bk-bs-th img{width:100%;height:100%;object-fit:contain;border-radius:9px;}
