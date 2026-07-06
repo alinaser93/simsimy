@@ -513,6 +513,7 @@ function TilesEditor() {
 
 /* ---------------- ✨ تسوّق حسب الحاجة ---------------- */
 const CONCERN_TABS = [["beauty", "الجمال"], ["electronics", "إلكترونيات"], ["decor", "ديكور"], ["kids", "الأطفال"], ["all", "الرئيسية (الكل)"]];
+const CONCERN_TAB_CATS = { beauty: ["جمال وعناية"], electronics: ["إلكترونيات"], decor: ["منزل وديكور"], kids: ["أطفال وألعاب"] };
 function ConcernsEditor() {
   const concerns = useStore((s) => s.concerns) || [];
   const products = useStore((s) => s.products);
@@ -520,7 +521,14 @@ function ConcernsEditor() {
   const [draft, setDraft] = useState({ title: "", sub: "", e: "✨", keywords: "" });
   const list = concerns.filter((c) => c.tab === tab);
 
-  const kwCount = (kw) => products.filter((p) => (kw || []).some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w) || (p.cat || "").includes(w))).length;
+  // نفس منطق المتجر: احصر بأقسام التبويب + طابق بالاسم/النوع (يمنع «كريم»→«آيس كريم»)
+  const matchedProducts = (kw) => {
+    const scope = CONCERN_TAB_CATS[tab];
+    return products.filter((p) => {
+      if (scope && !scope.includes(p.cat)) return false;
+      return (kw || []).some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w));
+    });
+  };
 
   const submit = () => {
     if (!draft.title.trim()) { alert("أدخل عنوان البطاقة"); return; }
@@ -589,7 +597,12 @@ function ConcernsEditor() {
                 <input className="pt-in" value={c.title} onChange={(e) => updateConcern(c.id, { title: e.target.value })} placeholder="العنوان" />
                 <input className="pt-in" value={c.sub || ""} onChange={(e) => updateConcern(c.id, { sub: e.target.value })} placeholder="الوصف" style={{ fontSize: 12 }} />
                 <input className="pt-in" value={(c.keywords || []).join("، ")} onChange={(e) => updateConcern(c.id, { keywords: e.target.value.split(/[،,]/).map((x) => x.trim()).filter(Boolean) })} placeholder="كلمات مفتاحية" style={{ fontSize: 11.5 }} dir="rtl" />
-                <small className="cn-count">🔗 {kwCount(c.keywords)} منتج مرتبط</small>
+                {(() => { const mp = matchedProducts(c.keywords); return (
+                  <div className="cn-preview">
+                    <small className={"cn-count" + (mp.length === 0 ? " zero" : "")}>🔗 {mp.length} منتج مرتبط{mp.length === 0 ? " — عدّل الكلمات!" : ""}</small>
+                    {mp.length > 0 && <div className="cn-prods">{mp.slice(0, 4).map((p) => <span key={p.id}>{p.e} {p.name}</span>)}{mp.length > 4 && <span className="more">+{mp.length - 4} غيرها</span>}</div>}
+                  </div>
+                ); })()}
               </div>
               <button className="pt-btn warn sm" onClick={() => confirm(`حذف «${c.title}»؟`) && removeConcern(c.id)}><Trash2 size={13} /></button>
             </div>

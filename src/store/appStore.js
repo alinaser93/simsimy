@@ -69,7 +69,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 7, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 8, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -208,10 +208,17 @@ const mergeSaved = (d, saved) => {
       const have = new Set(saved.products.map((p) => p.id));
       patch.products = [...saved.products, ...(d.products || []).filter((p) => !have.has(p.id))];
     }
-    // أضِف بطاقات «الحاجة» الجديدة (بالمعرّف) دون حذف ما أضافه الأدمن
+    // بطاقات «الحاجة»: حدّث الكلمات المفتاحية للبطاقات البذرية (c_*) للقيم الدقيقة الجديدة،
+    // مع الحفاظ على صور/عناوين الأدمن والبطاقات المخصّصة كما هي
     if (Array.isArray(saved.concerns)) {
+      const defById = Object.fromEntries((d.concerns || []).map((c) => [c.id, c]));
+      const updated = saved.concerns.map((c) => {
+        const def = defById[c.id];
+        if (def && c.id.startsWith("c_")) return { ...c, keywords: def.keywords, sub: c.sub || def.sub };
+        return c;
+      });
       const haveC = new Set(saved.concerns.map((c) => c.id));
-      patch.concerns = [...saved.concerns, ...(d.concerns || []).filter((c) => !haveC.has(c.id))];
+      patch.concerns = [...updated, ...(d.concerns || []).filter((c) => !haveC.has(c.id))];
     }
     saved = { ...saved, ...patch };
   }

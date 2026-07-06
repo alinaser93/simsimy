@@ -606,3 +606,10 @@ select.pt-in{width:auto;padding:7px 10px;font-size:12px;font-weight:700;}
 /* صورتان في محرّر الحاجة */
 .cn-prevs{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .cn-prev.sm{width:46px;height:46px;font-size:20px;align-self:center;}
+
+/* معاينة المنتجات المرتبطة بالبطاقة (الأدمن) */
+.cn-preview{margin-top:2px;}
+.cn-count.zero{color:#c0303a;}
+.cn-prods{display:flex;flex-direction:column;gap:2px;margin-top:5px;padding:7px 9px;background:var(--p-card,#fff);border:1px solid var(--p-border,#eee);border-radius:8px;}
+.cn-prods span{font-size:10.5px;color:var(--p-mut2,#555);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cn-prods .more{color:#0C831F;font-weight:700;}

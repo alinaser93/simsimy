@@ -5,6 +5,13 @@ import ProductCard from "./ProductCard.jsx";
 
 const SORTS = ["الأكثر رواجاً", "السعر: الأقل أولاً", "السعر: الأعلى أولاً", "أعلى خصم"];
 const fmtN = (n) => n >= 1000 ? (n / 1000) + " ألف" : String(n);
+// أقسام كل تبويب — تحصر نتائج «تسوّق حسب الحاجة» فيها (تمنع تطابق كلمة عابرة كـ«كريم»→«آيس كريم»)
+const TAB_CATS = {
+  beauty: ["جمال وعناية"],
+  electronics: ["إلكترونيات"],
+  decor: ["منزل وديكور"],
+  kids: ["أطفال وألعاب"],
+};
 
 /* صفحة التصنيف بأسلوب بلينكيت:
    عنوان القسم + صفوف أفقية ثابتة لكل تفرّع (نودلز / مجمّدات / دجاج…) + فرز */
@@ -50,7 +57,14 @@ export default function Listing({ title, cart, add, inc, dec, onBack }) {
   const dealOff = title.startsWith("__deals_off_") ? +title.replace("__deals_off_", "") : null;
   const concern = title.startsWith("__concern_") ? concerns.find((c) => c.id === title.replace("__concern_", "")) : null;
   const inCat = useMemo(() => {
-    if (concern) { const kw = concern.keywords || []; return PRODUCTS.filter((p) => kw.some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w) || (p.cat || "").includes(w))); }
+    if (concern) {
+      const kw = concern.keywords || [];
+      const scope = TAB_CATS[concern.tab]; // أقسام التبويب (إن وُجدت)
+      return PRODUCTS.filter((p) => {
+        if (scope && !scope.includes(p.cat)) return false; // احصر النتائج في أقسام التبويب
+        return kw.some((w) => (p.name || "").includes(w) || (p.sub || "").includes(w));
+      });
+    }
     if (dealMax) return PRODUCTS.filter((p) => p.priceIQD <= dealMax);
     if (dealOff) return PRODUCTS.filter((p) => p.mrpIQD > p.priceIQD && ((p.mrpIQD - p.priceIQD) / p.mrpIQD) * 100 >= dealOff);
     if (match.type === "all") return PRODUCTS;
