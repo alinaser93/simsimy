@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useStore } from "../store/appStore.js";
 import { BESTSELLERS } from "../data/collections.js";
 
-// خلية صورة منتج حقيقية مع رجوع للإيموجي عند فشل التحميل
+// خلية صورة منتج حقيقية: تعيد المحاولة عند الفشل ثم ترجع للإيموجي
 function Thumb({ p }) {
   const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const src = (p.images && p.images[0]) || p.img;
-  return src && !failed
-    ? <img src={src} alt="" onError={() => setFailed(true)} />
-    : <span>{p.e}</span>;
+  if (!src || failed) return <span>{p.e}</span>;
+  return <img key={retry} src={src} alt="" onError={() => { if (retry < 3) setTimeout(() => setRetry((n) => n + 1), 1000 * (retry + 1)); else setFailed(true); }} />;
 }
 
 // مطابقة مرنة بين عنوان البلاطة وأقسام المنتجات

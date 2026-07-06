@@ -2,6 +2,9 @@ import { useState, useRef } from "react";
 import { Star, Plus, Minus, ChevronLeft } from "lucide-react";
 import { fmt, CUR } from "../utils/currency.js";
 
+// خلفية موحّدة لكل بطاقات المنتجات — أزرق فاتح ناعم بأسلوب بلينكيت
+export const PROD_BG = "#EFF3FA";
+
 /* بطاقة منتج بأسلوب بلينكيت:
    - إطار صورة موحّد + شارة خصم + زرّ «أضف» فوق الصورة (أسفل) + الوزن
    - أسفل الصورة: السعر ثم الاسم ثم التقييم ثم رابط التفرّع «كل … ‹»
@@ -17,8 +20,9 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
   const nOpts = (p.variants || []).length;
   const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [])).slice(0, 5);
   const [ci, setCi] = useState(0);
-  // شبكة أمان: أي صورة يفشل تحميلها (رابط مكسور) تُستبدل بالإيموجي بدل أيقونة مكسورة
+  // شبكة أمان: أي صورة يفشل تحميلها تُعاد محاولتها (تحسّباً لبطء توليد الذكاء) ثم تُستبدل بالإيموجي
   const [failed, setFailed] = useState({});
+  const [retry, setRetry] = useState({});
   const allFailed = imgs.length > 0 && imgs.every((_, i) => failed[i]);
   const drag = useRef({ x: 0, dx: 0, moved: false });
   const openProduct = () => window.dispatchEvent(new CustomEvent("bk:openProduct", { detail: p.id }));
@@ -35,7 +39,7 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
   const onCardTap = () => { if (!drag.current.moved) openProduct(); };
   return (
     <div className={"bk-pc" + (grid ? " grid" : "") + (oos ? " oos" : "")} style={style}>
-      <div className="bk-pc-imgwrap" style={{ background: p.bg }}
+      <div className="bk-pc-imgwrap" style={{ background: PROD_BG }}
         onClick={onCardTap}
         onTouchStart={(e) => startDrag(e.touches[0].clientX)}
         onTouchMove={(e) => { moveDrag(e.touches[0].clientX); if (Math.abs(drag.current.dx) > 8 && imgs.length > 1) e.preventDefault(); }}
@@ -50,8 +54,12 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
                 <div className="bk-pc-slide" key={i}>
                   {failed[i]
                     ? <div className="bk-pc-img">{p.e}</div>
-                    : <img className="ph-img" src={u} alt={p.name} loading="lazy" draggable="false"
-                        onError={() => setFailed((f) => ({ ...f, [i]: true }))} />}
+                    : <img key={retry[i] || 0} className="ph-img" src={u} alt={p.name} loading="lazy" draggable="false"
+                        onError={() => {
+                          const n = retry[i] || 0;
+                          if (n < 3) setTimeout(() => setRetry((r) => ({ ...r, [i]: n + 1 })), 1000 * (n + 1));
+                          else setFailed((f) => ({ ...f, [i]: true }));
+                        }} />}
                 </div>
               ))}
             </div>

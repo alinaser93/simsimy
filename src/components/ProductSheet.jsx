@@ -3,6 +3,7 @@ import { ChevronRight, Heart, Share2, Clock, Star } from "lucide-react";
 import { useStore, toggleWishlist } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
+import { PROD_BG } from "./ProductCard.jsx";
 
 /* صفحة تفاصيل المنتج — كما في التطبيق الأصلي:
    صورة كبيرة، شريط علوي لاصق عند التمرير، لماذا بلينكيت، المواصفات،
@@ -17,8 +18,9 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const p = products.find((x) => x.id === id);
   const [bar, setBar] = useState(false);
   const bodyRef = useRef(null);
-  // شبكة أمان: أي صورة رابطها مكسور تُستبدل بالإيموجي بدل أيقونة مكسورة
+  // شبكة أمان: أي صورة رابطها مكسور تُعاد محاولتها ثم تُستبدل بالإيموجي
   const [failed, setFailed] = useState({});
+  const [retry, setRetry] = useState({});
   if (!p) return null;
 
   const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : []));
@@ -81,9 +83,14 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
             }}>
             <div className="bk-pd-track" style={{ transform: `translateX(${ii * 100}%)` }}>
               {(imgs.length ? imgs : [null]).map((u, i) => (
-                <div className="bk-pd-slide" key={i} style={{ background: p.bg }}>
+                <div className="bk-pd-slide" key={i} style={{ background: PROD_BG }}>
                   {u && !failed[i]
-                    ? <img src={u} alt={p.name} draggable="false" onError={() => setFailed((f) => ({ ...f, [i]: true }))} />
+                    ? <img key={retry[i] || 0} src={u} alt={p.name} draggable="false"
+                        onError={() => {
+                          const n = retry[i] || 0;
+                          if (n < 3) setTimeout(() => setRetry((r) => ({ ...r, [i]: n + 1 })), 1000 * (n + 1));
+                          else setFailed((f) => ({ ...f, [i]: true }));
+                        }} />
                     : <span className="emoji">{p.e}</span>}
                 </div>
               ))}
