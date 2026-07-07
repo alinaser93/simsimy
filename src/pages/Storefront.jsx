@@ -59,10 +59,19 @@ export default function Storefront() {
     hero: { kind: "glow", title: customTab.emoji + " " + customTab.label, sub: "قسم مخصّص من إدارة المتجر",
       bg: "linear-gradient(135deg,#5a5b60,#3f4045)", text: "#ffffff", subText: "#e2e2e2" },
   }) || THEMES.all;
+  // ثيم موحّد: كل التبويبات تأخذ لون الهوية الأحمر (هيدر + هيرو + نص أصفر) — الفوق والجوه متطابقان
+  const themeR = useMemo(() => ({
+    ...theme,
+    headTop: appearance.headTop,
+    headBot: appearance.headBot,
+    onHead: "#F8CE4E",
+    sub: "#F7DCA0",
+    hero: theme.hero ? { ...theme.hero, bg: `linear-gradient(135deg,${appearance.headTop},${appearance.headBot})`, text: "#F8CE4E", subText: "#F7DCA0" } : theme.hero,
+  }), [theme, appearance.headTop, appearance.headBot]);
   const { cart, add, inc, dec, clear, count, total, savings, recentItems } = useCart();
   const freeAbove = settings.freeAbove || 50000;
 
-  const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(theme);
+  const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(themeR);
   const [celebrate, setCelebrate] = useState(false);
   const wasFree = useRef(total >= freeAbove); // يبدأ حسب حالة السلة المحفوظة (لا احتفال خاطئ عند التحميل)
   useEffect(() => {
@@ -166,8 +175,8 @@ export default function Storefront() {
     setPage("cart");
   };
 
-  const headTop = catTab === "all" ? appearance.headTop : theme.headTop;
-  const headBot = catTab === "all" ? appearance.headBot : theme.headBot;
+  const headTop = appearance.headTop;
+  const headBot = appearance.headBot;
   const goldGrad = `linear-gradient(180deg, ${headTop}, ${headBot})`;
   const brandVars = {
     "--bk-green": appearance.green,
@@ -187,8 +196,8 @@ export default function Storefront() {
     [catTab, cart, theme, customTab, tabBlocks, add, inc, dec, openList]
   );
   const banner = useMemo(
-    () => (catTab === "all" ? <WelcomeHero /> : <Hero hero={theme.hero} />),
-    [catTab, theme]
+    () => (catTab === "all" ? <WelcomeHero /> : <Hero hero={themeR.hero} />),
+    [catTab, themeR]
   );
 
   return (
