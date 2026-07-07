@@ -73,7 +73,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 11, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 12, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -107,11 +107,11 @@ const defaults = () => {
     },
     // هوية الموقع — يتحكم بها الأدمن من تبويب «المظهر»
     appearance: {
-      headTop: "#C99A24",
-      headBot: "#8E6112",
+      headTop: "#C63C2A",
+      headBot: "#9E2A1E",
       green: "#0C831F",
-      yellow: "#F8CB46",
-      yellowDk: "#F0B500",
+      yellow: "#C63C2A",
+      yellowDk: "#9E2A1E",
     },
     // نصوص الموقع — يتحكم بها الأدمن من تبويب «المظهر»
     texts: {
@@ -245,6 +245,15 @@ const mergeSaved = (d, saved) => {
       appName: st.appName === "بلينكيت" ? d.texts.appName : st.appName,
       logoLetter: st.logoLetter === "ب" ? d.texts.logoLetter : st.logoLetter,
       footerBig: st.footerBig === "بلينكيت" ? d.texts.footerBig : st.footerBig,
+    };
+    // تحديث ألوان الهوية القديمة (الذهبي) → الأحمر القرمزي فقط إن لم يُخصّصها المالك
+    const ap = saved.appearance || {};
+    saved.appearance = {
+      ...ap,
+      headTop: ap.headTop === "#C99A24" ? d.appearance.headTop : ap.headTop,
+      headBot: ap.headBot === "#8E6112" ? d.appearance.headBot : ap.headBot,
+      yellow: ap.yellow === "#F8CB46" ? d.appearance.yellow : ap.yellow,
+      yellowDk: ap.yellowDk === "#F0B500" ? d.appearance.yellowDk : ap.yellowDk,
     };
   }
   const out = { ...d, ...saved };

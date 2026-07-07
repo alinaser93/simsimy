@@ -12,7 +12,7 @@ export const THEMES = {
     dealZone: true,
   },
   all: {
-    eta: "12", headTop: "#C99A24", headBot: "#8E6112", onHead: "#ffffff", sub: "#fbeccd",
+    eta: "12", headTop: "#C63C2A", headBot: "#9E2A1E", onHead: "#F8CE4E", sub: "#F7DCA0",
     badge: "#ffffff", badgeBorder: "rgba(255,255,255,.5)", searchBg: "#fff",
     searchText: "#8a8a8a", searchIcon: "#5a5a5a", promo: true, welcome: true,
     hints: ["نباتات", "حقيبة هدايا", "تمارين", "بانير", "كولا"],
