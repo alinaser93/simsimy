@@ -43,7 +43,7 @@ export function Shell({ role, tabs, tab, setTab, children, onLogout, who, prefs 
   return (
     <div className={"pt-root" + (prefs?.dark ? " dark" : "")}>
       <div className="pt-top">
-        <div className="logo"><span className="b">ب</span>بلينكيت</div>
+        <div className="logo"><span className="b">س</span>سمسمي</div>
         <span className="role">{role}{who ? ` · ${who}` : ""}</span>
         <span className="sp" />
         {prefs && (

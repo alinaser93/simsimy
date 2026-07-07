@@ -73,7 +73,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 10, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 11, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -115,8 +115,8 @@ const defaults = () => {
     },
     // نصوص الموقع — يتحكم بها الأدمن من تبويب «المظهر»
     texts: {
-      appName: "بلينكيت",
-      logoLetter: "ب",
+      appName: "سمسمي",
+      logoLetter: "س",
       tagline: "تطبيق الدقائق الأخيرة",
       splashWelcome: "اطلب الآن واستمتع بتوصيل مجاني",
       welcomeTitle: "أهلاً بك",
@@ -124,7 +124,7 @@ const defaults = () => {
       addressTitle: "المنزل",
       address: "علي، 22، منطقة راجباث",
       closedMsg: "المتجر مغلق حالياً — نعود قريباً 🌙",
-      footerBig: "بلينكيت",
+      footerBig: "سمسمي",
       footerTag: "تطبيق الدقائق الأخيرة 🇮🇶",
       footerMini: "صُنع بـ ❤️ في العراق",
       customerName: "زبون التطبيق",
@@ -238,6 +238,14 @@ const mergeSaved = (d, saved) => {
       patch.concerns = [...updated, ...(d.concerns || []).filter((c) => !haveC.has(c.id))];
     }
     saved = { ...saved, ...patch };
+    // تحديث العلامة القديمة «بلينكيت»→«سمسمي» فقط إن لم يُخصّصها المالك لشيء آخر
+    const st = saved.texts || {};
+    saved.texts = {
+      ...st,
+      appName: st.appName === "بلينكيت" ? d.texts.appName : st.appName,
+      logoLetter: st.logoLetter === "ب" ? d.texts.logoLetter : st.logoLetter,
+      footerBig: st.footerBig === "بلينكيت" ? d.texts.footerBig : st.footerBig,
+    };
   }
   const out = { ...d, ...saved };
   // ترحيل بيانات: دمج قسم «مشروبات» المكرر في «مشروبات وعصائر» (آمن التكرار)

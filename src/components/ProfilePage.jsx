@@ -28,7 +28,7 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
 
   const share = () => {
     const url = window.location.origin;
-    if (navigator.share) navigator.share({ title: "بلينكيت", text: "اطلب بقالتك بأسرع توصيل!", url }).catch(() => {});
+    if (navigator.share) navigator.share({ title: "سمسمي", text: "اطلب بقالتك بأسرع توصيل!", url }).catch(() => {});
     else { navigator.clipboard?.writeText(url); alert("تم نسخ رابط التطبيق ✓"); }
   };
 
@@ -136,7 +136,7 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
         <div className="pf-sec">
           <div className="pf-sectitle">أخرى</div>
           <Row Icon={Share2} label="شارك التطبيق" onClick={share} />
-          <Row Icon={Info} label="من نحن" onClick={() => alert("بلينكيت — أسرع توصيل بقالة في مدينتك. نوصلك طلبك خلال دقائق.")} />
+          <Row Icon={Info} label="من نحن" onClick={() => alert("سمسمي — أسرع توصيل بقالة في مدينتك. نوصلك طلبك خلال دقائق.")} />
           <Row Icon={Shield} label="سياسة الخصوصية" onClick={() => alert("نحترم خصوصيتك ونحمي بياناتك. تُستخدم معلوماتك فقط لإتمام طلباتك.")} />
           <Row Icon={Phone} label="تواصل معنا" sub="خدمة العملاء على مدار الساعة" onClick={onHelp} />
         </div>
@@ -147,7 +147,7 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
           </button>
         )}
 
-        <div className="pf-version">بلينكيت • الإصدار 1.0</div>
+        <div className="pf-version">سمسمي • الإصدار 1.0</div>
       </div>
     </div>
   );
