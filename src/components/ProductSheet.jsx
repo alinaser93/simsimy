@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ChevronRight, Heart, Share2, Clock, Star } from "lucide-react";
+import { ChevronRight, ChevronLeft, Heart, Share2, Clock, Star } from "lucide-react";
 import { useStore, toggleWishlist } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
@@ -101,6 +101,14 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
           )}
         </div>
 
+        <div className="bk-pd-chips">
+          {[["التوصيل", p.eta], ["الحجم", p.weight], ["النوع", p.sub || p.cat], ["التقييم", "⭐ " + p.rating]]
+            .filter(([, v]) => v)
+            .map(([k, v], i) => (
+              <div className="bk-pd-chip" key={i}><div className="k">{k}</div><div className="v">{v}</div></div>
+            ))}
+        </div>
+
         <div className="bk-pd-body">
           <span className="bk-pd-eta"><Clock size={11} strokeWidth={2.6} /> {p.eta}</span>
           <div className="bk-pd-name">{p.name}</div>
@@ -128,6 +136,12 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="bk-pd-brand" onClick={() => { onClose(); setTimeout(() => window.dispatchEvent(new CustomEvent("bk:openList", { detail: p.cat })), 60); }}>
+          <div className="ic"><SmartImg src={p.img} emoji={p.e} className="" emojiClass="" imgStyle={{ width: 34, height: 34, objectFit: "contain" }} /></div>
+          <div className="tx"><b>{p.cat}</b><span>تصفّح كل المنتجات</span></div>
+          <ChevronLeft size={20} color="#b0b0b0" />
         </div>
 
         <div className="bk-why">

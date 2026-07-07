@@ -996,3 +996,16 @@ html,body{margin:0;height:100%;}
   box-shadow:0 3px 9px rgba(212,175,55,.45);}
 
 .bk-bs-th img{width:100%;height:100%;object-fit:contain;border-radius:9px;}
+
+/* شرائط المواصفات السريعة في صفحة المنتج (بأسلوب بلينكيت) */
+.bk-pd-chips{display:flex;gap:8px;overflow-x:auto;padding:12px 14px 2px;background:#fff;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.bk-pd-chips::-webkit-scrollbar{display:none;}
+.bk-pd-chip{flex:0 0 auto;min-width:76px;border:1px solid #ededed;border-radius:12px;padding:7px 12px;background:#fff;text-align:center;}
+.bk-pd-chip .k{font-size:10.5px;color:#9a9a9a;margin-bottom:3px;}
+.bk-pd-chip .v{font-size:12.5px;font-weight:700;color:#2a2a2a;white-space:nowrap;}
+/* بطاقة العلامة / القسم */
+.bk-pd-brand{display:flex;align-items:center;gap:12px;margin:10px 14px 0;padding:12px 14px;background:#fff;border:1px solid #ededed;border-radius:14px;cursor:pointer;}
+.bk-pd-brand .ic{width:44px;height:44px;border-radius:10px;background:#f5f6f8;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex:0 0 auto;}
+.bk-pd-brand .tx{flex:1;display:flex;flex-direction:column;gap:2px;}
+.bk-pd-brand .tx b{font-size:14px;color:#1f1f1f;}
+.bk-pd-brand .tx span{font-size:12px;color:#8a8a8a;}
