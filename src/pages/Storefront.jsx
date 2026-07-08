@@ -50,6 +50,8 @@ export default function Storefront() {
 
   const customTabs = useStore((s) => s.customTabs);
   const tabBlocks = useStore((s) => s.tabBlocks);
+  const products = useStore((s) => s.products);
+  const orders = useStore((s) => s.orders);
   const customTab = customTabs.find((t) => t.id === catTab);
   const theme = THEMES[catTab] || (customTab && {
     eta: "12", headTop: "#4a4b50", headBot: "#6e6d6e", onHead: "#ffffff", sub: "#eaeaea",
@@ -70,6 +72,24 @@ export default function Storefront() {
     return `rgb(${m(r)},${m(g)},${m(b)})`;
   };
   const contentBg = lightTint(headTop);
+  // تلميحات البحث = أسماء منتجات حقيقية، مرجّحة بالأكثر شعبية (طلبات الزبائن + التقييمات)
+  const searchHints = useMemo(() => {
+    const revNum = (r) => {
+      if (!r) return 0;
+      const n = parseFloat(String(r).replace(/[^\d.]/g, "")) || 0;
+      return /ألف|الف|آلاف/.test(String(r)) ? n * 1000 : n;
+    };
+    const ord = {};
+    (orders || []).forEach((o) => (o.items || []).forEach((it) => { if (it && it.name) ord[it.name] = (ord[it.name] || 0) + (it.qty || 1); }));
+    const scored = (products || [])
+      .filter((p) => p && p.name && p.stock !== false)
+      .map((p) => ({ name: p.name, score: (ord[p.name] || 0) * 9000 + revNum(p.reviews) * ((p.rating || 4) / 5) + (p.deal ? 500 : 0) }));
+    scored.sort((a, b) => b.score - a.score);
+    const top = scored.slice(0, 40).map((s) => s.name);
+    // خلط بسيط للتنويع مع بقاء الأسماء كلها من الأكثر شعبية
+    for (let i = top.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [top[i], top[j]] = [top[j], top[i]]; }
+    return top.length ? top : ["منتجاتنا"];
+  }, [products, orders]);
   const { cart, add, inc, dec, clear, count, total, savings, recentItems } = useCart();
   const freeAbove = settings.freeAbove || 50000;
 
@@ -153,9 +173,9 @@ export default function Storefront() {
   // تلميحات البحث المتغيّرة
   useEffect(() => { setHint(0); }, [catTab]);
   useEffect(() => {
-    const iv = setInterval(() => setHint((h) => (h + 1) % theme.hints.length), 2200);
+    const iv = setInterval(() => setHint((h) => (h + 1) % searchHints.length), 2000);
     return () => clearInterval(iv);
-  }, [theme]);
+  }, [searchHints]);
 
   const pushBK = () => { try { window.history.pushState({ bk: 1 }, ""); } catch { /* لا شيء */ } };
   const openList = useCallback((t) => { pushBK(); setListing(t); }, []);
@@ -223,7 +243,7 @@ export default function Storefront() {
             {/* الهيدر القابل للطي — الطيّ واللون عبر متغيّرات CSS */}
             <div className="bk-header" style={{ background: goldGrad }}>
               <div className="bk-deliv-wrap"><DeliveryInfo theme={theme} /></div>
-              <div onClick={() => setPage("search")}><SearchBar theme={theme} hint={hint} catTab={catTab} /></div>
+              <div onClick={() => setPage("search")}><SearchBar theme={theme} hint={hint} hints={searchHints} /></div>
               <CategoryTabs catTab={catTab} onPick={pickTab} />
               {theme.promo && <div className="bk-promo">{settings.promoText}</div>}
             </div>
