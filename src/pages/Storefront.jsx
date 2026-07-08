@@ -169,10 +169,19 @@ export default function Storefront() {
   const headTop = catTab === "all" ? appearance.headTop : theme.headTop;
   const headBot = catTab === "all" ? appearance.headBot : theme.headBot;
   const goldGrad = `linear-gradient(180deg, ${headTop}, ${headBot})`;
+  // خلفية المحتوى = درجة فاتحة جداً من لون هيدر هذا التبويب (الجوه يتناسق مع الفوك)
+  const lightTint = (hex, amt = 0.10) => {
+    const h = (hex || "#cccccc").replace("#", "");
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    const m = (c) => Math.round((isNaN(c) ? 200 : c) * amt + 255 * (1 - amt));
+    return `rgb(${m(r)},${m(g)},${m(b)})`;
+  };
+  const contentBg = lightTint(headTop);
   const brandVars = {
     "--bk-green": appearance.green,
     "--bk-yellow": appearance.yellow,
     "--bk-yellow-dk": appearance.yellowDk,
+    "--bk-content-bg": contentBg,
   };
 
   // المحتوى الثقيل مثبّت — لا يُعاد رسمه أثناء التمرير
