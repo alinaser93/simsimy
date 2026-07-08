@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { ChevronDown, User, TrendingUp } from "lucide-react";
+import { ChevronDown, User, TrendingUp, Wallet } from "lucide-react";
 import { hexToRgb, rgb, rgba } from "../utils/color.js";
 import { useStore } from "../store/appStore.js";
 
@@ -8,6 +8,7 @@ function DeliveryInfo({ theme }) {
   const oh = hexToRgb(theme.onHead);
   const eta = useStore((s) => s.settings.eta);
   const t = useStore((s) => s.texts);
+  const points = useStore((s) => s.user.points || 0);
   return (
     <div className="bk-deliv">
       <div>
@@ -23,7 +24,11 @@ function DeliveryInfo({ theme }) {
         </div>
       </div>
       <div className="bk-headicons">
-        <div className="bk-mapw">💳</div>
+        <div className="bk-wallet" onClick={() => window.dispatchEvent(new CustomEvent("bk:openProfile"))} title="محفظتي · نقاطي">
+          <Wallet size={16} strokeWidth={2.3} color="#fff" />
+          <span className="wn">{points}</span>
+          <span className="wl">نقطة</span>
+        </div>
         <div className="bk-profile" onClick={() => window.dispatchEvent(new CustomEvent("bk:openProfile"))}><User size={22} strokeWidth={2} color={rgb(oh)} /></div>
       </div>
     </div>

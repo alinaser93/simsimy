@@ -18,7 +18,9 @@ html,body{margin:0;height:100%;}
 .bk-loc{display:flex;align-items:center;gap:4px;font-size:13px;margin-top:3px;}
 .bk-loc b{font-weight:800;}
 .bk-headicons{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
-.bk-mapw{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2f7d32,#1f5c22);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.15);font-size:18px;}
+.bk-wallet{display:flex;align-items:center;gap:5px;height:40px;padding:0 12px;border-radius:20px;background:linear-gradient(135deg,#2f9e37,#1f7a26);box-shadow:0 2px 7px rgba(0,0,0,.18);cursor:pointer;flex:0 0 auto;border:1.5px solid rgba(255,255,255,.35);}
+.bk-wallet .wn{color:#fff;font-weight:800;font-size:14.5px;line-height:1;}
+.bk-wallet .wl{color:rgba(255,255,255,.85);font-weight:700;font-size:11px;line-height:1;}
 .bk-profile{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
 
 .bk-search{margin:6px 14px 8px;border-radius:14px;height:48px;display:flex;align-items:center;padding:0 14px;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);}
