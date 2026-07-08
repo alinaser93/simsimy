@@ -1,5 +1,7 @@
 import { useStore, applyTileOverrides } from "../store/appStore.js";
 import { ChevronRight } from "lucide-react";
+import SmartImg from "./SmartImg.jsx";
+import { catImageUrl } from "../utils/imageGen.js";
 import {
   GROCERY, SNACKS, BEAUTY, HOUSEHOLD, STORES_SPOTLIGHT, PICKS_LIFESTYLE,
   ELECTRONICS_TILES, DECOR_TILES, KIDS_TILES, IMPORTED_TILES,
@@ -38,7 +40,7 @@ export default function CategoriesPage({ onOpen, onBack }) {
               {items.map((c, i) => (
                 <div className="bk-cat-tile" key={i} onClick={() => onOpen && onOpen(c.orig || c.t)}>
                   <div className="bk-cat-tile-img" style={{ background: c.bg || "#f3f3f3" }}>
-                    {(c.img) ? <img src={c.img} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : <span className="e">{c.e}</span>}
+                    {(c.img) ? <SmartImg src={c.img} emoji={c.e} className="" emojiClass="e" /> : <SmartImg src={catImageUrl(c.t)} emoji={c.e} className="" emojiClass="e" />}
                   </div>
                   <div className="bk-cat-tile-t">{c.t}</div>
                 </div>

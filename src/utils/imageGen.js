@@ -71,6 +71,25 @@ const AR_EN = {
   "سماعات": "headphones", "شاحن": "phone charger", "باور بانك": "power bank",
   "معجون": "paste jar", "نودلز": "instant noodles pack", "معكرونة": "pasta pack", "دجاج": "frozen chicken",
   "فيريرو": "ferrero rocher chocolate", "روشيه": "ferrero rocher", "أوريو": "oreo cookies",
+  // ——— أسماء الأقسام (لصور البلاطات) ———
+  "خضار وفواكه": "fresh fruits and vegetables", "خضار": "fresh vegetables", "فواكه": "fresh fruits",
+  "ألبان وخبز وبيض": "milk bread and eggs", "ألبان": "dairy milk products",
+  "طحين وأرز وبقوليات": "flour rice and lentils bags", "بقوليات": "lentils legumes", "حبوب": "cereal grains bowl",
+  "زيوت وسكر وبهارات": "cooking oil sugar and spices", "زيوت": "cooking oil bottle", "بهارات": "colorful spices bowls",
+  "وجبات خفيفة ومشروبات": "snacks and soft drinks", "وجبات خفيفة": "assorted snacks", "مشروبات وعصائر": "soft drinks and juices", "مشروبات": "soft drink bottles",
+  "شاي وقهوة": "tea and coffee cup", "شاي": "tea box", "قهوة": "coffee jar",
+  "حلويات وشوكولاتة": "chocolate and candy sweets", "حلويات": "assorted candy", "مقرمشات": "snack crackers",
+  "صلصات ومربى": "sauce and jam jars", "صلصات": "sauce bottles", "مربى": "jam jar",
+  "طعام سريع ومجمد": "frozen ready meal", "مجمد": "frozen food", "طعام سريع": "instant food",
+  "مكسرات": "mixed nuts bowl", "مخبوزات": "bakery bread pastry", "لحوم": "raw red meat", "أسماك": "fresh fish", "دجاج ولحوم": "chicken and meat",
+  "أدوات وأجهزة مطبخ": "kitchen utensils set", "مطبخ": "kitchenware", "أدوات": "kitchen tools",
+  // ——— مكياج وعناية ———
+  "مكياج الأظافر": "nail polish bottles", "مكياج العيون": "eyeshadow makeup palette", "مكياج الوجه": "face foundation cosmetics", "مكياج الشفاه": "red lipstick",
+  "مكياج": "makeup cosmetics set", "أظافر": "nail polish", "ماسكات": "facial mask skincare", "غسولات": "facial cleanser bottle", "واقيات شمس": "sunscreen bottle",
+  "شامبو وزيوت": "shampoo bottle", "تصفيف الشعر": "hair styling tools", "صبغات الشعر": "hair color dye box", "عناية": "personal care products", "بشرة": "skincare cream jar", "شعر": "hair care shampoo",
+  // ——— أطفال ومتاجر ———
+  "مستلزمات الأطفال": "baby care products", "حفاضات": "baby diapers pack", "ألعاب": "colorful kids toys", "دمية": "teddy bear",
+  "صيدلية": "pharmacy medicine", "أدوية": "medicine pills", "هدايا": "gift box with ribbon", "كتب": "stack of books",
 };
 const norm2 = (s) => (s || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
 export function arToEnPrompt(name) {
@@ -89,6 +108,13 @@ export function pollinationsUrl(prompt, seed) {
   const p = encodeURIComponent((prompt || "product") + ", professional product photography, isolated on pure solid white background, soft even studio lighting, centered, full product, sharp focus, high detail, no shadow, no text, no watermark");
   const s = (seed == null ? Math.floor(Math.random() * 100000) : Math.abs(seed) % 1000000);
   return `https://image.pollinations.ai/prompt/${p}?width=600&height=600&nologo=true&seed=${s}`;
+}
+
+// صورة لبلاطة قسم من عنوانها — بذرة ثابتة فتظهر نفسها على كل الأجهزة
+export function catImageUrl(title) {
+  let h = 0; const s = title || "cat";
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return pollinationsUrl(arToEnPrompt(title), h % 1000000);
 }
 
 
