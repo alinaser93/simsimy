@@ -1064,3 +1064,10 @@ html,body{margin:0;height:100%;}
 .info-contact b{font-size:14.5px;color:#1f1f1f;}
 .info-contact span{font-size:12.5px;color:#8a8a8a;}
 .info-contact.static{cursor:default;}
+
+/* أزرار بطاقة العنوان (تعديل/حذف) — مساحة ضغط مريحة على الموبايل */
+.bk-addr-acts{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+.bk-addr-edit{display:flex;align-items:center;gap:5px;background:#eaf7ec;color:#0C831F;border:1px solid #bfe6cb;border-radius:20px;padding:8px 13px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;min-height:38px;}
+.bk-addr-edit:active{background:#d8efdd;}
+.bk-addr-del{display:flex;align-items:center;justify-content:center;background:#fdeceb;color:#b3261e;border:1px solid #f3c9c6;border-radius:50%;width:38px;height:38px;cursor:pointer;flex:0 0 auto;}
+.bk-addr-del:active{background:#f8dcda;}

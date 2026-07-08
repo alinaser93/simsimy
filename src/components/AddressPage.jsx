@@ -107,10 +107,14 @@ export default function AddressPage({ onBack }) {
                 <span>{a.details}</span>
                 <div className="ph">📞 {a.phone}</div>
               </div>
-              <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                <Pencil size={16} color="#0C831F" onClick={(e) => { e.stopPropagation(); startEdit(a); }} />
+              <div className="bk-addr-acts">
+                <button className="bk-addr-edit" onClick={(e) => { e.stopPropagation(); startEdit(a); }}>
+                  <Pencil size={14} strokeWidth={2.4} /> تعديل
+                </button>
                 {addresses.length > 1 && (
-                  <Trash2 size={16} color="#b3261e" onClick={(e) => { e.stopPropagation(); removeAddress(a.id); }} />
+                  <button className="bk-addr-del" onClick={(e) => { e.stopPropagation(); removeAddress(a.id); }} aria-label="حذف">
+                    <Trash2 size={15} strokeWidth={2.2} />
+                  </button>
                 )}
               </div>
             </div>
