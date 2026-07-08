@@ -5,6 +5,7 @@ import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
 import { PROD_BG } from "./ProductCard.jsx";
 import SmartImg from "./SmartImg.jsx";
+import { productImg } from "../utils/imageGen.js";
 
 /* صفحة تفاصيل المنتج — كما في التطبيق الأصلي:
    صورة كبيرة، شريط علوي لاصق عند التمرير، لماذا بلينكيت، المواصفات،
@@ -21,7 +22,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const bodyRef = useRef(null);
   if (!p) return null;
 
-  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : []));
+  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [productImg(p)]));
   const variants = p.variants || [];
   const sel = variants[vi] || null;
   const price = sel ? sel.priceIQD : p.priceIQD;

@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Star, Plus, Minus, ChevronLeft } from "lucide-react";
 import { fmt, CUR } from "../utils/currency.js";
 import SmartImg from "./SmartImg.jsx";
+import { productImg } from "../utils/imageGen.js";
 
 // خلفية موحّدة لكل بطاقات المنتجات — أبيض نقي ليذوب مع خلفيات الصور البيضاء (المنتج يطفو بلا مربّع)
 export const PROD_BG = "#FFFFFF";
@@ -19,7 +20,8 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
   const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
   const oos = p.stock === false;
   const nOpts = (p.variants || []).length;
-  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [])).slice(0, 5);
+  const rawImgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : []));
+  const imgs = (rawImgs.length ? rawImgs : [productImg(p)]).slice(0, 5);
   const [ci, setCi] = useState(0);
   const drag = useRef({ x: 0, dx: 0, moved: false });
   const openProduct = () => window.dispatchEvent(new CustomEvent("bk:openProduct", { detail: p.id }));

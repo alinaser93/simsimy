@@ -102,6 +102,14 @@ export function arToEnPrompt(name) {
   return en || name; // إن لم نجد، نعيد الاسم كما هو
 }
 
+// تُعيد رابط صورة لأي منتج دائماً: صورة التاجر إن وُجدت، وإلا صورة الذكاء المحسوبة من الاسم
+export function productImg(p) {
+  if (!p) return "";
+  if (p.images && p.images.length && p.images[0]) return p.images[0];
+  if (p.img) return p.img;
+  return pollinationsUrl(arToEnPrompt(p.name || "منتج"), p.id || 1);
+}
+
 // توليد صورة حقيقية بالذكاء عبر Pollinations (مجاني، بلا مفتاح)
 // seed اختياري: مرّر قيمة ثابتة (مثل رقم المنتج) لتكون الصورة **نفسها على كل الأجهزة**.
 export function pollinationsUrl(prompt, seed) {
