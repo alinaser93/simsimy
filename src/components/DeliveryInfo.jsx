@@ -9,6 +9,12 @@ function DeliveryInfo({ theme }) {
   const eta = useStore((s) => s.settings.eta);
   const t = useStore((s) => s.texts);
   const points = useStore((s) => s.user.points || 0);
+  const addresses = useStore((s) => s.addresses);
+  const selectedAddress = useStore((s) => s.selectedAddress);
+  // اعرض العنوان المحدد فعلياً من دفتر العناوين (لا نصاً ثابتاً)
+  const addr = addresses.find((a) => a.id === selectedAddress) || addresses[0];
+  const addrTitle = addr?.label || t.addressTitle;
+  const addrText = addr?.details || t.address;
   return (
     <div className="bk-deliv">
       <div>
@@ -20,7 +26,7 @@ function DeliveryInfo({ theme }) {
             : <span className="bk-247" style={{ color: theme.badge, borderColor: theme.badgeBorder }}>على مدار الساعة</span>}
         </div>
         <div className="bk-loc" style={{ color: theme.sub, cursor: "pointer" }} onClick={() => window.dispatchEvent(new CustomEvent("bk:openAddress"))}>
-          <b style={{ color: rgb(oh) }}>{t.addressTitle}</b> - {t.address} <ChevronDown size={16} strokeWidth={2.6} />
+          <b style={{ color: rgb(oh) }}>{addrTitle}</b> - {addrText} <ChevronDown size={16} strokeWidth={2.6} />
         </div>
       </div>
       <div className="bk-headicons">

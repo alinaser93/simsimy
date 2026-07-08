@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronRight, Search, Plus, MapPin, Trash2, LocateFixed, Loader2 } from "lucide-react";
-import { useStore, addAddress, selectAddress, removeAddress } from "../store/appStore.js";
+import { ChevronRight, Search, Plus, MapPin, Trash2, LocateFixed, Loader2, Pencil } from "lucide-react";
+import { useStore, addAddress, selectAddress, removeAddress, updateAddress } from "../store/appStore.js";
 import MapView from "./MapView.jsx";
 import { getCurrentLocation, reverseGeocode } from "../utils/geo.js";
 
@@ -9,7 +9,9 @@ export default function AddressPage({ onBack }) {
   const addresses = useStore((s) => s.addresses);
   const selected = useStore((s) => s.selectedAddress);
   const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState(null);   // عند التعديل: معرّف العنوان
   const storeLoc = useStore((s) => s.storeLocation);
+  const userPhone = useStore((s) => s.user.phone);
   const [f, setF] = useState({ label: "المنزل", details: "", phone: "" });
   const [coords, setCoords] = useState(null);
   const [locating, setLocating] = useState(false);
@@ -26,12 +28,22 @@ export default function AddressPage({ onBack }) {
     setLocating(false);
   };
 
+  const startEdit = (a) => {
+    setEditId(a.id);
+    setF({ label: a.label || "المنزل", details: a.details || "", phone: a.phone || "" });
+    setCoords(a.lat && a.lng ? { lat: a.lat, lng: a.lng } : null);
+    setAdding(true);
+  };
+  const cancel = () => { setAdding(false); setEditId(null); setF({ label: "المنزل", details: "", phone: "" }); setCoords(null); };
   const save = () => {
-    if (!f.details) return;
-    addAddress(f.label || "عنوان", f.details, f.phone || "0770 000 0000", coords);
-    setAdding(false);
-    setF({ label: "المنزل", details: "", phone: "" });
-    setCoords(null);
+    if (!f.details.trim()) return;
+    const phone = (f.phone || "").trim() || userPhone || "";   // رقم حسابك تلقائياً إن تُرك فارغاً
+    if (editId) {
+      updateAddress(editId, { label: f.label || "عنوان", details: f.details.trim(), phone, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) });
+    } else {
+      addAddress(f.label || "عنوان", f.details.trim(), phone, coords);
+    }
+    cancel();
     onBack();
   };
 
@@ -48,7 +60,7 @@ export default function AddressPage({ onBack }) {
         </div>
 
         {!adding ? (
-          <div className="bk-addr-add" onClick={() => setAdding(true)}><Plus size={18} strokeWidth={2.6} /> إضافة عنوان جديد</div>
+          <div className="bk-addr-add" onClick={() => { setEditId(null); setF({ label: "المنزل", details: "", phone: "" }); setCoords(null); setAdding(true); }}><Plus size={18} strokeWidth={2.6} /> إضافة عنوان جديد</div>
         ) : (
           <div className="bk-cardbox" style={{ padding: 14 }}>
             <div className="pt-field"><label>التسمية</label>
@@ -75,11 +87,12 @@ export default function AddressPage({ onBack }) {
               <input className="pt-in" placeholder="مثال: الكرادة، شارع 62، بناية 14، ط2" value={f.details}
                 onChange={(e) => setF({ ...f, details: e.target.value })} /></div>
             <div className="pt-field"><label>رقم الهاتف</label>
-              <input className="pt-in" dir="ltr" placeholder="07xx xxx xxxx" value={f.phone}
-                onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
+              <input className="pt-in" dir="ltr" placeholder={userPhone || "07xx xxx xxxx"} value={f.phone}
+                onChange={(e) => setF({ ...f, phone: e.target.value })} />
+              {!f.phone && userPhone && <div className="bk-tip-note" style={{ padding: "4px 0 0" }}>سيُستخدم رقم حسابك: {userPhone}</div>}</div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="pt-btn" style={{ flex: 1 }} onClick={save}>حفظ العنوان</button>
-              <button className="pt-btn ghost" onClick={() => setAdding(false)}>إلغاء</button>
+              <button className="pt-btn" style={{ flex: 1 }} onClick={save}>{editId ? "حفظ التعديلات" : "حفظ العنوان"}</button>
+              <button className="pt-btn ghost" onClick={cancel}>إلغاء</button>
             </div>
           </div>
         )}
@@ -94,10 +107,12 @@ export default function AddressPage({ onBack }) {
                 <span>{a.details}</span>
                 <div className="ph">📞 {a.phone}</div>
               </div>
-              {addresses.length > 1 && (
-                <Trash2 size={16} color="#b3261e" style={{ marginTop: 4 }}
-                  onClick={(e) => { e.stopPropagation(); removeAddress(a.id); }} />
-              )}
+              <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                <Pencil size={16} color="#0C831F" onClick={(e) => { e.stopPropagation(); startEdit(a); }} />
+                {addresses.length > 1 && (
+                  <Trash2 size={16} color="#b3261e" onClick={(e) => { e.stopPropagation(); removeAddress(a.id); }} />
+                )}
+              </div>
             </div>
           ))}
         </div>

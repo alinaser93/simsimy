@@ -752,6 +752,9 @@ export const addAddress = (label, details, phone, coords) => {
   setState((s) => ({ addresses: [...s.addresses, { id, label, details, phone, lat: coords?.lat, lng: coords?.lng }], selectedAddress: id }));
 };
 export const selectAddress = (id) => setState({ selectedAddress: id });
+// تعديل عنوان محفوظ (التسمية/التفاصيل/الهاتف/الإحداثيات)
+export const updateAddress = (id, patch) =>
+  setState((s) => ({ addresses: s.addresses.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
 export const removeAddress = (id) =>
   setState((s) => ({
     addresses: s.addresses.filter((a) => a.id !== id),
