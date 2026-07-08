@@ -26,10 +26,20 @@ export function useCart() {
   const add = useCallback((id) => {
     const p = findProduct(id);
     if (!p || p.stock === false || !getState().settings.storeOpen) return;
+    if (p.qty != null && p.qty < 1) return;              // نفد المخزون
     setCart((c) => ({ ...c, [id]: 1 }));
     remember(id);
   }, []);
-  const inc = useCallback((id) => { setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 })); remember(id); }, []);
+  // لا تتجاوز الكمية المتوفّرة فعلياً في المخزون
+  const inc = useCallback((id) => {
+    const p = findProduct(id);
+    setCart((c) => {
+      const cur = c[id] || 0;
+      if (p && p.qty != null && cur >= p.qty) return c;   // بلغنا أقصى المتوفّر
+      return { ...c, [id]: cur + 1 };
+    });
+    remember(id);
+  }, []);
   const dec = useCallback((id) => setCart((c) => {
     const n = (c[id] || 0) - 1; const nc = { ...c };
     if (n <= 0) { delete nc[id]; forget(id); } else nc[id] = n; return nc;

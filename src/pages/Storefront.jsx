@@ -9,6 +9,7 @@ import DeliveryInfo from "../components/DeliveryInfo.jsx";
 import ProfilePage from "../components/ProfilePage.jsx";
 import WishlistPage from "../components/WishlistPage.jsx";
 import InfoPage from "../components/InfoPage.jsx";
+import useOrderNotifications from "../hooks/useOrderNotifications.js";
 import LoginPage from "../components/LoginPage.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import CategoryTabs from "../components/CategoryTabs.jsx";
@@ -39,6 +40,7 @@ export default function Storefront() {
   const [catTab, setCatTab] = useState(initialTab);
   const [hint, setHint] = useState(0);
   const [listing, setListing] = useState(null);
+  useOrderNotifications();   // إشعارات حالة الطلب في كل أنحاء التطبيق
   const [page, setPage] = useState(null);        // cart | payment | address | orders | search | {tracking:id}
   const [pending, setPending] = useState(null);  // بيانات السلة قبل الدفع
   const [loginNext, setLoginNext] = useState("profile"); // الوجهة بعد تسجيل الدخول

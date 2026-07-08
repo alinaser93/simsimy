@@ -18,7 +18,9 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
   const price = p.priceIQD;
   const mrp = p.mrpIQD;
   const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
-  const oos = p.stock === false;
+  const oos = p.stock === false || (p.qty != null && p.qty < 1);
+  const low = !oos && p.qty != null && p.qty <= (p.lowAt ?? 10);   // بقي القليل
+  const atMax = p.qty != null && qty >= p.qty;                      // بلغت السلة أقصى المتوفّر
   const nOpts = (p.variants || []).length;
   const rawImgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : []));
   const imgs = (rawImgs.length ? rawImgs : [productImg(p)]).slice(0, 5);
@@ -59,6 +61,7 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
         </div>
         {off > 0 && <div className="bk-off">{off}%<br />خصم</div>}
         {oos && <div className="bk-oos-badge">غير متوفر حالياً</div>}
+        {low && <div className="bk-low-badge">بقي {p.qty} فقط</div>}
         {p.badge && <div className="bk-pbadge">{p.badge}</div>}
         <div className="bk-veg"><i /></div>
         {imgs.length > 1 && <div className="bk-imgdots">{imgs.map((_, i) => <i key={i} className={i === ci ? "on" : ""} onClick={(e) => { e.stopPropagation(); setCi(i); }} />)}</div>}
@@ -67,7 +70,9 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
             <div className="bk-step">
               <button onClick={() => onDec(p.id)} aria-label="إنقاص"><Minus size={14} strokeWidth={3} /></button>
               <span className="q">{qty}</span>
-              <button onClick={() => onInc(p.id)} aria-label="زيادة"><Plus size={14} strokeWidth={3} /></button>
+              <button onClick={() => onInc(p.id)} aria-label="زيادة" disabled={atMax}
+                style={atMax ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
+                title={atMax ? "بلغت أقصى كمية متوفّرة" : undefined}><Plus size={14} strokeWidth={3} /></button>
             </div>
           ) : (
             nOpts > 0 ? (

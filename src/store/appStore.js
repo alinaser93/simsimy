@@ -26,6 +26,8 @@ const seedProducts = () =>
     priceIQD: toIQD(p.price),
     mrpIQD: toIQD(p.mrp),
     stock: true,
+    qty: 40 + ((p.id * 7) % 60),   // كمية مخزون أولية لكل منتج (تنقص مع كل بيع)
+    lowAt: 10,                      // حد التنبيه عند اقتراب النفاد
     merchantId: p.merchantId || merchantFor(p.id),
     desc: `منتج أصلي 100% بجودة مضمونة. ${p.name} — ${p.weight}. يصلك خلال دقائق بتغليف آمن يحافظ على الجودة والنضارة.`,
     highlights: [
@@ -73,7 +75,7 @@ const defaults = () => {
   return {
     homeBlocks: HOME_BLOCKS,
   tabBlocks: TAB_BLOCKS,
-  layoutVersion: 12, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
+  layoutVersion: 13, // ارفع الرقم عند تحديث التصميم ليتحدّث تلقائياً لدى الجميع
   customTabs: [],
   settings: {
       promoText: "⚡ اطلب الآن واحصل على توصيل مجاني",
@@ -220,9 +222,10 @@ const mergeSaved = (d, saved) => {
         if (!def) return p;
         // صورة التاجر المرفوعة (ليست من الذكاء) → اتركها كما هي
         const uploaded = p.images && p.images.length && !isPoll(p.images[0]);
-        if (uploaded) return p;
-        // بلا صورة، أو صورة ذكاء قديمة → استخدم صورة البذرة الجديدة (خلفية بيضاء نظيفة)
-        return { ...p, img: def.img, images: undefined };
+        const base = uploaded ? p : { ...p, img: def.img, images: undefined };
+        // فعّل إدارة المخزون للمنتجات القديمة التي لا كمية لها
+        if (base.qty == null) return { ...base, qty: def.qty ?? 50, lowAt: def.lowAt ?? 10, stock: base.stock !== false };
+        return base;
       });
       patch.products = [...withImgs, ...(d.products || []).filter((p) => !have.has(p.id))];
     }
