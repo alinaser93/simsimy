@@ -440,9 +440,9 @@ html,body{margin:0;height:100%;}
 .bk-sublink:hover{background:#eef4fb;}
 
 /* ===== منطقة العروض (DEAL ZONE) بأسلوب بلينكيت ===== */
-.bk-dealzone{background:linear-gradient(180deg,#C63C2A 0%,#B0301F 35%,#9E2A1E 75%,#8A2418 100%);padding:0 0 20px;margin-bottom:6px;border-radius:0 0 22px 22px;}
+.bk-dealzone{background:linear-gradient(180deg,#418047 0%,#4c8a4f 30%,#6f9a5c 70%,#83a26b 100%);padding:0 0 20px;margin-bottom:6px;border-radius:0 0 22px 22px;}
 .bk-dz-banner{position:relative;height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.bk-dz-banner .dz-title{font-size:30px;font-weight:900;color:#fdf6d8;letter-spacing:1px;text-shadow:2px 2px 0 #7C1E13,-1px -1px 0 #7C1E13;transform:skewX(-6deg);font-style:italic;}
+.bk-dz-banner .dz-title{font-size:30px;font-weight:900;color:#fdf6d8;letter-spacing:1px;text-shadow:2px 2px 0 #23421f,-1px -1px 0 #23421f;transform:skewX(-6deg);font-style:italic;}
 .bk-dz-banner .dz-emoji{font-size:34px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25));}
 .bk-dz-banner .dz-emoji.e1{margin-right:6px;}
 .bk-dz-banner .dz-emoji.e2{margin-left:6px;}
