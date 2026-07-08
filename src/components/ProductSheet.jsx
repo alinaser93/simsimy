@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ChevronRight, ChevronLeft, Heart, Share2, Clock, Star } from "lucide-react";
-import { useStore, toggleWishlist } from "../store/appStore.js";
+import { useStore, toggleWishlist, addReview } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
 import { PROD_BG } from "./ProductCard.jsx";
@@ -18,11 +18,19 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const products = useStore((s) => s.products);
   const appName = useStore((s) => s.texts.appName);
   const p = products.find((x) => x.id === id);
+  const allReviews = useStore((s) => s.productReviews);
+  const reviews = allReviews[id] || [];
+  const [rStars, setRStars] = useState(0);
+  const [rText, setRText] = useState("");
+  const [rName, setRName] = useState("");
+  const [rDone, setRDone] = useState(false);
   const [bar, setBar] = useState(false);
   const bodyRef = useRef(null);
   if (!p) return null;
 
   const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [productImg(p)]));
+  const custCount = reviews.length;
+  const custAvg = custCount ? reviews.reduce((a, r) => a + (r.rating || 0), 0) / custCount : 0;
   const variants = p.variants || [];
   const sel = variants[vi] || null;
   const price = sel ? sel.priceIQD : p.priceIQD;
@@ -167,6 +175,38 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
         <div className="bk-hl">
           <div className="t">سياسة الاستبدال</div>
           <p>الاستبدال فقط خلال 72 ساعة من الشراء إذا كان المنتج تالفاً أو رديء الجودة أو غير مطابق. للمنتج غير المطابق يجب أن يكون مغلقاً وغير مستخدم وبحالته الأصلية.</p>
+        </div>
+
+        <div className="bk-reviews">
+          <div className="t">تقييمات الزبائن {custCount > 0 && <span className="rv-avg"><Star size={13} fill="#f5a623" color="#f5a623" style={{ verticalAlign: -1 }} /> {custAvg.toFixed(1)} · {custCount}</span>}</div>
+          {rDone ? (
+            <div className="rv-thanks">✅ شكراً! نُشر تقييمك.</div>
+          ) : (
+            <div className="rv-form">
+              <div className="rv-stars">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star key={n} size={28} strokeWidth={1.5} fill={n <= rStars ? "#f5a623" : "none"} color="#f5a623" style={{ cursor: "pointer" }} onClick={() => setRStars(n)} />
+                ))}
+                <span className="rv-hint">{rStars ? `${rStars}/5` : "اضغط النجوم"}</span>
+              </div>
+              <input className="rv-in" placeholder="اسمك (اختياري)" value={rName} onChange={(e) => setRName(e.target.value)} />
+              <textarea className="rv-in rv-ta" placeholder="اكتب رأيك بالمنتج… (اختياري)" value={rText} onChange={(e) => setRText(e.target.value)} rows={2} />
+              <button className="rv-submit" disabled={!rStars} style={!rStars ? { opacity: 0.5 } : undefined}
+                onClick={() => { if (rStars) { addReview(id, { rating: rStars, text: rText, name: rName }); setRStars(0); setRText(""); setRName(""); setRDone(true); } }}>
+                انشر التقييم
+              </button>
+            </div>
+          )}
+          {reviews.length > 0 ? (
+            <div className="rv-list">
+              {reviews.slice(0, 30).map((r, i) => (
+                <div className="rv-item" key={i}>
+                  <div className="rv-h"><b>{r.name}</b><span className="rv-st">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span></div>
+                  {r.text && <p>{r.text}</p>}
+                </div>
+              ))}
+            </div>
+          ) : <div className="rv-empty">لا توجد تقييمات بعد — كن أول من يقيّم ⭐</div>}
         </div>
 
         {similar.length > 0 && (

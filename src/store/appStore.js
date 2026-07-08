@@ -188,6 +188,7 @@ const defaults = () => {
     selectedAddress: "a1",
     user: { name: "", phone: "", birthday: "", email: "", notifications: true, loggedIn: false, points: 0, pointsHistory: [] },
     wishlist: [],
+    productReviews: {},   // تقييمات الزبائن: { [productId]: [{ rating, text, name, at }] }
     orders: seedOrders(products),
     settlements: [],   // تسويات التجار والمندوبين
     nextOrderId: 1007,
@@ -540,6 +541,14 @@ export const updateUser = (patch) =>
   setState((s) => ({ user: { ...s.user, ...patch } }));
 export const toggleWishlist = (id) =>
   setState((s) => ({ wishlist: s.wishlist.includes(id) ? s.wishlist.filter((x) => x !== id) : [...s.wishlist, id] }));
+
+// تقييم زبون لمنتج (نجوم + تعليق اختياري) — يُضاف لأعلى القائمة
+export const addReview = (pid, review) =>
+  setState((s) => {
+    const list = s.productReviews[pid] || [];
+    const entry = { rating: Math.max(1, Math.min(5, review.rating || 5)), text: (review.text || "").trim(), name: (review.name || "").trim() || "زبون", at: Date.now() };
+    return { productReviews: { ...s.productReviews, [pid]: [entry, ...list] } };
+  });
 
 // جاهزية التاجر (بوابة الجاهزية): عندما تكتمل كل المتاجر ينتقل الطلب تلقائياً لـ«جاهز للتوصيل»
 export const setMerchantReady = (orderId, mid, val = true) => {
