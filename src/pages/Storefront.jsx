@@ -8,6 +8,7 @@ import SplashScreen from "../components/SplashScreen.jsx";
 import DeliveryInfo from "../components/DeliveryInfo.jsx";
 import ProfilePage from "../components/ProfilePage.jsx";
 import WishlistPage from "../components/WishlistPage.jsx";
+import InfoPage from "../components/InfoPage.jsx";
 import LoginPage from "../components/LoginPage.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import CategoryTabs from "../components/CategoryTabs.jsx";
@@ -291,8 +292,12 @@ export default function Storefront() {
             onAddress={() => setPage("address")}
             onWishlist={() => setPage("wishlist")}
             onWallet={() => setPage("orders")}
-            onHelp={() => setPage("orders")}
+            onHelp={() => setPage({ info: "contact" })}
+            onInfo={(topic) => setPage({ info: topic })}
             onLogin={() => { setLoginNext("profile"); setPage("login"); }} />
+        )}
+        {page && page.info && (
+          <InfoPage topic={page.info} onBack={() => setPage("profile")} />
         )}
         {page === "wishlist" && (
           <WishlistPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage("profile")} />

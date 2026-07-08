@@ -1,14 +1,14 @@
 import { useState } from "react";
 import {
   ChevronRight, ChevronLeft, ShoppingBag, Wallet, HelpCircle, MapPin, Heart,
-  CreditCard, Gift, Bell, Share2, Info, Shield, Phone, Moon, Sun, LogOut, Pencil, User, Cake,
+  CreditCard, Gift, Bell, Share2, Info, Shield, Phone, Moon, Sun, LogOut, Pencil, User, Cake, FileText,
 } from "lucide-react";
 import { fmt } from "../utils/currency.js";
 import { useStore, updateUser } from "../store/appStore.js";
 import { requestNotifyPermission, notifyPermission } from "../utils/notify.js";
 
 /* الصفحة الشخصية — بأسلوب بلينكيت، معرّبة لمتجر عراقي */
-export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, onWallet, onHelp, onLogin }) {
+export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, onWallet, onHelp, onLogin, onInfo }) {
   const user = useStore((s) => s.user);
   const wishlist = useStore((s) => s.wishlist);
   const orders = useStore((s) => s.orders);
@@ -136,9 +136,11 @@ export default function ProfilePage({ onBack, onOrders, onAddress, onWishlist, o
         <div className="pf-sec">
           <div className="pf-sectitle">أخرى</div>
           <Row Icon={Share2} label="شارك التطبيق" onClick={share} />
-          <Row Icon={Info} label="من نحن" onClick={() => alert("سمسمي — أسرع توصيل بقالة في مدينتك. نوصلك طلبك خلال دقائق.")} />
-          <Row Icon={Shield} label="سياسة الخصوصية" onClick={() => alert("نحترم خصوصيتك ونحمي بياناتك. تُستخدم معلوماتك فقط لإتمام طلباتك.")} />
-          <Row Icon={Phone} label="تواصل معنا" sub="خدمة العملاء على مدار الساعة" onClick={onHelp} />
+          <Row Icon={Info} label="من نحن" onClick={() => (onInfo ? onInfo("about") : null)} />
+          <Row Icon={HelpCircle} label="الأسئلة الشائعة" onClick={() => (onInfo ? onInfo("faq") : null)} />
+          <Row Icon={Shield} label="سياسة الخصوصية" onClick={() => (onInfo ? onInfo("privacy") : null)} />
+          <Row Icon={FileText} label="الشروط والأحكام" onClick={() => (onInfo ? onInfo("terms") : null)} />
+          <Row Icon={Phone} label="تواصل معنا" sub="خدمة العملاء على مدار الساعة" onClick={() => (onInfo ? onInfo("contact") : onHelp && onHelp())} />
         </div>
 
         {user.loggedIn && (
