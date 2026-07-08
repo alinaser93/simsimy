@@ -59,30 +59,21 @@ export default function Storefront() {
     hero: { kind: "glow", title: customTab.emoji + " " + customTab.label, sub: "قسم مخصّص من إدارة المتجر",
       bg: "linear-gradient(135deg,#5a5b60,#3f4045)", text: "#ffffff", subText: "#e2e2e2" },
   }) || THEMES.all;
-  // هوية التبويب: الفوق (الهيدر/الهيرو) والجوه (الخلفية) بنفس الدرجة الفاتحة، والنص غامق مقروء
-  const headBase = catTab === "all" ? appearance.headTop : theme.headTop;
-  const tintOf = (hex, amt) => {
+  const headTop = catTab === "all" ? appearance.headTop : theme.headTop;
+  const headBot = catTab === "all" ? appearance.headBot : theme.headBot;
+  const goldGrad = `linear-gradient(180deg, ${headTop}, ${headBot})`;
+  // خلفية المحتوى = درجة فاتحة من لون هيدر هذا التبويب
+  const lightTint = (hex, amt = 0.10) => {
     const h = (hex || "#cccccc").replace("#", "");
     const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
-    const tw = (c) => Math.round((isNaN(c) ? 200 : c) * amt + 255 * (1 - amt));
-    return `rgb(${tw(r)},${tw(g)},${tw(b)})`;
+    const m = (c) => Math.round((isNaN(c) ? 200 : c) * amt + 255 * (1 - amt));
+    return `rgb(${m(r)},${m(g)},${m(b)})`;
   };
-  const shadeOf = (hex, amt) => {
-    const h = (hex || "#888888").replace("#", "");
-    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
-    const hx = (c) => Math.round((isNaN(c) ? 120 : c) * amt).toString(16).padStart(2, "0");
-    return `#${hx(r)}${hx(g)}${hx(b)}`;
-  };
-  const contentBg = tintOf(headBase, 0.14);  // نفس اللون الفاتح فوق وتحت
-  const headInk = shadeOf(headBase, 0.42);   // نص غامق مقروء على الفاتح
-  const themeLight = useMemo(() => ({
-    ...theme, onHead: headInk, sub: headInk,
-    hero: theme.hero ? { ...theme.hero, bg: contentBg, text: headInk, subText: headInk } : theme.hero,
-  }), [theme, contentBg, headInk]);
+  const contentBg = lightTint(headTop);
   const { cart, add, inc, dec, clear, count, total, savings, recentItems } = useCart();
   const freeAbove = settings.freeAbove || 50000;
 
-  const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(themeLight);
+  const { phoneRef, scrollRef, onScroll } = useCollapsingHeader(theme);
   const [celebrate, setCelebrate] = useState(false);
   const wasFree = useRef(total >= freeAbove); // يبدأ حسب حالة السلة المحفوظة (لا احتفال خاطئ عند التحميل)
   useEffect(() => {
@@ -191,7 +182,6 @@ export default function Storefront() {
     "--bk-yellow": appearance.yellow,
     "--bk-yellow-dk": appearance.yellowDk,
     "--bk-content-bg": contentBg,
-    "--bk-head-ink": headInk,
   };
 
   // المحتوى الثقيل مثبّت — لا يُعاد رسمه أثناء التمرير
@@ -206,8 +196,8 @@ export default function Storefront() {
     [catTab, cart, theme, customTab, tabBlocks, add, inc, dec, openList]
   );
   const banner = useMemo(
-    () => (catTab === "all" ? <WelcomeHero /> : <Hero hero={themeLight.hero} />),
-    [catTab, themeLight]
+    () => (catTab === "all" ? <WelcomeHero /> : <Hero hero={theme.hero} />),
+    [catTab, theme]
   );
 
   return (
@@ -231,7 +221,7 @@ export default function Storefront() {
           <>
             {!settings.storeOpen && <div className="bk-closed">{texts.closedMsg}</div>}
             {/* الهيدر القابل للطي — الطيّ واللون عبر متغيّرات CSS */}
-            <div className="bk-header" style={{ background: contentBg }}>
+            <div className="bk-header" style={{ background: goldGrad }}>
               <div className="bk-deliv-wrap"><DeliveryInfo theme={theme} /></div>
               <div onClick={() => setPage("search")}><SearchBar theme={theme} hint={hint} catTab={catTab} /></div>
               <CategoryTabs catTab={catTab} onPick={pickTab} />

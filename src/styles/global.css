@@ -34,17 +34,17 @@ html,body{margin:0;height:100%;}
 .bk-tab .iconwrap{position:relative;z-index:1;display:flex;}
 .bk-tab.on .iconwrap:before{content:"";position:absolute;inset:-5px -9px;border-radius:50%;background:rgba(248,203,70,.4);z-index:0;}
 
-.bk-promo{background:var(--bk-content-bg,#fff);color:var(--bk-head-ink,#333);font-size:12.5px;font-weight:800;text-align:center;letter-spacing:.3px;overflow:hidden;line-height:24px;height:calc(var(--t,0) * 24px);opacity:var(--t,0);}
+.bk-promo{background:linear-gradient(90deg,var(--bk-yellow,#C63C2A),var(--bk-yellow-dk,#9E2A1E));color:#F8CE4E;font-size:12.5px;font-weight:800;text-align:center;letter-spacing:.3px;overflow:hidden;line-height:24px;height:calc(var(--t,0) * 24px);opacity:var(--t,0);}
 
 .bk-content{flex:1;overflow-y:auto;background:var(--bk-content-bg,#fff);padding-bottom:150px;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
 .bk-herowrap{opacity:var(--hf,1);transform:translateY(calc((var(--hf,1) - 1) * 10px));}
 
 /* بانر الترحيب (الكل) */
-.bk-whero{position:relative;padding:18px 16px 26px;text-align:center;overflow:hidden;background:var(--bk-content-bg,#fff);}
+.bk-whero{position:relative;padding:18px 16px 26px;text-align:center;overflow:hidden;background:radial-gradient(130% 100% at 50% -10%,#C63C2A 0%,#A62D20 55%,#8A2418 100%);}
 .bk-whero:after{content:"";position:absolute;left:-4%;right:-4%;bottom:-3px;height:26px;background:var(--bk-content-bg,#fff);border-radius:50%/100% 100% 0 0;}
 .bk-whero .rays{position:absolute;inset:0;background:conic-gradient(from -20deg at 50% -5%,rgba(255,255,255,.16),transparent 10deg,rgba(255,255,255,.12) 20deg,transparent 30deg,rgba(255,255,255,.14) 40deg,transparent 50deg);opacity:.6;}
-.wh-title{font-size:38px;font-weight:900;letter-spacing:1px;color:var(--bk-head-ink,#333);text-shadow:0 1px 2px rgba(0,0,0,.08);position:relative;z-index:2;}
-.wh-sub{margin-top:8px;font-size:14.5px;font-weight:800;color:var(--bk-head-ink,#333);position:relative;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.2);}
+.wh-title{font-size:38px;font-weight:900;letter-spacing:1px;color:#F8CE4E;text-shadow:0 3px 0 #7C1E13,0 6px 12px rgba(0,0,0,.28);position:relative;z-index:2;}
+.wh-sub{margin-top:8px;font-size:14.5px;font-weight:800;color:#F8CE4E;position:relative;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.2);}
 .wh-hand{position:absolute;bottom:8px;font-size:52px;z-index:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));}
 .wh-hand.l{left:2px;transform:scaleX(-1);}
 .wh-hand.r{right:2px;}
