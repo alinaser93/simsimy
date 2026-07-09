@@ -11,6 +11,7 @@ const OK_KEY = "bk-img-ok";    // ذاكرة الروابط الناجحة
 let active = 0;
 const queue = [];
 const inFlight = new Map();    // url -> Promise (منع الطلب المكرر)
+const badSet = new Set();      // روابط فشلت نهائياً في هذه الجلسة (لا نعيدها)
 
 const loadOk = () => { try { return new Set(JSON.parse(localStorage.getItem(OK_KEY) || "[]")); } catch { return new Set(); } };
 const okSet = loadOk();
@@ -24,6 +25,8 @@ const saveOk = () => {
 
 // هل نعرف مسبقاً أن هذا الرابط يعمل؟ (يُعرض فوراً بلا انتظار)
 export function isKnownGood(url) { return !!url && okSet.has(url); }
+// هل فشل هذا الرابط نهائياً في هذه الجلسة؟ (نتخطّاه فوراً)
+export function isKnownBad(url) { return !!url && badSet.has(url); }
 
 function pump() {
   while (active < MAX_CONCURRENT && queue.length) {
@@ -34,6 +37,8 @@ function pump() {
 }
 
 function attempt(job, n) {
+  const maxAttempts = job.attempts || MAX_ATTEMPTS;
+  const timeoutMs = job.timeout || TIMEOUT_MS;
   const img = new Image();
   let settled = false;
   const finish = (ok) => {
@@ -44,24 +49,26 @@ function attempt(job, n) {
     if (ok) {
       if (!job.url.startsWith("data:")) { okSet.add(job.url); saveOk(); }
       job.resolve(true);
-    } else if (n < MAX_ATTEMPTS) {
+    } else if (n < maxAttempts) {
       // أعِد الصورة لآخر الطابور بعد مهلة، فلا تعطّل بقية الصور
       setTimeout(() => { queue.push({ ...job, attempt: n + 1 }); pump(); }, 1500 * n);
     } else {
+      badSet.add(job.url);
       job.resolve(false);
     }
     pump();
   };
-  const timer = setTimeout(() => finish(false), TIMEOUT_MS);
+  const timer = setTimeout(() => finish(false), timeoutMs);
   img.onload = () => finish(img.naturalWidth > 0);
   img.onerror = () => finish(false);
   img.src = job.url;
 }
 
 /* حمّل صورة عبر الطابور. يُعيد Promise<boolean> (نجحت أم لا). */
-export function loadImage(url) {
+export function loadImage(url, opts = {}) {
   if (!url) return Promise.resolve(false);
   if (okSet.has(url)) return Promise.resolve(true);
+  if (badSet.has(url)) return Promise.resolve(false);
   // الصور المحلية (base64/blob) لا تحتاج طابوراً — حمّلها فوراً
   if (url.startsWith("data:") || url.startsWith("blob:")) {
     return new Promise((resolve) => {
@@ -73,7 +80,7 @@ export function loadImage(url) {
   }
   if (inFlight.has(url)) return inFlight.get(url);
   const p = new Promise((resolve) => {
-    queue.push({ url, resolve });
+    queue.push({ url, resolve, attempts: opts.attempts, timeout: opts.timeout });
     pump();
   }).then((ok) => { inFlight.delete(url); return ok; });
   inFlight.set(url, p);
