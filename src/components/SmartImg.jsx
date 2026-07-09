@@ -1,34 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { loadImage, isKnownGood } from "../utils/imgQueue.js";
 
-/* صورة ذكية بأسلوب بلينكيت:
-   - الإيموجي يظهر افتراضياً (أثناء التحميل أو عند الفشل) — فلا تظهر أيقونة «الصورة مكسورة» أبداً.
-   - الصورة الحقيقية تنكشف فقط عند نجاح تحميلها (onLoad).
-   - عند الفشل: تُعاد المحاولة بصمت (تحسّباً لبطء توليد صور الذكاء) ثم يبقى الإيموجي.
-   className: صنف الصورة | emojiClass: صنف حاوية الإيموجي (ليطابق كل سياق). */
-export default function SmartImg({ src, emoji, alt = "", className = "ph-img", emojiClass = "bk-pc-img", imgStyle, maxRetry = 3 }) {
-  const [loaded, setLoaded] = useState(false);
-  const [tries, setTries] = useState(0);
-  const [dead, setDead] = useState(false);
-  const canImg = src && !dead;
-  return (
-    <>
-      {!loaded && <span className={emojiClass}>{emoji}</span>}
-      {canImg && (
-        <img
-          key={tries}
-          src={src}
-          alt={alt}
-          className={className}
-          style={{ ...(imgStyle || {}), display: loaded ? undefined : "none" }}
-          loading="lazy"
-          draggable="false"
-          onLoad={() => setLoaded(true)}
-          onError={() => {
-            if (tries < maxRetry) setTimeout(() => setTries((t) => t + 1), 1500 * (tries + 1));
-            else setDead(true);
-          }}
-        />
-      )}
-    </>
-  );
+/* صورة ذكية:
+   - الإيموجي يظهر افتراضياً — فلا تظهر أبداً أيقونة «صورة مكسورة».
+   - الصورة الحقيقية تُطلب عبر طابور محدود التزامن (4 في آنٍ واحد) بدل 100 دفعة واحدة،
+     فتنجح الخدمة المجانية في توليدها ثم تُعرض. الروابط الناجحة تُحفظ فتظهر فوراً لاحقاً.
+   - عند الفشل التام: يبقى الإيموجي بلا كسر. */
+export default function SmartImg({ src, emoji, alt = "", className = "ph-img", emojiClass = "bk-pc-img", imgStyle }) {
+  const [ready, setReady] = useState(() => isKnownGood(src));
+
+  useEffect(() => {
+    let alive = true;
+    if (!src) { setReady(false); return undefined; }
+    if (isKnownGood(src)) { setReady(true); return undefined; }
+    setReady(false);
+    loadImage(src).then((ok) => { if (alive && ok) setReady(true); });
+    return () => { alive = false; };
+  }, [src]);
+
+  if (!ready) return <span className={emojiClass}>{emoji}</span>;
+  return <img src={src} alt={alt} className={className} style={imgStyle} draggable="false" />;
 }
