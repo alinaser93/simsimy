@@ -1,7 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import ProductCard, { PROD_BG } from "./ProductCard.jsx";
 import SmartImg from "./SmartImg.jsx";
-import { productImg } from "../utils/imageGen.js";
+import { productImgCandidates } from "../utils/imageGen.js";
 import { useStore } from "../store/appStore.js";
 
 /* صف منتجات أفقي بأسلوب بلينكيت:
@@ -37,7 +37,7 @@ export default function ProductRow({ title, sub, ids, cart, add, inc, dec, onSee
         <div className="bk-seeall-bar" onClick={onSeeAll}>
           <div className="thumbs">
             {all.slice(0, 3).map((p) => (
-              <span key={p.id} className="th" style={{ background: PROD_BG }}><SmartImg src={productImg(p)} emoji={p.e} className="" emojiClass="" /></span>
+              <span key={p.id} className="th" style={{ background: PROD_BG }}><SmartImg srcs={productImgCandidates(p)} emoji={p.e} className="" emojiClass="" /></span>
             ))}
           </div>
           <div className="txt">عرض المنتجات</div>

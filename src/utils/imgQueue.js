@@ -5,6 +5,7 @@
 
 const MAX_CONCURRENT = 4;      // كم صورة تُحمّل في نفس الوقت
 const MAX_ATTEMPTS = 4;        // محاولات كل صورة
+const TIMEOUT_MS = 12000;      // مهلة المحاولة الواحدة
 const OK_KEY = "bk-img-ok";    // ذاكرة الروابط الناجحة
 
 let active = 0;
@@ -28,7 +29,7 @@ function pump() {
   while (active < MAX_CONCURRENT && queue.length) {
     const job = queue.shift();
     active++;
-    attempt(job, 1);
+    attempt(job, job.attempt || 1);
   }
 }
 
@@ -39,17 +40,19 @@ function attempt(job, n) {
     if (settled) return;
     settled = true;
     clearTimeout(timer);
+    active--;                       // حرّر الخانة فوراً — لا تحجزها أثناء انتظار المحاولة التالية
     if (ok) {
-      okSet.add(job.url); saveOk();
-      active--; job.resolve(true); pump();
+      if (!job.url.startsWith("data:")) { okSet.add(job.url); saveOk(); }
+      job.resolve(true);
     } else if (n < MAX_ATTEMPTS) {
-      // إعادة محاولة هادئة (الخدمة قد تكون تولّد الصورة الآن)
-      setTimeout(() => attempt(job, n + 1), 1500 * n);
+      // أعِد الصورة لآخر الطابور بعد مهلة، فلا تعطّل بقية الصور
+      setTimeout(() => { queue.push({ ...job, attempt: n + 1 }); pump(); }, 1500 * n);
     } else {
-      active--; job.resolve(false); pump();
+      job.resolve(false);
     }
+    pump();
   };
-  const timer = setTimeout(() => finish(false), 20000);  // مهلة سخيّة لتوليد الذكاء
+  const timer = setTimeout(() => finish(false), TIMEOUT_MS);
   img.onload = () => finish(img.naturalWidth > 0);
   img.onerror = () => finish(false);
   img.src = job.url;
@@ -59,6 +62,15 @@ function attempt(job, n) {
 export function loadImage(url) {
   if (!url) return Promise.resolve(false);
   if (okSet.has(url)) return Promise.resolve(true);
+  // الصور المحلية (base64/blob) لا تحتاج طابوراً — حمّلها فوراً
+  if (url.startsWith("data:") || url.startsWith("blob:")) {
+    return new Promise((resolve) => {
+      const im = new Image();
+      im.onload = () => resolve(im.naturalWidth > 0);
+      im.onerror = () => resolve(false);
+      im.src = url;
+    });
+  }
   if (inFlight.has(url)) return inFlight.get(url);
   const p = new Promise((resolve) => {
     queue.push({ url, resolve });

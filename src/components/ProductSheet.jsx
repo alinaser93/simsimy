@@ -5,7 +5,7 @@ import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
 import { PROD_BG } from "./ProductCard.jsx";
 import SmartImg from "./SmartImg.jsx";
-import { productImg } from "../utils/imageGen.js";
+import { productImgCandidates } from "../utils/imageGen.js";
 
 /* صفحة تفاصيل المنتج — كما في التطبيق الأصلي:
    صورة كبيرة، شريط علوي لاصق عند التمرير، لماذا بلينكيت، المواصفات،
@@ -28,7 +28,8 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
   const bodyRef = useRef(null);
   if (!p) return null;
 
-  const imgs = (p.images && p.images.length ? p.images : (p.img ? [p.img] : [productImg(p)]));
+  const cand = productImgCandidates(p);
+  const imgs = (p.images && p.images.length ? p.images : [cand[0]]);
   const custCount = reviews.length;
   const custAvg = custCount ? reviews.reduce((a, r) => a + (r.rating || 0), 0) / custCount : 0;
   const variants = p.variants || [];
@@ -56,7 +57,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
     <div className="bk-page" style={{ zIndex: 45 }}>
       <div className={"bk-pd-sticky" + (bar ? " on" : "")}>
         <div className="bk-back" style={{ width: 32, height: 32, borderRadius: "50%", background: "#f3f3f3", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}><ChevronRight size={20} strokeWidth={2.5} /></div>
-        <span className="e"><SmartImg src={p.img} emoji={p.e} className="" emojiClass="" imgStyle={{ width: 30, height: 30, objectFit: "contain" }} /></span>
+        <span className="e"><SmartImg srcs={cand} emoji={p.e} className="" emojiClass="" imgStyle={{ width: 30, height: 30, objectFit: "contain" }} /></span>
         <span className="n">{p.name}</span>
         <Adder />
       </div>
@@ -91,7 +92,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
             <div className="bk-pd-track" style={{ transform: `translateX(${ii * 100}%)` }}>
               {(imgs.length ? imgs : [null]).map((u, i) => (
                 <div className="bk-pd-slide" key={i} style={{ background: PROD_BG }}>
-                  <SmartImg src={u} emoji={p.e} alt={p.name} className="" emojiClass="emoji" />
+                  <SmartImg srcs={i === 0 ? cand : [u]} emoji={p.e} alt={p.name} className="" emojiClass="emoji" />
                 </div>
               ))}
             </div>

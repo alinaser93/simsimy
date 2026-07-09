@@ -2,22 +2,29 @@ import { useEffect, useState } from "react";
 import { loadImage, isKnownGood } from "../utils/imgQueue.js";
 
 /* صورة ذكية:
-   - الإيموجي يظهر افتراضياً — فلا تظهر أبداً أيقونة «صورة مكسورة».
-   - الصورة الحقيقية تُطلب عبر طابور محدود التزامن (4 في آنٍ واحد) بدل 100 دفعة واحدة،
-     فتنجح الخدمة المجانية في توليدها ثم تُعرض. الروابط الناجحة تُحفظ فتظهر فوراً لاحقاً.
-   - عند الفشل التام: يبقى الإيموجي بلا كسر. */
-export default function SmartImg({ src, emoji, alt = "", className = "ph-img", emojiClass = "bk-pc-img", imgStyle }) {
-  const [ready, setReady] = useState(() => isKnownGood(src));
+   - تجرّب روابط الصورة بالترتيب: صورة التاجر ← الصورة الدائمة (Supabase) ← توليد لحظي بالذكاء.
+   - أثناء التحميل: بديل رمادي ناعم (وميض) — لا إيموجي ولا أيقونة مكسورة.
+   - الروابط الناجحة تُحفظ فتظهر فوراً لاحقاً. */
+export default function SmartImg({ src, srcs, emoji, alt = "", className = "ph-img", emojiClass = "bk-pc-img", imgStyle }) {
+  const list = (srcs && srcs.length ? srcs : (src ? [src] : [])).filter(Boolean);
+  const key = list.join("|");
+  const [okSrc, setOkSrc] = useState(() => list.find(isKnownGood) || null);
 
   useEffect(() => {
     let alive = true;
-    if (!src) { setReady(false); return undefined; }
-    if (isKnownGood(src)) { setReady(true); return undefined; }
-    setReady(false);
-    loadImage(src).then((ok) => { if (alive && ok) setReady(true); });
+    const known = list.find(isKnownGood);
+    if (known) { setOkSrc(known); return undefined; }
+    setOkSrc(null);
+    (async () => {
+      for (const u of list) {
+        const ok = await loadImage(u);
+        if (!alive) return;
+        if (ok) { setOkSrc(u); return; }
+      }
+    })();
     return () => { alive = false; };
-  }, [src]);
+  }, [key]);
 
-  if (!ready) return <span className={emojiClass}>{emoji}</span>;
-  return <img src={src} alt={alt} className={className} style={imgStyle} draggable="false" />;
+  if (!okSrc) return <span className={emojiClass + " bk-imgph"} aria-label={alt} />;
+  return <img src={okSrc} alt={alt} className={className} style={imgStyle} draggable="false" />;
 }

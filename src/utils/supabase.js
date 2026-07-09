@@ -35,6 +35,40 @@ export function imageLoads(src, timeoutMs = 7000) {
   });
 }
 
+/* رابط الصورة الدائم لمنتج — محسوب من رقم المنتج، فيعرفه كل جهاز بلا مزامنة.
+   يُنشأ مرة واحدة برفع الصورة إلى هذا المسار من لوحة الإدارة. */
+export function productImageUrl(id) {
+  const cfg = getSupabaseCfg();
+  if (!cfg || id == null) return null;
+  const url = baseUrl(cfg.url);
+  const bucket = cfg.bucket || "products";
+  return `${url}/storage/v1/object/public/${bucket}/prod-${id}.jpg`;
+}
+
+/* يرفع صورة إلى مسار محدد (يستبدل الموجود). يُعيد الرابط العام. */
+export async function uploadImageAt(path, blob, contentType = "image/jpeg") {
+  const cfg = getSupabaseCfg();
+  if (!cfg) throw new Error("لم يُضبط Supabase بعد");
+  const url = baseUrl(cfg.url);
+  const bucket = cfg.bucket || "products";
+  const res = await fetch(`${url}/storage/v1/object/${bucket}/${path}`, {
+    method: "POST",
+    headers: {
+      apikey: cfg.anonKey,
+      Authorization: `Bearer ${cfg.anonKey}`,
+      "x-upsert": "true",
+      "Content-Type": contentType,
+    },
+    body: blob,
+  });
+  if (!res.ok) {
+    let msg = res.status + "";
+    try { const j = await res.json(); msg += " — " + (j.message || j.error || ""); } catch { /* لا شيء */ }
+    throw new Error("فشل الرفع: " + msg);
+  }
+  return `${url}/storage/v1/object/public/${bucket}/${path}`;
+}
+
 // يرفع الملف ويُعيد الرابط العام — لكن فقط إن كان الرابط **يفتح فعلاً**.
 // إن نجح الرفع لكن القراءة محجوبة (bucket ليس عاماً)، يُعيد null ليستخدم المُنادي نسخة base64
 // فتظهر الصورة دائماً على الجهاز. مرِّر verify=false لتخطّي التحقّق (نادراً).

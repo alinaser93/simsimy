@@ -6,6 +6,7 @@ import { classify, suggestPrice, suggestBadge, generateDesc, findSimilar } from 
 import { uploadImage, getSupabaseCfg, setSupabaseCfg } from "../utils/supabase.js";
 import { aiCall } from "../utils/aiClient.js";
 import { genProductImage, suggestBackgrounds, pollinationsUrl, arToEnPrompt, normalizeImage } from "../utils/imageGen.js";
+import { productImageUrl, uploadImageAt, imageLoads } from "../utils/supabase.js";
 import { processImage, dataUrlToFile, bgForCat, PRODUCT_BGS } from "../utils/imageProcessor.js";
 import { fmt, CUR } from "../utils/currency.js";
 
@@ -52,28 +53,45 @@ function ProductManager({ scope = "admin", mid = null }) {
   const [collapsed, setCollapsed] = useState({});
   const subOptions = [...new Set(products.map((p) => p.sub).filter(Boolean))];
   const [modal, setModal] = useState(null); // null | {mode:'add'|'edit', data}
-  // أداة توليد الصور الواقعية لكل المنتجات دفعة واحدة
-  const [bulk, setBulk] = useState(null); // null | { done, total, running }
+  /* أداة الصور الدائمة:
+     تولّد صورة واقعية لكل منتج مرة واحدة، وترفعها إلى تخزين الموقع بمسار ثابت (prod-{id}.jpg).
+     بعدها تظهر الصور فوراً لكل الأجهزة بلا توليد ولا انتظار. الأداة قابلة للاستئناف والإيقاف. */
+  const [bulk, setBulk] = useState(null); // null | { done, total, running, skipped, failed, cur }
   const bulkStop = useRef(false);
   const genAllImages = async () => {
-    const targets = products.filter((p) => !((p.images && p.images.length) || p.img));
-    if (!targets.length) { alert("كل المنتجات عندها صور بالفعل 👍"); return; }
-    if (!window.confirm(`راح يولّد صور واقعية بالذكاء لـ ${targets.length} منتج (مجاناً).\nتقدر توقفه بأي لحظة. نكمل؟`)) return;
+    const targets = products.slice();
+    if (!targets.length) return;
+    if (!window.confirm(
+      `سيولّد صوراً واقعية لـ ${targets.length} منتج ويرفعها لتخزين موقعك مرة واحدة.\n` +
+      `بعدها تظهر الصور فوراً لكل الزبائن على كل الأجهزة.\n\n` +
+      `قد يستغرق عدة دقائق. تقدر توقفه وتكمل لاحقاً. نبدأ؟`)) return;
+
     bulkStop.current = false;
-    setBulk({ done: 0, total: targets.length, running: true });
-    let done = 0;
+    let done = 0, skipped = 0, failed = 0;
+    setBulk({ done, total: targets.length, running: true, skipped, failed, cur: "" });
+
     for (const p of targets) {
       if (bulkStop.current) break;
+      setBulk({ done, total: targets.length, running: true, skipped, failed, cur: p.name });
+      const permanent = productImageUrl(p.id);
       try {
-        const genUrl = pollinationsUrl(arToEnPrompt(p.name)); // وصف إنجليزي موثوق ← صورة واقعية بخلفية بيضاء
-        updateProduct(p.id, { images: [genUrl], img: genUrl });
+        // موجودة مسبقاً؟ تخطَّ (يجعل الأداة قابلة للاستئناف)
+        if (permanent && (await imageLoads(permanent, 6000))) { skipped++; done++; continue; }
+        // ولّد الصورة من خدمة الذكاء ثم ارفعها لتخزينك
+        const genUrl = pollinationsUrl(arToEnPrompt(p.name), p.id);
+        const res = await fetch(genUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error("توليد فشل: " + res.status);
+        const blob = await res.blob();
+        if (!blob || blob.size < 1000) throw new Error("صورة فارغة");
+        await uploadImageAt(`prod-${p.id}.jpg`, blob, blob.type || "image/jpeg");
         done++;
-      } catch { /* تخطَّ هذا المنتج وواصل */ }
-      setBulk({ done, total: targets.length, running: true });
-      await new Promise((r) => setTimeout(r, 120));
+      } catch {
+        failed++; done++;   // تخطَّ هذا المنتج وواصل
+      }
+      setBulk({ done, total: targets.length, running: true, skipped, failed, cur: p.name });
+      await new Promise((r) => setTimeout(r, 400));  // مهلة تحترم حدود الخدمة المجانية
     }
-    setBulk({ done, total: targets.length, running: false });
-    setTimeout(() => setBulk((b) => (b && !b.running ? null : b)), 6000);
+    setBulk({ done, total: targets.length, running: false, skipped, failed, cur: "" });
   };
   const list = products.filter((p) => p.name.includes(q) && (catFilter === "الكل" || p.cat === catFilter) && (merchantFilter === "الكل" || p.merchantId === merchantFilter) && (!dealsOnly || p.deal));
   const mName = (id) => merchants.find((m) => m.id === id)?.name || "—";
@@ -232,20 +250,20 @@ function ProductManager({ scope = "admin", mid = null }) {
           <div style={{ fontSize: 30, lineHeight: 1 }}>🎨</div>
           <div style={{ flex: 1, minWidth: 170 }}>
             <div style={{ fontWeight: 800, fontSize: 15, color: "#0C6B2A" }}>صور واقعية بالذكاء</div>
-            <div style={{ fontSize: 12.5, color: "#3a5a44", lineHeight: 1.6 }}>حوّل الإيموجي إلى صور منتجات واقعية بأسلوب بلينكيت — مجاناً وبضغطة وحدة.</div>
+            <div style={{ fontSize: 12.5, color: "#3a5a44", lineHeight: 1.6 }}>تُولّد مرة واحدة وتُحفظ في تخزين موقعك — بعدها تظهر فوراً لكل الزبائن على كل الأجهزة.</div>
           </div>
-          {!bulk?.running && <button className="pt-btn sm" style={{ background: "#0C831F" }} onClick={genAllImages}>🎨 ولّد صور المنتجات</button>}
+          {!bulk?.running && <button className="pt-btn sm" style={{ background: "#0C831F" }} onClick={genAllImages}>🎨 ولّد صور المنتجات (مرة واحدة)</button>}
         </div>
         {bulk && (
           <div style={{ marginTop: 10 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 5, fontWeight: 700, color: "#0C6B2A" }}>
-              <span>{bulk.running ? `⏳ يولّد… ${bulk.done} / ${bulk.total}` : `✓ تم توليد ${bulk.done} صورة`}</span>
+              <span>{bulk.running ? `⏳ ${bulk.done} / ${bulk.total} — ${bulk.cur || "…"}` : `✓ انتهى: ${bulk.done - bulk.failed} نجحت · ${bulk.skipped} موجودة · ${bulk.failed} فشلت`}</span>
               {bulk.running && <button className="pt-btn sm ghost" onClick={() => { bulkStop.current = true; }}>إيقاف</button>}
             </div>
             <div style={{ height: 8, background: "#D6EEDD", borderRadius: 20, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.round((bulk.done / bulk.total) * 100)}%`, background: "#0C831F", transition: "width .2s" }} />
             </div>
-            {!bulk.running && <div style={{ fontSize: 11.5, color: "#3a5a44", marginTop: 7, lineHeight: 1.6 }}>الصور تظهر بالمتجر الآن. أي صورة ما عجبتك؟ افتح المنتج وبدّلها أو ولّد غيرها.</div>}
+            {!bulk.running && <div style={{ fontSize: 11.5, color: "#3a5a44", marginTop: 7, lineHeight: 1.6 }}>{bulk.failed > 0 ? `الصور المرفوعة تظهر الآن فوراً لكل الأجهزة. ${bulk.failed} صورة فشلت — شغّل الأداة مرة أخرى لإكمالها (تتخطّى الموجود).` : "تم! كل الصور محفوظة دائماً وتظهر فوراً لكل الزبائن على كل الأجهزة."}</div>}
           </div>
         )}
       </div>

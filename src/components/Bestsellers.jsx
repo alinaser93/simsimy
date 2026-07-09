@@ -1,11 +1,11 @@
 import { useStore } from "../store/appStore.js";
 import { BESTSELLERS } from "../data/collections.js";
 import SmartImg from "./SmartImg.jsx";
-import { productImg } from "../utils/imageGen.js";
+import { productImgCandidates } from "../utils/imageGen.js";
 
 // خلية صورة منتج: الإيموجي يظهر حتى تنجح الصورة (بلا أيقونة مكسورة)
 function Thumb({ p }) {
-  return <SmartImg src={productImg(p)} emoji={p.e} className="" emojiClass="" />;
+  return <SmartImg srcs={productImgCandidates(p)} emoji={p.e} className="" emojiClass="" />;
 }
 
 // مطابقة مرنة بين عنوان البلاطة وأقسام المنتجات

@@ -1,5 +1,6 @@
 /* توليد صور منتجات متناسقة بأسلوب بلينكيت (بلا خادم) — canvas.
    ينتج صورة نظيفة: رمز/حرف المنتج على خلفية متدرّجة بلون القسم، بأبعاد موحّدة. */
+import { productImageUrl } from "./supabase.js";
 
 // ألوان ناعمة لكل قسم (تطابق روح بلينكيت)
 const CAT_COLORS = {
@@ -102,12 +103,22 @@ export function arToEnPrompt(name) {
   return en || name; // إن لم نجد، نعيد الاسم كما هو
 }
 
-// تُعيد رابط صورة لأي منتج دائماً: صورة التاجر إن وُجدت، وإلا صورة الذكاء المحسوبة من الاسم
+// تُعيد قائمة روابط مرشّحة لصورة المنتج، بالترتيب:
+// 1) صورة التاجر المرفوعة  2) الصورة الدائمة على Supabase (فورية لكل الأجهزة)  3) توليد لحظي بالذكاء
+export function productImgCandidates(p) {
+  if (!p) return [];
+  const out = [];
+  if (p.images && p.images.length && p.images[0]) out.push(p.images[0]);
+  else if (p.img && !p.img.includes("image.pollinations.ai")) out.push(p.img);
+  const permanent = productImageUrl(p.id);
+  if (permanent) out.push(permanent);
+  out.push(pollinationsUrl(arToEnPrompt(p.name || "منتج"), p.id || 1));
+  return [...new Set(out.filter(Boolean))];
+}
+
+// أول رابط مرشّح (لتوافق الاستدعاءات القديمة)
 export function productImg(p) {
-  if (!p) return "";
-  if (p.images && p.images.length && p.images[0]) return p.images[0];
-  if (p.img) return p.img;
-  return pollinationsUrl(arToEnPrompt(p.name || "منتج"), p.id || 1);
+  return productImgCandidates(p)[0] || "";
 }
 
 // توليد صورة حقيقية بالذكاء عبر Pollinations (مجاني، بلا مفتاح)
