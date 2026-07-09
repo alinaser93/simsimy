@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Star, Plus, Minus, ChevronLeft } from "lucide-react";
 import { fmt, CUR } from "../utils/currency.js";
 import SmartImg from "./SmartImg.jsx";
-import { productImgCandidates } from "../utils/imageGen.js";
+import { productImgCandidates, arToEnPrompt } from "../utils/imageGen.js";
 
 // خلفية موحّدة لكل بطاقات المنتجات — أبيض نقي ليذوب مع خلفيات الصور البيضاء (المنتج يطفو بلا مربّع)
 export const PROD_BG = "#FFFFFF";
@@ -54,7 +54,7 @@ export default function ProductCard({ p, qty, onAdd, onInc, onDec, grid, cardBg,
             <div className="bk-pc-track" style={{ transform: `translateX(${ci * 100}%)` }}>
               {imgs.map((u, i) => (
                 <div className="bk-pc-slide" key={i}>
-                  <SmartImg srcs={i === 0 ? cand : [u]} emoji={p.e} alt={p.name} />
+                  <SmartImg srcs={i === 0 ? cand : [u]} query={arToEnPrompt(p.name)} emoji={p.e} alt={p.name} />
                 </div>
               ))}
             </div>

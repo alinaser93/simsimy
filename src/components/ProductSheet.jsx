@@ -5,7 +5,7 @@ import { fmt, CUR } from "../utils/currency.js";
 import ProductRow from "./ProductRow.jsx";
 import { PROD_BG } from "./ProductCard.jsx";
 import SmartImg from "./SmartImg.jsx";
-import { productImgCandidates } from "../utils/imageGen.js";
+import { productImgCandidates, arToEnPrompt } from "../utils/imageGen.js";
 
 /* صفحة تفاصيل المنتج — كما في التطبيق الأصلي:
    صورة كبيرة، شريط علوي لاصق عند التمرير، لماذا بلينكيت، المواصفات،
@@ -92,7 +92,7 @@ export default function ProductSheet({ id, cart, add, inc, dec, onClose }) {
             <div className="bk-pd-track" style={{ transform: `translateX(${ii * 100}%)` }}>
               {(imgs.length ? imgs : [null]).map((u, i) => (
                 <div className="bk-pd-slide" key={i} style={{ background: PROD_BG }}>
-                  <SmartImg srcs={i === 0 ? cand : [u]} emoji={p.e} alt={p.name} className="" emojiClass="emoji" />
+                  <SmartImg srcs={i === 0 ? cand : [u]} query={arToEnPrompt(p.name)} emoji={p.e} alt={p.name} className="" emojiClass="emoji" />
                 </div>
               ))}
             </div>
