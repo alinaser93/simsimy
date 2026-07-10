@@ -14,7 +14,20 @@ function DeliveryInfo({ theme }) {
   // اعرض العنوان المحدد فعلياً من دفتر العناوين (لا نصاً ثابتاً)
   const addr = addresses.find((a) => a.id === selectedAddress) || addresses[0];
   const addrTitle = addr?.label || t.addressTitle;
-  const addrText = addr?.details || t.address;
+  const fullText = addr?.details || t.address;
+  // اعرض اسم المدينة فقط (اختصاراً): عادةً الجزء قبل «محافظة»، أو ثاني جزء في العنوان
+  const cityOnly = (txt) => {
+    if (!txt) return "";
+    const parts = txt.split("،").map((p) => p.trim()).filter(Boolean);
+    // أزل أي جزء يبدأ بـ«محافظة» أو «العراق»
+    const noProv = parts.filter((p) => !/^محافظة|^العراق|^الع راق/.test(p));
+    // ابحث عن جزء فيه اسم مدينة معروف، وإلا خذ الجزء قبل المحافظة، وإلا آخر جزء متبقٍّ
+    const provIdx = parts.findIndex((p) => /^محافظة/.test(p));
+    if (provIdx > 0) return parts[provIdx - 1];
+    if (noProv.length >= 2) return noProv[1];   // غالباً: منطقة، مدينة
+    return noProv[noProv.length - 1] || parts[0];
+  };
+  const addrText = cityOnly(fullText);
   return (
     <div className="bk-deliv">
       <div>
