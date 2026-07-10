@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { ChevronRight, MessageCircle, ShieldCheck } from "lucide-react";
-import { loginWithPhone } from "../store/appStore.js";
+import { ChevronRight, MessageCircle, ShieldCheck, LocateFixed, Loader2, MapPin } from "lucide-react";
+import { loginWithPhone, setMyLocation } from "../store/appStore.js";
 import { sendWhatsappOtp } from "../utils/otp.js";
+import { getCurrentLocation, reverseGeocode } from "../utils/geo.js";
 
 /* تسجيل الدخول عبر واتساب — العراق فقط (+964) — بأسلوب بلينكيت */
 export default function LoginPage({ onBack, onDone }) {
@@ -13,6 +14,9 @@ export default function LoginPage({ onBack, onDone }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [countdown, setCountdown] = useState(0);
+  const [locating, setLocating] = useState(false);
+  const [locErr, setLocErr] = useState("");
+  const [locDone, setLocDone] = useState("");
   const boxes = useRef([]);
 
   // أرقام العراق: 10 أرقام تبدأ بـ7 (بعد +964)، أو 11 تبدأ بـ07
@@ -62,15 +66,30 @@ export default function LoginPage({ onBack, onDone }) {
     // التحقّق: في الوضع التجريبي نطابق الرمز المُرسل؛ في الإنتاج يتحقّق الخادم
     if (sentCode && code !== sentCode) { setErr("الرمز غير صحيح، تحقّق وأعد المحاولة"); setOtp(["", "", "", "", "", ""]); boxes.current[0]?.focus(); return; }
     loginWithPhone(fullNumber);
-    onDone ? onDone() : onBack();
+    setStep("location");   // خطوة تثبيت الموقع لسهولة المستخدم
   };
+
+  const useMyLocation = async () => {
+    setLocating(true); setLocErr("");
+    try {
+      const loc = await getCurrentLocation();
+      let details = "";
+      try { details = await reverseGeocode(loc.lat, loc.lng); } catch { /* لا بأس */ }
+      setMyLocation({ lat: loc.lat, lng: loc.lng, details });
+      setLocDone(details || "تم تحديد موقعك بنجاح");
+      setTimeout(() => finish(), 1100);
+    } catch (e) { setLocErr(e.message || "تعذّر تحديد الموقع — فعّل خدمة الموقع وحاول مجدداً"); }
+    setLocating(false);
+  };
+
+  const finish = () => { onDone ? onDone() : onBack(); };
 
   const resend = async () => { if (countdown > 0) return; await send(); };
 
   return (
     <div className="lg-page">
       <div className="lg-top">
-        <button className="lg-back" onClick={step === "otp" ? () => setStep("phone") : onBack}><ChevronRight size={24} /></button>
+        <button className="lg-back" onClick={step === "otp" ? () => setStep("phone") : step === "location" ? finish : onBack}><ChevronRight size={24} /></button>
         {step === "phone" && <button className="lg-skip" onClick={onBack}>تخطّي</button>}
       </div>
 
@@ -94,7 +113,7 @@ export default function LoginPage({ onBack, onDone }) {
             </button>
             <div className="lg-terms">بالمتابعة، أنت توافق على <b>شروط الخدمة</b> و<b>سياسة الخصوصية</b></div>
           </>
-        ) : (
+        ) : step === "otp" ? (
           <>
             <h2 className="lg-h">تأكيد الرمز</h2>
             <div className="lg-sent">أرسلنا رمز التحقّق عبر واتساب إلى<br /><b dir="ltr">{fullNumber}</b></div>
@@ -113,6 +132,26 @@ export default function LoginPage({ onBack, onDone }) {
                 : <button onClick={resend}>إعادة إرسال الرمز</button>}
             </div>
             <div className="lg-wavia"><MessageCircle size={15} color="#25D366" /> يصلك الرمز عبر واتساب</div>
+          </>
+        ) : (
+          <>
+            <div className="lg-loc-ic"><MapPin size={40} strokeWidth={1.6} color="#0C831F" /></div>
+            <h2 className="lg-h">حدّد موقعك</h2>
+            <div className="lg-sent">نحتاج موقعك لتوصيل طلباتك بدقّة وسرعة.<br />فعّلها مرة وحدة وتنحفظ لك.</div>
+            {locDone ? (
+              <div className="lg-demo" style={{ background: "#eaf7ec", borderColor: "#bfe6cb", color: "#0C6B2A" }}>
+                ✅ تم تثبيت موقعك<br /><b>{locDone}</b>
+              </div>
+            ) : (
+              <>
+                <button className="lg-wa" style={{ background: "#0C831F" }} disabled={locating} onClick={useMyLocation}>
+                  {locating ? <Loader2 size={18} className="spin" /> : <LocateFixed size={18} />}
+                  {locating ? "جارٍ تحديد موقعك…" : "استخدام موقعي الحالي"}
+                </button>
+                {locErr && <div className="lg-err">{locErr}</div>}
+                <button className="lg-skip-loc" onClick={finish}>تخطّي الآن — أحدّده لاحقاً</button>
+              </>
+            )}
           </>
         )}
       </div>

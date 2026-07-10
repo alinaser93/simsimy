@@ -543,6 +543,17 @@ export const updateSettings = (patch) =>
 export const updateUser = (patch) =>
   setState((s) => ({ user: { ...s.user, ...patch } }));
 
+// يثبّت موقع المستخدم الحقيقي على العنوان المحدّد (يحدّث التفاصيل + الإحداثيات)
+export const setMyLocation = ({ lat, lng, details }) =>
+  setState((s) => {
+    const id = s.selectedAddress || (s.addresses[0] && s.addresses[0].id);
+    return {
+      addresses: s.addresses.map((a) =>
+        a.id === id ? { ...a, ...(details ? { details } : {}), ...(lat != null ? { lat, lng } : {}) } : a
+      ),
+    };
+  });
+
 // تسجيل الدخول: يحفظ الرقم + يحدّث الأرقام الافتراضية في العناوين لرقم الحساب الجديد
 const DEFAULT_PHONES = ["0770 000 0000", "07700000000", "+964 7700000000"];
 export const loginWithPhone = (fullNumber) =>
