@@ -44,7 +44,7 @@ export default function SmartImg({ src, srcs, query, emoji, alt = "", className 
         if (isKnownBad(u)) continue;
         const ok = await loadImage(u, { attempts: 1, timeout: 5000 });
         if (!alive) return;
-        if (ok) { setOkSrc(u); cacheAsWebp(key, u); return; }
+        if (ok) { setOkSrc(u); cacheAsWebp(key, u).then(() => getCachedWebp(key)).then((c) => { if (alive && c) setOkSrc(c); }); return; }
       }
       // 2) صورة حقيقية حرّة الترخيص (بلا توليد — الأسرع والأثبت)
       if (query) {
@@ -53,7 +53,7 @@ export default function SmartImg({ src, srcs, query, emoji, alt = "", className 
         if (real && !isKnownBad(real)) {
           const ok = await loadImage(real, { attempts: 2, timeout: 9000 });
           if (!alive) return;
-          if (ok) { setOkSrc(real); cacheAsWebp(key, real); return; }
+          if (ok) { setOkSrc(real); cacheAsWebp(key, real).then(() => getCachedWebp(key)).then((c) => { if (alive && c) setOkSrc(c); }); return; }
         }
       }
       // 3) توليد بالذكاء (آخر خيار — قد يتأخّر)
@@ -61,7 +61,7 @@ export default function SmartImg({ src, srcs, query, emoji, alt = "", className 
       if (last && !isKnownBad(last)) {
         const ok = await loadImage(last, { attempts: 3, timeout: 15000 });
         if (!alive) return;
-        if (ok) { setOkSrc(last); cacheAsWebp(key, last); }
+        if (ok) { setOkSrc(last); cacheAsWebp(key, last).then(() => getCachedWebp(key)).then((c) => { if (alive && c) setOkSrc(c); }); }
       }
     })();
     return () => { alive = false; };

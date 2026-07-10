@@ -10,6 +10,7 @@ import ProfilePage from "../components/ProfilePage.jsx";
 import WishlistPage from "../components/WishlistPage.jsx";
 import InfoPage from "../components/InfoPage.jsx";
 import useOrderNotifications from "../hooks/useOrderNotifications.js";
+import useImageWarmup from "../hooks/useImageWarmup.js";
 import LoginPage from "../components/LoginPage.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import CategoryTabs from "../components/CategoryTabs.jsx";
@@ -54,6 +55,7 @@ export default function Storefront() {
   const customTabs = useStore((s) => s.customTabs);
   const tabBlocks = useStore((s) => s.tabBlocks);
   const products = useStore((s) => s.products);
+  useImageWarmup(products);  // تجهيز صور المنتجات مسبقاً في الخلفية
   const orders = useStore((s) => s.orders);
   const customTab = customTabs.find((t) => t.id === catTab);
   const theme = THEMES[catTab] || (customTab && {

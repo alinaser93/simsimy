@@ -24,7 +24,7 @@ export function findRealImage(query) {
   if (inFlight.has(q)) return inFlight.get(q);
 
   const url = `${API}?action=query&format=json&origin=*&generator=search`
-    + `&gsrnamespace=6&gsrsearch=${encodeURIComponent("filetype:bitmap " + q)}&gsrlimit=3`
+    + `&gsrnamespace=6&gsrsearch=${encodeURIComponent("filetype:bitmap " + q)}&gsrlimit=10`
     + `&prop=imageinfo&iiprop=url&iiurlwidth=500`;
 
   const p = (async () => {
@@ -36,8 +36,23 @@ export function findRealImage(query) {
       if (!res.ok) throw new Error("bad status");
       const data = await res.json();
       const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
-      // فضّل الصور (jpg/png) على الرسومات المتجهة
-      const hit = pages.map((pg) => pg?.imageinfo?.[0]?.thumburl).filter((u) => u && /\.(jpe?g|png)/i.test(u))[0] || null;
+      // فلترة الصلة: يجب أن يحتوي اسم الملف على كلمة أساسية من الوصف
+      // (يمنع نتائج عشوائية مثل صورة حصان لعبارة «تصفيف الشعر»)
+      const STOP = new Set(["and", "the", "for", "with", "photo", "product", "set", "bottle", "box", "pack", "bowl", "jar"]);
+      const keys = q.split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !STOP.has(w));
+      const scored = pages
+        .map((pg) => {
+          const t = String(pg?.title || "").toLowerCase();
+          const u = pg?.imageinfo?.[0]?.thumburl;
+          if (!u || !/\.(jpe?g|png)/i.test(u)) return null;
+          const hits = keys.filter((k) => t.includes(k)).length;
+          return { u, hits };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.hits - a.hits);
+      // إن لم تتطابق أي كلمة أساسية، لا نُرجع صورة عشوائية
+      const best = scored[0];
+      const hit = best && (keys.length === 0 || best.hits > 0) ? best.u : null;
       cache[q] = hit; save();
       return hit;
     } catch {

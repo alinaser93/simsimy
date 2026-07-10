@@ -41,6 +41,44 @@ async function idbPut(key, blob) {
   } catch { /* تجاهل */ }
 }
 
+
+/* إزالة الخلفية البيضاء: يملأ من الحواف نحو الداخل ويجعل البكسلات البيضاء شفافة.
+   يُطبَّق فقط على صور المنتجات ذات الخلفية البيضاء (لا على الصور الفوتوغرافية الطبيعية). */
+function removeWhiteBackground(ctx, w, h) {
+  const data = ctx.getImageData(0, 0, w, h);
+  const px = data.data;
+  const idx = (x, y) => (y * w + x) * 4;
+  const isWhite = (i, hard) => {
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    const mn = Math.min(r, g, b), mx = Math.max(r, g, b);
+    return r >= (hard ? 238 : 224) && g >= (hard ? 238 : 224) && b >= (hard ? 238 : 224) && mx - mn <= 14;
+  };
+  // هل الحواف بيضاء فعلاً؟ (وإلا فهي صورة طبيعية — لا نلمسها)
+  let edge = 0, edgeWhite = 0;
+  for (let x = 0; x < w; x++) { [0, h - 1].forEach((y) => { edge++; if (isWhite(idx(x, y), false)) edgeWhite++; }); }
+  for (let y = 0; y < h; y++) { [0, w - 1].forEach((x) => { edge++; if (isWhite(idx(x, y), false)) edgeWhite++; }); }
+  if (edgeWhite / edge < 0.7) return false;
+
+  const seen = new Uint8Array(w * h);
+  const stack = [];
+  const push = (x, y) => { if (x >= 0 && y >= 0 && x < w && y < h && !seen[y * w + x]) { seen[y * w + x] = 1; stack.push(x, y); } };
+  for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+  for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+
+  let cleared = 0;
+  while (stack.length) {
+    const y = stack.pop(), x = stack.pop();
+    const i = idx(x, y);
+    if (!isWhite(i, false)) continue;          // حدّ المنتج — توقّف
+    px[i + 3] = isWhite(i, true) ? 0 : 90;     // حافة ناعمة بدل قصّ حادّ
+    cleared++;
+    push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
+  }
+  if (cleared / (w * h) > 0.97) return false;  // الصورة فارغة تقريباً — تراجع
+  ctx.putImageData(data, 0, 0);
+  return true;
+}
+
 const urlCache = new Map();   // key -> objectURL (لتفادي إنشاء روابط مكرّرة)
 
 /* يُعيد رابط WebP محلياً إن كانت الصورة مخزّنة مسبقاً، وإلا null. */
@@ -64,13 +102,13 @@ export async function cacheAsWebp(key, url, size = 500) {
     if (!loaded || !img.naturalWidth) return;
     const c = document.createElement("canvas");
     c.width = size; c.height = size;
-    const ctx = c.getContext("2d");
-    ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, 0, size, size);
+    const ctx = c.getContext("2d");     // خلفية شفافة (لا نملأها بالأبيض)
     // احتواء الصورة داخل مربّع بلا تشويه
     const r = Math.min(size / img.naturalWidth, size / img.naturalHeight);
     const w = img.naturalWidth * r, h = img.naturalHeight * r;
     ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-    const blob = await new Promise((res) => c.toBlob(res, "image/webp", 0.82));
+    removeWhiteBackground(ctx, size, size);   // اجعل الخلفية البيضاء شفافة
+    const blob = await new Promise((res) => c.toBlob(res, "image/webp", 0.85));
     if (blob && blob.size > 500) await idbPut(key, blob);
   } catch { /* تلويث canvas أو منع CORS — تجاهل */ }
 }
