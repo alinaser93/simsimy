@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import SmartImg from "./SmartImg.jsx";
+import { productImgCandidates, arToEnPrompt } from "../utils/imageGen.js";
 import { useStore } from "../store/appStore.js";
 import { fmt, CUR } from "../utils/currency.js";
 
@@ -55,7 +56,7 @@ export default function FlashDeals({ cart, add, inc, dec, openList }) {
             <div className="bk-flash-card" key={p.id} onClick={() => openList && openList(p.cat)}>
               <div className="bk-flash-off">−{p.off}%</div>
               <div className="bk-flash-img" style={{ background: p.bg || "#fff" }}>
-                <SmartImg src={p.img || (p.images && p.images[0])} emoji={p.e} className="" emojiClass="e" />
+                <SmartImg srcs={productImgCandidates(p)} query={arToEnPrompt(p.name)} emoji={p.e} className="" emojiClass="e" />
               </div>
               <div className="bk-flash-nm">{p.name}</div>
               <div className="bk-flash-prices"><b>{fmt(p.priceIQD)} {CUR}</b><s>{fmt(p.mrpIQD)}</s></div>
