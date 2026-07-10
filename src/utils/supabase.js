@@ -42,11 +42,11 @@ export function productImageUrl(id) {
   if (!cfg || id == null) return null;
   const url = baseUrl(cfg.url);
   const bucket = cfg.bucket || "products";
-  return `${url}/storage/v1/object/public/${bucket}/prod-${id}.jpg`;
+  return `${url}/storage/v1/object/public/${bucket}/prod-${id}.webp`;
 }
 
 /* يرفع صورة إلى مسار محدد (يستبدل الموجود). يُعيد الرابط العام. */
-export async function uploadImageAt(path, blob, contentType = "image/jpeg") {
+export async function uploadImageAt(path, blob, contentType = "image/webp") {
   const cfg = getSupabaseCfg();
   if (!cfg) throw new Error("لم يُضبط Supabase بعد");
   const url = baseUrl(cfg.url);

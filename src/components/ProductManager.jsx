@@ -54,7 +54,7 @@ function ProductManager({ scope = "admin", mid = null }) {
   const subOptions = [...new Set(products.map((p) => p.sub).filter(Boolean))];
   const [modal, setModal] = useState(null); // null | {mode:'add'|'edit', data}
   /* أداة الصور الدائمة:
-     تولّد صورة واقعية لكل منتج مرة واحدة، وترفعها إلى تخزين الموقع بمسار ثابت (prod-{id}.jpg).
+     تولّد صورة واقعية لكل منتج مرة واحدة، تحوّلها إلى WebP (أخف وأسرع)، وترفعها بمسار ثابت (prod-{id}.webp).
      بعدها تظهر الصور فوراً لكل الأجهزة بلا توليد ولا انتظار. الأداة قابلة للاستئناف والإيقاف. */
   const [bulk, setBulk] = useState(null); // null | { done, total, running, skipped, failed, cur }
   const bulkStop = useRef(false);
@@ -81,9 +81,12 @@ function ProductManager({ scope = "admin", mid = null }) {
         const genUrl = pollinationsUrl(arToEnPrompt(p.name), p.id);
         const res = await fetch(genUrl, { cache: "no-store" });
         if (!res.ok) throw new Error("توليد فشل: " + res.status);
-        const blob = await res.blob();
-        if (!blob || blob.size < 1000) throw new Error("صورة فارغة");
-        await uploadImageAt(`prod-${p.id}.jpg`, blob, blob.type || "image/jpeg");
+        const raw = await res.blob();
+        if (!raw || raw.size < 1000) throw new Error("صورة فارغة");
+        // حوّلها إلى WebP (حجم أصغر بكثير ⇒ تحميل أسرع للزبائن)
+        const webp = await processImage(new File([raw], "gen.jpg", { type: raw.type || "image/jpeg" }),
+          { size: 600, bg: "#FFFFFF", pad: 0.04, format: "webp", quality: 0.82 });
+        await uploadImageAt(`prod-${p.id}.webp`, webp.blob, "image/webp");
         done++;
       } catch {
         failed++; done++;   // تخطَّ هذا المنتج وواصل
