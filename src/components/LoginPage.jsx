@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronRight, MessageCircle, ShieldCheck } from "lucide-react";
-import { updateUser } from "../store/appStore.js";
+import { loginWithPhone } from "../store/appStore.js";
 import { sendWhatsappOtp } from "../utils/otp.js";
 
 /* تسجيل الدخول عبر واتساب — العراق فقط (+964) — بأسلوب بلينكيت */
@@ -28,6 +28,15 @@ export default function LoginPage({ onBack, onDone }) {
 
   const send = async () => {
     if (!validIraq) { setErr("أدخل رقم عراقي صحيح (يبدأ بـ 7 ويتكوّن من 10 أرقام)"); return; }
+    if (busy) return;
+    // حماية من الضغط المتكرر: ثانيتان بين كل طلب لكل مستخدم (تُحفظ محلياً لتصمد عبر إعادة التحميل)
+    const now = Date.now();
+    let last = 0;
+    try { last = Number(localStorage.getItem("bk-otp-cooldown")) || 0; } catch { last = 0; }
+    const wait = 2000 - (now - last);
+    if (wait > 0) { setErr(`الرجاء الانتظار ${Math.ceil(wait / 1000)} ثانية قبل المحاولة مجدداً`); return; }
+    try { localStorage.setItem("bk-otp-cooldown", String(now)); } catch { /* لا شيء */ }
+
     setErr(""); setBusy(true);
     const res = await sendWhatsappOtp(cleanPhone(phone));
     setBusy(false);
@@ -52,7 +61,7 @@ export default function LoginPage({ onBack, onDone }) {
   const verify = (code) => {
     // التحقّق: في الوضع التجريبي نطابق الرمز المُرسل؛ في الإنتاج يتحقّق الخادم
     if (sentCode && code !== sentCode) { setErr("الرمز غير صحيح، تحقّق وأعد المحاولة"); setOtp(["", "", "", "", "", ""]); boxes.current[0]?.focus(); return; }
-    updateUser({ phone: fullNumber, loggedIn: true });
+    loginWithPhone(fullNumber);
     onDone ? onDone() : onBack();
   };
 

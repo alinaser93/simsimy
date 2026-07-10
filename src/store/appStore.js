@@ -542,6 +542,16 @@ export const updateSettings = (patch) =>
 
 export const updateUser = (patch) =>
   setState((s) => ({ user: { ...s.user, ...patch } }));
+
+// تسجيل الدخول: يحفظ الرقم + يحدّث الأرقام الافتراضية في العناوين لرقم الحساب الجديد
+const DEFAULT_PHONES = ["0770 000 0000", "07700000000", "+964 7700000000"];
+export const loginWithPhone = (fullNumber) =>
+  setState((s) => ({
+    user: { ...s.user, phone: fullNumber, loggedIn: true },
+    addresses: s.addresses.map((a) =>
+      (!a.phone || DEFAULT_PHONES.includes(String(a.phone).trim())) ? { ...a, phone: fullNumber } : a
+    ),
+  }));
 export const toggleWishlist = (id) =>
   setState((s) => ({ wishlist: s.wishlist.includes(id) ? s.wishlist.filter((x) => x !== id) : [...s.wishlist, id] }));
 
