@@ -42,7 +42,17 @@ export default function Storefront() {
   const [hint, setHint] = useState(0);
   const [listing, setListing] = useState(null);
   useOrderNotifications();   // إشعارات حالة الطلب في كل أنحاء التطبيق
-  const [page, setPage] = useState(null);        // cart | payment | address | orders | search | {tracking:id}
+  const [page, setPageRaw] = useState(null);        // cart | payment | address | orders | search | {tracking:id} | {info:topic} | login | wishlist
+  const navStack = useRef([]);                       // مكدّس الصفحات السابقة للرجوع الصحيح
+  // فتح صفحة مع تذكّر الحالية (فالرجوع يرجّع للمكان الفعلي)
+  const goTo = (next) => { navStack.current.push(page); setPageRaw(next); };
+  // رجوع للصفحة السابقة فعلياً، أو للرئيسية إن لم توجد
+  const goBack = () => {
+    const prev = navStack.current.pop();
+    setPageRaw(prev === undefined ? null : prev);
+  };
+  // ضبط مباشر يمسح المكدّس (للانتقالات الجذرية مثل العودة للرئيسية)
+  const setPage = (next) => { navStack.current = []; setPageRaw(next); };
   const [pending, setPending] = useState(null);  // بيانات السلة قبل الدفع
   const [loginNext, setLoginNext] = useState("profile"); // الوجهة بعد تسجيل الدخول
   const loggedIn = useStore((s) => s.user.loggedIn);
@@ -156,8 +166,8 @@ export default function Storefront() {
     return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("bk:openProfile", () => {}); };
   }, []);
   useEffect(() => {
-    const openProf = () => { pushBK(); setPage("profile"); };
-    const openAddr = () => { pushBK(); setPage("address"); };
+    const openProf = () => { pushBK(); goTo("profile"); };
+    const openAddr = () => { pushBK(); goTo("address"); };
     window.addEventListener("bk:openProfile", openProf);
     window.addEventListener("bk:openAddress", openAddr);
     const h = (e) => { pushBK(); setProductId(e.detail); };
@@ -241,7 +251,7 @@ export default function Storefront() {
             else if (order) { setNav("home"); setPage({ tracking: order.id }); }
           }} />
         ) : nav === "again" ? (
-          <OrdersPage onBack={() => setNav("home")} onOpen={(id) => { setNav("home"); setPage({ tracking: id }); }} onReorder={reorder} add={add} cart={cart} inc={inc} dec={dec} />
+          <OrdersPage onBack={() => setNav("home")} onOpen={(id) => { setNav("home"); goTo({ tracking: id }); }} onReorder={reorder} add={add} cart={cart} inc={inc} dec={dec} />
         ) : (
           <>
             {!settings.storeOpen && <div className="bk-closed">{texts.closedMsg}</div>}
@@ -263,7 +273,7 @@ export default function Storefront() {
         )}
 
         {count > 0 && !page && !productId && (
-          <div onClick={() => setPage("cart")}><CartBar count={count} total={total} savings={savings} items={recentItems} /></div>
+          <div onClick={() => goTo("cart")}><CartBar count={count} total={total} savings={savings} items={recentItems} /></div>
         )}
 
         {/* الصفحات الكاملة */}
@@ -274,40 +284,40 @@ export default function Storefront() {
             onPay={(data) => {
               setPending(data);
               if (loggedIn) setPage("payment");
-              else { setLoginNext("payment"); setPage("login"); }
+              else { setLoginNext("payment"); goTo("login"); }
             }} />
         )}
         {page === "payment" && pending && (
           <PaymentPage pending={pending} onBack={() => setPage("cart")} onPlaced={placed} />
         )}
-        {page === "address" && <AddressPage onBack={() => setPage("cart")} />}
+        {page === "address" && <AddressPage onBack={goBack} />}
         {page === "orders" && (
           <OrdersPage onBack={() => setPage(null)}
             onOpen={(id) => setPage({ tracking: id })}
             onReorder={reorder} add={add} cart={cart} inc={inc} dec={dec} />
         )}
         {page && page.tracking && (
-          <TrackingPage orderId={page.tracking} onBack={() => setPage("orders")} />
+          <TrackingPage orderId={page.tracking} onBack={goBack} />
         )}
         {page === "profile" && (
           <ProfilePage
             onBack={() => setPage(null)}
             onOrders={() => setPage("orders")}
             onAddress={() => setPage("address")}
-            onWishlist={() => setPage("wishlist")}
+            onWishlist={() => goTo("wishlist")}
             onWallet={() => setPage("orders")}
             onHelp={() => setPage({ info: "contact" })}
-            onInfo={(topic) => setPage({ info: topic })}
-            onLogin={() => { setLoginNext("profile"); setPage("login"); }} />
+            onInfo={(topic) => goTo({ info: topic })}
+            onLogin={() => { setLoginNext("profile"); goTo("login"); }} />
         )}
         {page && page.info && (
-          <InfoPage topic={page.info} onBack={() => setPage("profile")} />
+          <InfoPage topic={page.info} onBack={goBack} />
         )}
         {page === "wishlist" && (
-          <WishlistPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage("profile")} />
+          <WishlistPage cart={cart} add={add} inc={inc} dec={dec} onBack={goBack} />
         )}
         {page === "login" && (
-          <LoginPage onBack={() => setPage(loginNext === "payment" ? "cart" : "profile")} onDone={() => { if (loginNext === "print") { setPage(null); setNav("print"); } else setPage(loginNext); }} />
+          <LoginPage onBack={goBack} onDone={() => { if (loginNext === "print") { setPage(null); setNav("print"); } else setPage(loginNext); }} />
         )}
         {page === "search" && (
           <SearchPage cart={cart} add={add} inc={inc} dec={dec} onBack={() => setPage(null)} />
