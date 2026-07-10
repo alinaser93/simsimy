@@ -623,9 +623,11 @@ html,body{margin:0;height:100%;}
 .bk-gps-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:#eaf5ec;border:1.5px solid #0C831F;color:#0C831F;font-size:14px;font-weight:800;padding:12px;border-radius:11px;cursor:pointer;box-sizing:border-box;}
 .bk-locbox.open .bk-gps-btn{border:none;border-bottom:1.5px solid #0C831F;border-radius:0;background:#0C831F;color:#fff;}
 .bk-gps-btn:disabled{opacity:.6;cursor:default;}
-.bk-map-pick{margin:0;}
-.bk-map-pick .leaflet-container{border-radius:0 !important;}
-.bk-map-hint{text-align:center;font-size:12px;color:#6b7a6e;margin:0;padding:8px 6px;font-weight:700;background:#f4faf5;}
+.bk-map-pick{margin:0;line-height:0;font-size:0;}
+.bk-map-pick > div{margin:0 !important;}
+.bk-map-pick .bk-map{margin:0 !important;border:none !important;border-radius:0 !important;width:100% !important;background-image:none !important;background:#e8eef0 !important;}
+.bk-map-pick .leaflet-container{border-radius:0 !important;display:block;width:100% !important;background:#e8eef0;}
+.bk-map-hint{text-align:center;font-size:12px;color:#6b7a6e;margin:0;padding:8px 6px;font-weight:700;background:#f4faf5;line-height:1.3;}
 .spin{animation:bkspin 1s linear infinite;}
 @keyframes bkspin{to{transform:rotate(360deg);}}
 

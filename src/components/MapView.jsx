@@ -36,11 +36,14 @@ export default function MapView({ center = [33.3152, 44.3661], zoom = 14, marker
   // إنشاء الخريطة مرة واحدة
   useEffect(() => {
     if (mapRef.current || !elRef.current) return;
-    const map = L.map(elRef.current, { zoomControl: true, attributionControl: false }).setView(center, zoom);
+    const map = L.map(elRef.current, { zoomControl: false, attributionControl: false }).setView(center, zoom);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
     mapRef.current = map;
     setTimeout(() => map.invalidateSize(), 100);
-    return () => { map.remove(); mapRef.current = null; };
+    setTimeout(() => map.invalidateSize(), 400);   // بعد استقرار التخطيط (يمنع الفراغ الجانبي)
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => map.invalidateSize()) : null;
+    if (ro && elRef.current) ro.observe(elRef.current);
+    return () => { if (ro) ro.disconnect(); map.remove(); mapRef.current = null; };
   }, []);
 
   // تحديث المعالم والمسار
