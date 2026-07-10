@@ -73,10 +73,10 @@ export default function LoginPage({ onBack, onDone }) {
     setLocating(true); setLocErr("");
     try {
       const loc = await getCurrentLocation();
-      let details = "";
-      try { details = await reverseGeocode(loc.lat, loc.lng); } catch { /* لا بأس */ }
-      setMyLocation({ lat: loc.lat, lng: loc.lng, details });
-      setLocDone(details || "تم تحديد موقعك بنجاح");
+      let geo = { full: "", city: "" };
+      try { geo = await reverseGeocode(loc.lat, loc.lng); } catch { /* لا بأس */ }
+      setMyLocation({ lat: loc.lat, lng: loc.lng, details: geo.full, city: geo.city });
+      setLocDone(geo.full || "تم تحديد موقعك بنجاح");
       setTimeout(() => finish(), 1100);
     } catch (e) { setLocErr(e.message || "تعذّر تحديد الموقع — فعّل خدمة الموقع وحاول مجدداً"); }
     setLocating(false);

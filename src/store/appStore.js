@@ -544,12 +544,12 @@ export const updateUser = (patch) =>
   setState((s) => ({ user: { ...s.user, ...patch } }));
 
 // يثبّت موقع المستخدم الحقيقي على العنوان المحدّد (يحدّث التفاصيل + الإحداثيات)
-export const setMyLocation = ({ lat, lng, details }) =>
+export const setMyLocation = ({ lat, lng, details, city }) =>
   setState((s) => {
     const id = s.selectedAddress || (s.addresses[0] && s.addresses[0].id);
     return {
       addresses: s.addresses.map((a) =>
-        a.id === id ? { ...a, ...(details ? { details } : {}), ...(lat != null ? { lat, lng } : {}) } : a
+        a.id === id ? { ...a, ...(details ? { details } : {}), ...(city ? { city } : {}), ...(lat != null ? { lat, lng } : {}) } : a
       ),
     };
   });
@@ -771,9 +771,9 @@ export const cancelOrder = (id) => { _cancelOrder(id); afterOrderChange(id); };
 const _cancelOrder = (id) =>
   setState((s) => ({ orders: s.orders.map((o) => (o.id === id && o.status === "جديد" ? { ...o, status: "ملغي" } : o)) }));
 
-export const addAddress = (label, details, phone, coords) => {
+export const addAddress = (label, details, phone, coords, city) => {
   const id = "a" + Date.now();
-  setState((s) => ({ addresses: [...s.addresses, { id, label, details, phone, lat: coords?.lat, lng: coords?.lng }], selectedAddress: id }));
+  setState((s) => ({ addresses: [...s.addresses, { id, label, details, phone, city: city || "", lat: coords?.lat, lng: coords?.lng }], selectedAddress: id }));
 };
 export const selectAddress = (id) => setState({ selectedAddress: id });
 // تعديل عنوان محفوظ (التسمية/التفاصيل/الهاتف/الإحداثيات)

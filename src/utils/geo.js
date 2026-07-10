@@ -24,12 +24,14 @@ export async function reverseGeocode(lat, lng) {
     if (!res.ok) throw new Error("geocode failed");
     const data = await res.json();
     const a = data.address || {};
+    const city = a.city || a.town || a.village || a.municipality || a.county || a.state_district || "";
     // ابنِ عنوانًا مختصرًا مقروءًا
     const parts = [a.road || a.neighbourhood || a.suburb, a.suburb || a.city_district, a.city || a.town || a.village, a.state]
       .filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i);
-    return parts.join("، ") || data.display_name || `موقع (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    const full = parts.join("، ") || data.display_name || `موقع (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    return { full, city };
   } catch {
-    return `موقع محدّد (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    return { full: `موقع محدّد (${lat.toFixed(4)}, ${lng.toFixed(4)})`, city: "" };
   }
 }
 

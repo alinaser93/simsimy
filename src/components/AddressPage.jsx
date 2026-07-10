@@ -12,7 +12,7 @@ export default function AddressPage({ onBack }) {
   const [editId, setEditId] = useState(null);   // عند التعديل: معرّف العنوان
   const storeLoc = useStore((s) => s.storeLocation);
   const userPhone = useStore((s) => s.user.phone);
-  const [f, setF] = useState({ label: "المنزل", details: "", phone: "" });
+  const [f, setF] = useState({ label: "المنزل", details: "", phone: "", city: "" });
   const [coords, setCoords] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locErr, setLocErr] = useState("");
@@ -22,26 +22,26 @@ export default function AddressPage({ onBack }) {
     try {
       const loc = await getCurrentLocation();
       setCoords({ lat: loc.lat, lng: loc.lng });
-      const addr = await reverseGeocode(loc.lat, loc.lng);
-      setF((prev) => ({ ...prev, details: addr }));
+      const geo = await reverseGeocode(loc.lat, loc.lng);
+      setF((prev) => ({ ...prev, details: geo.full, city: geo.city }));
     } catch (e) { setLocErr(e.message); }
     setLocating(false);
   };
 
   const startEdit = (a) => {
     setEditId(a.id);
-    setF({ label: a.label || "المنزل", details: a.details || "", phone: a.phone || "" });
+    setF({ label: a.label || "المنزل", details: a.details || "", phone: a.phone || "", city: a.city || "" });
     setCoords(a.lat && a.lng ? { lat: a.lat, lng: a.lng } : null);
     setAdding(true);
   };
-  const cancel = () => { setAdding(false); setEditId(null); setF({ label: "المنزل", details: "", phone: "" }); setCoords(null); };
+  const cancel = () => { setAdding(false); setEditId(null); setF({ label: "المنزل", details: "", phone: "", city: "" }); setCoords(null); };
   const save = () => {
     if (!f.details.trim()) return;
     const phone = (f.phone || "").trim() || userPhone || "";   // رقم حسابك تلقائياً إن تُرك فارغاً
     if (editId) {
-      updateAddress(editId, { label: f.label || "عنوان", details: f.details.trim(), phone, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) });
+      updateAddress(editId, { label: f.label || "عنوان", details: f.details.trim(), phone, ...(f.city ? { city: f.city } : {}), ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) });
     } else {
-      addAddress(f.label || "عنوان", f.details.trim(), phone, coords);
+      addAddress(f.label || "عنوان", f.details.trim(), phone, coords, f.city);
     }
     cancel();
     onBack();
@@ -60,7 +60,7 @@ export default function AddressPage({ onBack }) {
         </div>
 
         {!adding ? (
-          <div className="bk-addr-add" onClick={() => { setEditId(null); setF({ label: "المنزل", details: "", phone: "" }); setCoords(null); setAdding(true); }}><Plus size={18} strokeWidth={2.6} /> إضافة عنوان جديد</div>
+          <div className="bk-addr-add" onClick={() => { setEditId(null); setF({ label: "المنزل", details: "", phone: "", city: "" }); setCoords(null); setAdding(true); }}><Plus size={18} strokeWidth={2.6} /> إضافة عنوان جديد</div>
         ) : (
           <div className="bk-cardbox" style={{ padding: 14 }}>
             <div className={"bk-locbox" + (coords ? " open" : "")}>
@@ -72,7 +72,7 @@ export default function AddressPage({ onBack }) {
                 <div className="bk-map-pick">
                   <MapView center={[coords.lat, coords.lng]} zoom={16} height={200} draggablePin
                     markers={[{ lat: coords.lat, lng: coords.lng, type: "home", label: "اسحب الدبّوس لضبط موقعك" }]}
-                    onPinMove={async (lat, lng) => { setCoords({ lat, lng }); const addr = await reverseGeocode(lat, lng); setF((prev) => ({ ...prev, details: addr })); }} />
+                    onPinMove={async (lat, lng) => { setCoords({ lat, lng }); const geo = await reverseGeocode(lat, lng); setF((prev) => ({ ...prev, details: geo.full, city: geo.city })); }} />
                   <div className="bk-map-hint">🎯 اسحب الدبّوس لضبط موقعك بدقّة</div>
                 </div>
               )}

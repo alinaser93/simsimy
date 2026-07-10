@@ -27,7 +27,7 @@ function DeliveryInfo({ theme }) {
     if (noProv.length >= 2) return noProv[1];   // غالباً: منطقة، مدينة
     return noProv[noProv.length - 1] || parts[0];
   };
-  const addrText = cityOnly(fullText);
+  const addrText = (addr?.city && String(addr.city).trim()) || cityOnly(fullText);
   return (
     <div className="bk-deliv">
       <div>

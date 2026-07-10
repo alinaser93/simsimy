@@ -38,7 +38,7 @@ export default function StoreEditor({ mid, prefs }) {
     try {
       const p = await getCurrentLocation();
       upd({ lat: p.lat, lng: p.lng });
-      const addr = await reverseGeocode(p.lat, p.lng);
+      const addr = (await reverseGeocode(p.lat, p.lng)).full;
       upd({ lat: p.lat, lng: p.lng, address: addr });
       setLocMsg("✓ حُفظ الموقع: " + addr);
     } catch (e) { setLocMsg("⚠️ " + e.message); }

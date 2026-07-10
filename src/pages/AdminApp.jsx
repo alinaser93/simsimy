@@ -1247,7 +1247,7 @@ function StoreLocationCard() {
     try {
       const p = await getCurrentLocation();
       setStoreLocation({ lat: p.lat, lng: p.lng });
-      const addr = await reverseGeocode(p.lat, p.lng);
+      const addr = (await reverseGeocode(p.lat, p.lng)).full;
       setStoreLocation({ lat: p.lat, lng: p.lng }, addr);
       setMsg("✓ حُدّد موقع المتجر: " + addr);
     } catch (e) { setMsg("⚠️ " + e.message); }
