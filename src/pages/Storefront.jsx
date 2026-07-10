@@ -45,12 +45,9 @@ export default function Storefront() {
   const [page, setPageRaw] = useState(null);        // cart | payment | address | orders | search | {tracking:id} | {info:topic} | login | wishlist
   const navStack = useRef([]);                       // مكدّس الصفحات السابقة للرجوع الصحيح
   // فتح صفحة مع تذكّر الحالية (فالرجوع يرجّع للمكان الفعلي)
-  const goTo = (next) => { navStack.current.push(page); setPageRaw(next); };
-  // رجوع للصفحة السابقة فعلياً، أو للرئيسية إن لم توجد
-  const goBack = () => {
-    const prev = navStack.current.pop();
-    setPageRaw(prev === undefined ? null : prev);
-  };
+  const goTo = (next) => { navStack.current.push(page); try { window.history.pushState({ bk: 1 }, ""); } catch { /* لا شيء */ } setPageRaw(next); };
+  // رجوع موحّد: يشغّل زر رجوع المتصفح/الهاتف نفسه → معالج popstate يرجّع للسابقة الفعلية
+  const goBack = () => { try { window.history.back(); } catch { setPageRaw(null); } };
   // ضبط مباشر يمسح المكدّس (للانتقالات الجذرية مثل العودة للرئيسية)
   const setPage = (next) => { navStack.current = []; setPageRaw(next); };
   const [pending, setPending] = useState(null);  // بيانات السلة قبل الدفع
@@ -155,8 +152,15 @@ export default function Storefront() {
   // فتح تفاصيل المنتج من أي بطاقة
   const backRef = { productId, listing, catTab };
   const backRefBox = useRef(backRef); backRefBox.current = backRef;
+  const pageBox = useRef(page); pageBox.current = page;
   useEffect(() => {
     const onPop = () => {
+      // زر الرجوع (الهاتف/المتصفح): أغلق الطبقة العلوية بالترتيب الصحيح
+      if (pageBox.current != null) {            // صفحة مفتوحة (حساب/عنوان/سلة/…) → ارجع للسابقة الفعلية
+        const prev = navStack.current.pop();
+        setPageRaw(prev === undefined ? null : prev);
+        return;
+      }
       const r = backRefBox.current;
       if (r.productId != null) { setProductId(null); return; }
       if (r.listing) { setListing(null); return; }
@@ -166,8 +170,8 @@ export default function Storefront() {
     return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("bk:openProfile", () => {}); };
   }, []);
   useEffect(() => {
-    const openProf = () => { pushBK(); goTo("profile"); };
-    const openAddr = () => { pushBK(); goTo("address"); };
+    const openProf = () => { goTo("profile"); };
+    const openAddr = () => { goTo("address"); };
     window.addEventListener("bk:openProfile", openProf);
     window.addEventListener("bk:openAddress", openAddr);
     const h = (e) => { pushBK(); setProductId(e.detail); };

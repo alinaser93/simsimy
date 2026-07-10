@@ -63,13 +63,6 @@ export default function AddressPage({ onBack }) {
           <div className="bk-addr-add" onClick={() => { setEditId(null); setF({ label: "المنزل", details: "", phone: "" }); setCoords(null); setAdding(true); }}><Plus size={18} strokeWidth={2.6} /> إضافة عنوان جديد</div>
         ) : (
           <div className="bk-cardbox" style={{ padding: 14 }}>
-            <div className="pt-field"><label>التسمية</label>
-              <div className="bk-chips" style={{ padding: 0 }}>
-                {["المنزل", "العمل", "أخرى"].map((l) => (
-                  <span key={l} className={"bk-chip" + (f.label === l ? " on" : "")} onClick={() => setF({ ...f, label: l })}>{l}</span>
-                ))}
-              </div>
-            </div>
             <button className="bk-gps-btn" onClick={detectLocation} disabled={locating}>
               {locating ? <Loader2 size={17} className="spin" /> : <LocateFixed size={17} />}
               {locating ? "جارٍ تحديد موقعك…" : "📍 حدّد موقعي تلقائياً (GPS)"}
