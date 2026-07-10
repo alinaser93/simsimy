@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, Search, Plus, MapPin, Trash2, LocateFixed, Loader2, Pencil } from "lucide-react";
+import { ChevronRight, Search, Plus, MapPin, Trash2, LocateFixed, Loader2 } from "lucide-react";
 import { useStore, addAddress, selectAddress, removeAddress, updateAddress } from "../store/appStore.js";
 import MapView from "./MapView.jsx";
 import { getCurrentLocation, reverseGeocode } from "../utils/geo.js";
@@ -93,9 +93,9 @@ export default function AddressPage({ onBack }) {
         )}
 
         <div className="bk-srch-sec" style={{ paddingBottom: 6 }}>عناوينك المحفوظة</div>
-        <div className="bk-cardbox">
+        <div className="bk-cardbox" style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "visible", boxShadow: "none" }}>
           {addresses.map((a) => (
-            <div className="bk-addr-card" key={a.id} onClick={() => { selectAddress(a.id); onBack(); }}>
+            <div className={"bk-addr-card" + (selected === a.id ? " sel" : "")} key={a.id} onClick={() => startEdit(a)}>
               <span className="e">{a.label === "العمل" ? "🏢" : "🏠"}</span>
               <div className="inf">
                 <b>{a.label} {selected === a.id && <span style={{ color: "#0C831F", fontSize: 10.5 }}>· المحدد ✓</span>}</b>
@@ -103,9 +103,9 @@ export default function AddressPage({ onBack }) {
                 <div className="ph">📞 {a.phone}</div>
               </div>
               <div className="bk-addr-acts">
-                <button className="bk-addr-edit" onClick={(e) => { e.stopPropagation(); startEdit(a); }}>
-                  <Pencil size={14} strokeWidth={2.4} /> تعديل
-                </button>
+                {selected !== a.id && (
+                  <button className="bk-addr-pick" onClick={(e) => { e.stopPropagation(); selectAddress(a.id); onBack(); }}>تحديد</button>
+                )}
                 {addresses.length > 1 && (
                   <button className="bk-addr-del" onClick={(e) => { e.stopPropagation(); removeAddress(a.id); }} aria-label="حذف">
                     <Trash2 size={15} strokeWidth={2.2} />

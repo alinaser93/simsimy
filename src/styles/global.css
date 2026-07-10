@@ -359,13 +359,17 @@ html,body{margin:0;height:100%;}
 
 /* ============ العناوين ============ */
 .bk-addr-add{display:flex;align-items:center;gap:10px;padding:14px;color:var(--bk-green,#0C831F);font-size:13.5px;font-weight:900;cursor:pointer;background:#fff;margin:8px 10px;border-radius:14px;border:1px solid #efefef;}
-.bk-addr-card{display:flex;gap:12px;padding:13px;border-bottom:1px solid #f5f5f5;cursor:pointer;align-items:flex-start;}
-.bk-addr-card:last-child{border:none;}
+.bk-addr-card{display:flex;gap:12px;padding:13px;cursor:pointer;align-items:flex-start;border:1.5px solid #bfe6cb;border-radius:14px;margin-bottom:10px;background:#fff;transition:border-color .15s,box-shadow .15s;}
+.bk-addr-card:last-child{margin-bottom:0;}
+.bk-addr-card:active{box-shadow:0 2px 10px rgba(12,131,31,.14);}
+.bk-addr-card.sel{border-color:#0C831F;border-width:2px;background:#f4faf5;box-shadow:0 2px 10px rgba(12,131,31,.12);}
 .bk-addr-card .e{font-size:22px;margin-top:2px;}
 .bk-addr-card .inf{flex:1;}
 .bk-addr-card b{font-size:13.5px;display:block;}
 .bk-addr-card span{font-size:11.5px;color:#7a7a7a;line-height:1.5;display:block;}
 .bk-addr-card .ph{font-size:10.5px;color:#9a9a9a;margin-top:3px;direction:ltr;text-align:right;}
+.bk-addr-pick{background:#0C831F;color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;min-height:34px;white-space:nowrap;}
+.bk-addr-pick:active{background:#0a6f1a;}
 
 /* ============ تتبع الطلب ============ */
 .bk-trk-head{color:#fff;padding:18px 16px 22px;}
