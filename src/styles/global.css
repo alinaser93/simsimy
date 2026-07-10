@@ -614,10 +614,14 @@ html,body{margin:0;height:100%;}
 .bk-pin span{position:relative;z-index:2;font-size:15px;line-height:1;margin-top:-6px;}
 
 /* زرّ GPS + خريطة اختيار الموقع */
-.bk-gps-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:#eaf5ec;border:1.5px solid #0C831F;color:#0C831F;font-size:14px;font-weight:800;padding:12px;border-radius:11px;cursor:pointer;margin-bottom:10px;}
+.bk-locbox{margin-bottom:12px;border-radius:12px;}
+.bk-locbox.open{border:1.5px solid #0C831F;overflow:hidden;box-shadow:0 2px 10px rgba(12,131,31,.12);}
+.bk-gps-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:#eaf5ec;border:1.5px solid #0C831F;color:#0C831F;font-size:14px;font-weight:800;padding:12px;border-radius:11px;cursor:pointer;box-sizing:border-box;}
+.bk-locbox.open .bk-gps-btn{border:none;border-bottom:1.5px solid #0C831F;border-radius:0;background:#0C831F;color:#fff;}
 .bk-gps-btn:disabled{opacity:.6;cursor:default;}
-.bk-map-pick{margin-bottom:12px;}
-.bk-map-hint{text-align:center;font-size:12px;color:#7a7a7a;margin-top:6px;font-weight:600;}
+.bk-map-pick{margin:0;}
+.bk-map-pick .leaflet-container{border-radius:0 !important;}
+.bk-map-hint{text-align:center;font-size:12px;color:#6b7a6e;margin:0;padding:8px 6px;font-weight:700;background:#f4faf5;}
 .spin{animation:bkspin 1s linear infinite;}
 @keyframes bkspin{to{transform:rotate(360deg);}}
 

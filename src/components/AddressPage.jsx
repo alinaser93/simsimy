@@ -63,19 +63,21 @@ export default function AddressPage({ onBack }) {
           <div className="bk-addr-add" onClick={() => { setEditId(null); setF({ label: "المنزل", details: "", phone: "" }); setCoords(null); setAdding(true); }}><Plus size={18} strokeWidth={2.6} /> إضافة عنوان جديد</div>
         ) : (
           <div className="bk-cardbox" style={{ padding: 14 }}>
-            <button className="bk-gps-btn" onClick={detectLocation} disabled={locating}>
-              {locating ? <Loader2 size={17} className="spin" /> : <LocateFixed size={17} />}
-              {locating ? "جارٍ تحديد موقعك…" : "📍 حدّد موقعي تلقائياً (GPS)"}
-            </button>
+            <div className={"bk-locbox" + (coords ? " open" : "")}>
+              <button className="bk-gps-btn" onClick={detectLocation} disabled={locating}>
+                {locating ? <Loader2 size={17} className="spin" /> : <LocateFixed size={17} />}
+                {locating ? "جارٍ تحديد موقعك…" : "📍 حدّد موقعي تلقائياً (GPS)"}
+              </button>
+              {coords && (
+                <div className="bk-map-pick">
+                  <MapView center={[coords.lat, coords.lng]} zoom={16} height={200} draggablePin
+                    markers={[{ lat: coords.lat, lng: coords.lng, type: "home", label: "اسحب الدبّوس لضبط موقعك" }]}
+                    onPinMove={async (lat, lng) => { setCoords({ lat, lng }); const addr = await reverseGeocode(lat, lng); setF((prev) => ({ ...prev, details: addr })); }} />
+                  <div className="bk-map-hint">🎯 اسحب الدبّوس لضبط موقعك بدقّة</div>
+                </div>
+              )}
+            </div>
             {locErr && <div className="lg-err" style={{ marginBottom: 8 }}>{locErr}</div>}
-            {coords && (
-              <div className="bk-map-pick">
-                <MapView center={[coords.lat, coords.lng]} zoom={16} height={200} draggablePin
-                  markers={[{ lat: coords.lat, lng: coords.lng, type: "home", label: "اسحب الدبّوس لضبط موقعك" }]}
-                  onPinMove={async (lat, lng) => { setCoords({ lat, lng }); const addr = await reverseGeocode(lat, lng); setF((prev) => ({ ...prev, details: addr })); }} />
-                <div className="bk-map-hint">🎯 اسحب الدبّوس لضبط موقعك بدقّة</div>
-              </div>
-            )}
             <div className="pt-field"><label>تفاصيل العنوان (المنطقة، الشارع، الدار/الطابق)</label>
               <input className="pt-in" placeholder="مثال: الكرادة، شارع 62، بناية 14، ط2" value={f.details}
                 onChange={(e) => setF({ ...f, details: e.target.value })} /></div>
