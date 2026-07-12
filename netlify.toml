@@ -3,6 +3,12 @@
   publish = "dist"
   functions = "netlify/functions"
 
+# استثنِ دوال الخادم من إعادة التوجيه حتى لا تُلتقط وتُرجَع كصفحة HTML
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

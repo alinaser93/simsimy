@@ -197,7 +197,8 @@ function ProductManager({ scope = "admin", mid = null }) {
         const blob = await res.blob();
         dataUrl = await new Promise((resolve) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.readAsDataURL(blob); });
       }
-      const r = await aiCall({ task: "analyzeImage", image: dataUrl, cats: CATS }, 25000);
+      let errMsg = "";
+      const r = await aiCall({ task: "analyzeImage", image: dataUrl, cats: CATS }, 25000, (m) => { errMsg = m; });
       if (r && (r.name || r.desc)) {
         const patch = {};
         if (r.name && !modal.data.name) patch.name = r.name;
@@ -207,7 +208,9 @@ function ProductManager({ scope = "admin", mid = null }) {
         if (r.sub) patch.sub = r.sub;
         if (r.details) patch.hlText = (modal.data.hlText ? modal.data.hlText + "\n" : "") + r.details;
         upd(patch);
-      } else { alert("تعذّر تحليل الصورة — تأكّد من نشر دالة الذكاء على Netlify"); }
+      } else {
+        alert("تعذّر تحليل الصورة" + (errMsg ? "\n\nالسبب: " + errMsg : "") + "\n\nراجع: مفتاح ANTHROPIC_API_KEY في إعدادات Netlify، ورصيد الحساب، ونشر مجلد الدوال.");
+      }
     } catch (e) { alert("خطأ في التحليل: " + e.message); }
     setAiBusy("");
   };
