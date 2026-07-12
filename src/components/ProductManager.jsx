@@ -15,23 +15,30 @@ const CATS = ["مشروبات وعصائر","زيوت وسكر وبهارات","
 // رفع حيّ ذكي: يفتح الكاميرا/المعرض ← يعالج الصورة (مربّعة + خلفية + ضغط WebP) ← يخزّنها
 async function addImage(upd, data, onBusy) {
   const inp = document.createElement("input");
-  inp.type = "file"; inp.accept = "image/*"; // على الجوال يتيح الكاميرا والمعرض
+  inp.type = "file"; inp.accept = "image/*"; inp.multiple = true; // يتيح اختيار عدة صور دفعة واحدة
   inp.onchange = async () => {
-    const f = inp.files[0]; if (!f) return;
+    const files = Array.from(inp.files || []); if (!files.length) return;
     if (onBusy) onBusy(true);
-    try {
-      // عالج الصورة محلياً: مربّعة 800px + خلفية القسم + WebP مضغوط (~40-80كB)
-      const bg = bgForCat(data.cat);
-      const { dataUrl, blob } = await processImage(f, { size: 800, bg, pad: 0.08, format: "webp", quality: 0.82 });
-      let finalUrl = dataUrl; // افتراضياً: تخزين مضغوط داخل المتجر (يعمل دائماً بلا خادم)
-      // إن كان Supabase مضبوطاً: ارفع النسخة المضغوطة لرابط دائم أخف
-      const cfg = getSupabaseCfg();
-      if (cfg && cfg.url && cfg.anonKey) {
-        try { const up = await uploadImage(dataUrlToFile(dataUrl, "p-" + Date.now() + ".webp")); if (up) finalUrl = up; }
-        catch { /* يبقى المضغوط المحلي */ }
-      }
-      upd({ images: [...(data.images || []), finalUrl] });
-    } catch (e) { alert("تعذّرت معالجة الصورة: " + (e.message || "")); }
+    const bg = bgForCat(data.cat);
+    const cfg = getSupabaseCfg();
+    const added = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (onBusy) onBusy(files.length > 1 ? `يعالج ${i + 1}/${files.length}…` : true);
+      try {
+        // عالج كل صورة محلياً: مربّعة 800px + خلفية القسم + WebP مضغوط (~40-80كB)
+        const { dataUrl } = await processImage(f, { size: 800, bg, pad: 0.08, format: "webp", quality: 0.82 });
+        let finalUrl = dataUrl; // افتراضياً: تخزين مضغوط داخل المتجر (يعمل دائماً بلا خادم)
+        // إن كان Supabase مضبوطاً: ارفع النسخة المضغوطة لرابط دائم أخف
+        if (cfg && cfg.url && cfg.anonKey) {
+          try { const up = await uploadImage(dataUrlToFile(dataUrl, "p-" + Date.now() + "-" + i + ".webp")); if (up) finalUrl = up; }
+          catch { /* يبقى المضغوط المحلي */ }
+        }
+        added.push(finalUrl);
+      } catch { /* تخطَّ الصورة التالفة وواصل الباقي */ }
+    }
+    if (added.length) upd({ images: [...(data.images || []), ...added] });
+    if (added.length < files.length) alert(`أُضيفت ${added.length} من ${files.length} صورة (تعذّر معالجة الباقي)`);
     if (onBusy) onBusy(false);
   };
   inp.click();
@@ -349,7 +356,7 @@ function ProductManager({ scope = "admin", mid = null }) {
                     <button className="rm" onClick={() => upd({ images: modal.data.images.filter((_, j) => j !== i) })}>✕</button>
                   </div>
                 ))}
-                <button className="pt-img-add" onClick={() => addImage(upd, modal.data, setImgBusy)} disabled={imgBusy}>{imgBusy ? "⏳" : "📷"}<small>{imgBusy ? "يعالج…" : "ارفع صورة"}</small></button>
+                <button className="pt-img-add" onClick={() => addImage(upd, modal.data, setImgBusy)} disabled={!!imgBusy}>{imgBusy ? "⏳" : "📷"}<small>{typeof imgBusy === "string" ? imgBusy : (imgBusy ? "يعالج…" : "ارفع صور")}</small></button>
               </div>
               <div className="pt-imgbtns">
                 <button className="ai-chip" style={{ background: "#0C831F" }} onClick={analyzeFromImage} disabled={aiBusy==="analyze"}>{aiBusy==="analyze" ? "⏳ يقرأ الصورة…" : "📷 استخرج التفاصيل من الصورة"}</button>
@@ -367,7 +374,7 @@ function ProductManager({ scope = "admin", mid = null }) {
                   ))}
                 </div>
               )}
-              <div className="pt-tip" style={{ marginTop: 6 }}>📷 اضغط <b>«ارفع صورة»</b> → تفتح الكاميرا أو المعرض → تُعالَج تلقائياً (مربّعة + خلفية متناسقة + ضغط) وتصبح جاهزة كبلينكيت. ثم «استخرج التفاصيل» ليملأ الذكاء الاسم والوصف.</div>
+              <div className="pt-tip" style={{ marginTop: 6 }}>📷 اضغط <b>«ارفع صور»</b> → تگدر تختار <b>أكثر من صورة دفعة وحدة</b> → تُعالَج كلها تلقائياً (مربّعة + خلفية متناسقة + ضغط). ثم «استخرج التفاصيل» ليملأ الذكاء الاسم والوصف.</div>
 
               <div className="pt-tip">💡 المنتجات بأكثر من صورة تُباع <b>أضعافاً</b>. لا صورة حقيقية؟ ولّد صورة متناسقة بألوان القسم بنقرة — تبدو نظيفة كبلينكيت.</div>
               <input className="pt-in" style={{ marginTop: 6 }} value={modal.data.e} onChange={(e) => upd({ e: e.target.value })} placeholder="الإيموجي (يظهر إن لم توجد صورة)" />
