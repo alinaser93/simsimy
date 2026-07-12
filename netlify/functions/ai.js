@@ -13,6 +13,26 @@ export default async (req) => {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return new Response(JSON.stringify({ error: "لم يُضبط ANTHROPIC_API_KEY في Netlify" }), { status: 500, headers: cors });
 
+  // ينادي واجهة Claude مجرّباً عدة موديلات بالتتابع (يحمي من تقاعد اسم موديل)
+  async function callClaude(models, payload) {
+    let lastErr = "";
+    for (const model of models) {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify({ model, ...payload }),
+      });
+      const data = await r.json();
+      if (r.ok) return { ok: true, data };
+      lastErr = data.error?.message || ("status " + r.status);
+      // إن كان الخطأ بسبب الموديل (غير موجود/متقاعد) جرّب التالي، وإلا توقّف
+      if (!/model|not_found|deprecat|404/i.test(lastErr)) return { ok: false, error: lastErr, status: r.status };
+    }
+    return { ok: false, error: lastErr, status: 400 };
+  }
+  const VISION_MODELS = ["claude-sonnet-4-6", "claude-sonnet-4-5", "claude-3-5-sonnet-latest"];
+  const TEXT_MODELS = ["claude-haiku-4-5", "claude-3-5-haiku-latest", "claude-sonnet-4-6"];
+
   let body;
   try { body = await req.json(); } catch { return new Response(JSON.stringify({ error: "bad json" }), { status: 400, headers: cors }); }
   const { task, name, cat, sub, weight, price, cats = [], subs = [], image } = body || {};
@@ -43,24 +63,19 @@ export default async (req) => {
     const m = /^data:(image\/[a-zA-Z]+);base64,(.+)$/.exec(image);
     if (!m) return new Response(JSON.stringify({ error: "bad image format" }), { status: 400, headers: cors });
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
-          max_tokens: 500,
-          system: "أنت خبير في متاجر البقالة العراقية. حلّل صورة المنتج واستخرج معلوماته بدقّة. أجب بالعربية وبصيغة JSON فقط بلا أسوار كود.",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } },
-              { type: "text", text: `حلّل صورة منتج البقالة هذه. الأقسام المتاحة: ${cats.join("، ")}. استخرج: الاسم التجاري، وصف تسويقي قصير (≤20 كلمة)، الوزن/الحجم إن ظهر، أنسب قسم (أو قسم جديد إن لزم)، تفرّع مناسب، وأي تفاصيل مكتوبة مهمة. أعد JSON فقط: {"name":"...","desc":"...","weight":"...","cat":"...","sub":"...","details":"..."}` },
-            ],
-          }],
-        }),
+      const out = await callClaude(VISION_MODELS, {
+        max_tokens: 500,
+        system: "أنت خبير في متاجر البقالة العراقية. حلّل صورة المنتج واستخرج معلوماته بدقّة. أجب بالعربية وبصيغة JSON فقط بلا أسوار كود.",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } },
+            { type: "text", text: `حلّل صورة منتج البقالة هذه. الأقسام المتاحة: ${cats.join("، ")}. استخرج: الاسم التجاري، وصف تسويقي قصير (≤20 كلمة)، الوزن/الحجم إن ظهر، أنسب قسم (أو قسم جديد إن لزم)، تفرّع مناسب، وأي تفاصيل مكتوبة مهمة. أعد JSON فقط: {"name":"...","desc":"...","weight":"...","cat":"...","sub":"...","details":"..."}` },
+          ],
+        }],
       });
-      const data = await r.json();
-      if (!r.ok) return new Response(JSON.stringify({ error: data.error?.message || "vision error" }), { status: r.status, headers: cors });
+      if (!out.ok) return new Response(JSON.stringify({ error: out.error || "vision error" }), { status: out.status || 500, headers: cors });
+      const data = out.data;
       let text = (data.content?.[0]?.text || "").trim().replace(/^```json\s*|\s*```$/g, "");
       let parsed; try { parsed = JSON.parse(text); } catch { const mm = text.match(/\{[\s\S]*\}/); parsed = mm ? JSON.parse(mm[0]) : { raw: text }; }
       return new Response(JSON.stringify(parsed), { headers: cors });
@@ -70,18 +85,13 @@ export default async (req) => {
   }
 
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-3-5-haiku-20241022",
-        max_tokens: 400,
-        system,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const out = await callClaude(TEXT_MODELS, {
+      max_tokens: 400,
+      system,
+      messages: [{ role: "user", content: prompt }],
     });
-    const data = await r.json();
-    if (!r.ok) return new Response(JSON.stringify({ error: data.error?.message || "AI error" }), { status: r.status, headers: cors });
+    if (!out.ok) return new Response(JSON.stringify({ error: out.error || "AI error" }), { status: out.status || 500, headers: cors });
+    const data = out.data;
     let text = (data.content?.[0]?.text || "").trim().replace(/^```json\s*|\s*```$/g, "");
     let parsed;
     try { parsed = JSON.parse(text); } catch { const m = text.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { raw: text }; }
